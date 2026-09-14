@@ -141,10 +141,14 @@ official App Store iPhone app (0.8.0) and from Paseo on a second Mac that
 formulas and Mermaid diagrams display correctly, including the sample embedded
 in an assistant reply (inline math, `$$` block, flowchart).
 
-Confirmed by the user: images render on iOS and on the second Mac's client.
-Not yet reported: device and client versions, copy toast, Show source, Expand
-modal, the settings screen, the offline fallback, and text-size changes.
-Android was not run (no device).
+Confirmed by the user on the iPhone (official App Store 0.8.0) and on the
+second Mac's client: formulas and Mermaid render; Copy source shows the copied
+toast and pastes the original text; Expand opens the zoomable, two-way
+scrollable modal; Settings → Plugins → advanced-markdown opens with the Mermaid
+runtime ready and switching Mermaid off turns the diagram into source; in
+airplane mode an unseen conversation shows source with "Host unreachable" and
+Retry restores the images after reconnecting. Device model, OS version, and the
+exact client build numbers were not recorded. Android was not run (no device).
 
 ## Not covered here
 
