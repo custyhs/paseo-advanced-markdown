@@ -1,0 +1,12 @@
+{
+  "name": "paseo-advanced-markdown-mermaid-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned Mermaid CLI runtime installed by paseo-advanced-markdown into its own cache directory",
+  "type": "module",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "11.17.0",
+    "puppeteer": "25.11.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "advanced-markdown",
+  "requirements": { "paseo": "0.8.0" },
+  "build": [
+    ["npm", "ci"],
+    ["npm", "run", "build"],
+    ["npm", "run", "prepare-browser"]
+  ]
+}

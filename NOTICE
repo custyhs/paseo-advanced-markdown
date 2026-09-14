@@ -1,0 +1,26 @@
+paseo-advanced-markdown
+Copyright 2026 paseo-advanced-markdown contributors
+
+This plugin adapts code from paseo-math (Apache-2.0):
+https://github.com/q5m-ai/paseo-math/tree/3644aa73d40f2e4e51f7a4ef48b22b668db017d8
+Copyright 2026 q5m-ai contributors.
+Adapted files carry a header naming their origin. The adapted parts are:
+the Markdown math tokenizer (shared/markdown/math.ts), TeX normalization
+helpers (shared/tex.ts), the MathJax + resvg rasterizer (server/math/render.ts),
+the client formula layout (client/formula.tsx, client/formula-scale.ts,
+client/render-cache.ts, client/fit-image.ts), and the build-time stable
+Markdown node-key and class-lowering steps (scripts/build.mjs).
+
+paseo-math in turn draws on the public Paseo LaTeX proposal
+https://github.com/getpaseo/paseo/pull/2562 and the Paseo stable node-key patch
+https://github.com/getpaseo/paseo/blob/c43df5d4c398571f62584b4ad5a629b5fd3b4599/patches/react-native-markdown-display%2B7.0.2.patch
+Paseo is Copyright 2025-present Mohamed Boudra, Apache-2.0.
+
+Runtime dependency licenses remain in their npm packages and generated bundles:
+react-native-markdown-display (MIT), markdown-it (MIT), MathJax (Apache-2.0),
+resvg (MPL-2.0), Mermaid and @mermaid-js/mermaid-cli (MIT), Puppeteer
+(Apache-2.0), and their respective dependencies. The unmodified resvg WASM
+binary is embedded during the build; its source is available at
+https://github.com/thx/resvg-js/tree/v2.6.2 and https://github.com/linebender/resvg.
+Chrome for Testing (chrome-headless-shell) is downloaded during preparation
+under Google's Chrome for Testing terms and is not redistributed here.

@@ -1,0 +1,5 @@
+{
+  "browser": "chrome-headless-shell",
+  "buildId": "153.0.8010.36",
+  "source": "puppeteer-core 25.11.0 PUPPETEER_REVISIONS"
+}
