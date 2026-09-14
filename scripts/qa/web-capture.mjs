@@ -52,6 +52,7 @@ page.on("pageerror", (error) => consoleErrors.push(`pageerror: ${error.message}`
 await page.setViewport({ width, height, deviceScaleFactor: 2 });
 await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: dark ? "dark" : "light" }]);
 try {
+  let navigationStartedAt = Date.now();
   await page.goto(url, { waitUntil: "networkidle2", timeout });
   const waitFor = (text) =>
     page.waitForFunction((needle) => document.body.innerText.includes(needle), { timeout }, text);
@@ -61,8 +62,10 @@ try {
     const separator = step.indexOf(":");
     const action = step.slice(0, separator);
     const value = step.slice(separator + 1);
-    if (action === "goto") await page.goto(value, { waitUntil: "networkidle2", timeout });
-    else if (action === "wait") await waitFor(value);
+    if (action === "goto") {
+      navigationStartedAt = Date.now();
+      await page.goto(value, { waitUntil: "networkidle2", timeout });
+    } else if (action === "wait") await waitFor(value);
     else if (action === "sleep") await new Promise((resolve) => setTimeout(resolve, Number(value)));
     else if (action === "click") {
       const clicked = await page.evaluate((text) => {
@@ -96,7 +99,8 @@ try {
           ).length,
       );
       if (count >= expectImages) {
-        imagesReadyMs = Date.now() - startedWaiting;
+        // Measured from the last navigation so it includes host RPC round trips.
+        imagesReadyMs = Date.now() - navigationStartedAt;
         break;
       }
       await new Promise((resolve) => setTimeout(resolve, 250));
@@ -152,6 +156,8 @@ try {
     facts,
     clipboard,
     consoleErrors,
+    imagesReadyMs,
+    expectImages,
     capturedAt: new Date().toISOString(),
   };
   await writeFile(path.join(out, `${name}.json`), `${JSON.stringify(report, null, 2)}\n`);
@@ -159,6 +165,7 @@ try {
     JSON.stringify({
       name,
       images: facts.images.length,
+      imagesReadyMs,
       buttons: facts.buttonLabels.length,
       rawDollarMath: facts.rawDollarMath,
       overflow: facts.scrollWidth > facts.clientWidth,
