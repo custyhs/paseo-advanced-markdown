@@ -144,7 +144,8 @@ function nodeExecutable(): { command: string; env: NodeJS.ProcessEnv } {
   };
 }
 
-function browserArguments(): string[] {
+/** Launch flags handed to the pinned browser; exported for the network-isolation test. */
+export function browserArguments(): string[] {
   const args = [
     "--disable-gpu",
     "--disable-extensions",

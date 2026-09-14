@@ -3,7 +3,10 @@
 import { access } from "node:fs/promises";
 import { beforeAll, describe, expect, it } from "vitest";
 import { cacheLayout, resolveCacheRoot } from "../server/mermaid/cache-root.mjs";
+import { spawnSync } from "node:child_process";
+import { createServer } from "node:http";
 import {
+  browserArguments,
   mermaidCacheSize,
   renderDiagram,
   resetMermaidForTests,
@@ -103,6 +106,38 @@ describe("Mermaid rendering through the pinned local runtime", () => {
     }
     console.log(JSON.stringify({ warmMs: timings }));
   });
+
+  it("cannot reach the network with the launch flags the worker uses", async (context) => {
+    if (!prepared) return context.skip();
+    const runtime = await resolveMermaidRuntime();
+    if (!runtime.ready) throw new Error(runtime.message);
+    let hits = 0;
+    const server = createServer((_request, response) => {
+      hits++;
+      response.end("<html><body>reached</body></html>");
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    const port = typeof address === "object" && address ? address.port : 0;
+    try {
+      const result = spawnSync(
+        runtime.runtime.executablePath,
+        [...browserArguments(), "--dump-dom", `http://127.0.0.1:${port}/probe`],
+        { encoding: "utf8", timeout: 20_000 },
+      );
+      expect(result.stdout).not.toContain("reached");
+      expect(hits).toBe(0);
+      // A diagram that names a remote image still renders without contacting it.
+      const result2 = await renderDiagram({
+        source: `flowchart LR\n  A["<img src='http://127.0.0.1:${port}/img.png'>label"] --> B`,
+        theme: "default",
+      });
+      expect(result2.ok).toBe(true);
+      expect(hits).toBe(0);
+    } finally {
+      server.close();
+    }
+  }, 40_000);
 
   it("stops cleanly without leaving children", async () => {
     await stopMermaid();

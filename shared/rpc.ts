@@ -60,9 +60,9 @@ export const mermaidRenderOutput = z.discriminatedUnion("ok", [
   z.object({
     ok: z.literal(true),
     png: z.string().max(MAX_IMAGE_BASE64),
-    /** Logical size; PNG pixels are `scale` times larger. */
-    width: z.number().positive().max(4096),
-    height: z.number().positive().max(4096),
+    /** Logical size at 1x; PNG pixels are `scale` times larger and stay within MAX_IMAGE_EDGE. */
+    width: z.number().positive().max(16384),
+    height: z.number().positive().max(16384),
     scale: z.number().positive().max(4),
   }),
   z.object({

@@ -8,6 +8,7 @@ import { WORKER_KEY, BROWSER, BROWSER_BUILD_ID } from "../server/generated/runti
 import { cacheLayout } from "../server/mermaid/cache-root.mjs";
 import { mermaidQueueLength, renderDiagram, resetMermaidForTests, stopMermaid } from "../server/mermaid/render.js";
 import { MERMAID_TASK_TIMEOUT_MS } from "../shared/limits.js";
+import { renderFormula } from "../server/math/render.js";
 
 let root: string;
 let cliEntry: string;
@@ -95,6 +96,9 @@ describe("Mermaid worker faults", () => {
       expect(result.reason).toBe("unavailable");
       expect(result.message).toMatch(/browser executable is missing/);
     }
+    // The math module does not depend on the Mermaid runtime.
+    const formula = await renderFormula({ expression: "a^2", display: false, color: "#111111" });
+    expect(formula.ok).toBe(true);
   });
 
   it("refuses new work after stop and kills in-flight children", async () => {
