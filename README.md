@@ -20,7 +20,7 @@ patch: the official app, daemon, and plugin SDK are the only dependencies.
 | Paseo | app and daemon **0.8.0** (the manifest pins `requirements.paseo` to `0.8.0`; other releases are untested) |
 | Daemon host | Node ≥ 22.22 and npm on `PATH` for the preparation step, Git, about 700 MiB of disk in the plugin cache, network access during installation only |
 | Daemon host OS | verified on macOS arm64; Linux needs a CJK font (`fonts-noto-cjk`) for Chinese labels and the usual Chrome shared libraries; Windows is untested |
-| Clients | official browser web UI verified; Electron desktop, iOS, and Android are untested (see `docs/qa/`) |
+| Clients | official browser web UI verified in detail; official iOS app and a second Mac's desktop client verified for rendering by the maintainer; Android untested (see `docs/qa/`) |
 
 Plugins must be enabled on the daemon (Settings → Plugins, or `pluginsEnabled`
 in `config.json`).

@@ -131,7 +131,22 @@ See `docs/release/0.1.0-rc.1.md` for the table; run on host B against a local
 bare repository (`file:///tmp/pam.git`) with the manifest's three preparation
 commands executed by the daemon in its staging directory.
 
+## Official iPhone and second-Mac clients (user-reported, 2026-09-14)
+
+The plugin was installed with `paseo plugin install` on this machine's
+production daemon (fork build 0.8.0-beta.1, accepted by the `0.8.0` requirement
+through its stable core) without restarting the daemon; the status RPC through
+that daemon reported both engines ready. The user then reported from the
+official App Store iPhone app (0.8.0) and from Paseo on a second Mac that
+formulas and Mermaid diagrams display correctly, including the sample embedded
+in an assistant reply (inline math, `$$` block, flowchart).
+
+Confirmed by the user: images render on iOS and on the second Mac's client.
+Not yet reported: device and client versions, copy toast, Show source, Expand
+modal, the settings screen, the offline fallback, and text-size changes.
+Android was not run (no device).
+
 ## Not covered here
 
-iOS and Android clients (no emulator or Xcode on this host), light theme
-captures, and Electron desktop. See the task list for their status.
+Android clients, the detailed iOS checklist rows listed above, and the
+Electron desktop checklist beyond basic rendering. See the task list.
