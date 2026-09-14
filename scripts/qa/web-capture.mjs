@@ -21,7 +21,8 @@ const width = Number(option("width", "1280"));
 const height = Number(option("height", "900"));
 const copyLabel = option("copy");
 const copyIndex = Number(option("copy-index", "0"));
-const dark = option("dark", "false") === "true";
+const scheme = option("scheme", "dark");
+const dark = scheme === "dark";
 const chrome =
   option("chrome") ??
   process.env.PAM_QA_CHROME ??
@@ -44,7 +45,7 @@ page.on("console", (message) => {
 });
 page.on("pageerror", (error) => consoleErrors.push(`pageerror: ${error.message}`));
 await page.setViewport({ width, height, deviceScaleFactor: 2 });
-if (dark) await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
+await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: dark ? "dark" : "light" }]);
 try {
   await page.goto(url, { waitUntil: "networkidle2", timeout });
   const waitFor = (text) =>

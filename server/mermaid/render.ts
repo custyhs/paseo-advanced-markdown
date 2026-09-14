@@ -7,8 +7,10 @@ import {
   IMAGE_CACHE_BYTES,
   IMAGE_CACHE_ENTRIES,
   MAX_IMAGE_BASE64,
+  MAX_IMAGE_EDGE,
   MAX_IMAGE_PIXELS,
   MAX_MERMAID_SOURCE,
+  MIN_DIAGRAM_SCALE,
   MERMAID_CONCURRENCY,
   MERMAID_QUEUE_LIMIT,
   MERMAID_TASK_TIMEOUT_MS,
@@ -20,6 +22,23 @@ import { describe, resolveMermaidRuntime, type MermaidRuntime } from "./runtime.
 const SCALE = 2;
 const VIEWPORT_WIDTH = 1200;
 const VIEWPORT_HEIGHT = 800;
+
+/**
+ * Device scale that keeps a diagram of the given logical size inside the pixel
+ * and edge budgets, preferring the crisp default. Returns null when even the
+ * minimum scale cannot fit, so the caller refuses instead of shipping a huge
+ * bitmap to phones.
+ */
+export function fitScale(logicalWidth: number, logicalHeight: number): number | null {
+  if (!(logicalWidth > 0) || !(logicalHeight > 0)) return null;
+  const byArea = Math.sqrt(MAX_IMAGE_PIXELS / (logicalWidth * logicalHeight));
+  const byEdge = MAX_IMAGE_EDGE / Math.max(logicalWidth, logicalHeight);
+  const scale = Math.min(SCALE, byArea, byEdge);
+  if (scale >= SCALE) return SCALE;
+  if (scale < MIN_DIAGRAM_SCALE) return null;
+  // Quantize so cache keys and repeated renders agree.
+  return Math.floor(scale * 100) / 100;
+}
 
 type Failure = Extract<MermaidRenderOutput, { ok: false }>;
 
@@ -146,6 +165,7 @@ function browserArguments(): string[] {
 async function runCli(
   runtime: MermaidRuntime,
   input: MermaidRenderInput,
+  scale: number = SCALE,
 ): Promise<MermaidRenderOutput> {
   const workDir = await mkdtemp(path.join(os.tmpdir(), "paseo-advanced-markdown-"));
   try {
@@ -189,7 +209,7 @@ async function runCli(
       "--backgroundColor",
       "transparent",
       "--scale",
-      String(SCALE),
+      String(scale),
       "--width",
       String(VIEWPORT_WIDTH),
       "--height",
@@ -239,8 +259,19 @@ async function runCli(
     if (!png) return failure("failed", "Mermaid produced no image");
     const size = pngDimensions(png);
     if (!size) return failure("failed", "Mermaid produced an unreadable image");
-    if (size.width * size.height > MAX_IMAGE_PIXELS) {
-      return failure("too-large", `Diagram is ${size.width}x${size.height} px, above the pixel budget`);
+    const logicalWidth = size.width / scale;
+    const logicalHeight = size.height / scale;
+    if (size.width * size.height > MAX_IMAGE_PIXELS || Math.max(size.width, size.height) > MAX_IMAGE_EDGE) {
+      const fitted = fitScale(logicalWidth, logicalHeight);
+      if (fitted !== null && fitted < scale) {
+        // One retry at a lower device scale keeps large diagrams viewable
+        // without exceeding what phones can decode.
+        return runCli(runtime, input, fitted);
+      }
+      return failure(
+        "too-large",
+        `Diagram is ${Math.round(logicalWidth)}x${Math.round(logicalHeight)} px at 1x, above the image budget`,
+      );
     }
     const base64 = png.toString("base64");
     if (base64.length > MAX_IMAGE_BASE64) {
@@ -249,9 +280,9 @@ async function runCli(
     return {
       ok: true,
       png: base64,
-      width: size.width / SCALE,
-      height: size.height / SCALE,
-      scale: SCALE,
+      width: logicalWidth,
+      height: logicalHeight,
+      scale,
     };
   } finally {
     await rm(workDir, { recursive: true, force: true }).catch(() => undefined);

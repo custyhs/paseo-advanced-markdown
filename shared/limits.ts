@@ -11,8 +11,12 @@ export const MAX_INLINE_RUN = 65_536;
 export const MAX_DOCUMENT = 1_048_576;
 /** Largest rendered image, as base64 text, that one RPC response may carry. */
 export const MAX_IMAGE_BASE64 = 2_000_000;
-/** Largest rendered image in raster pixels. */
-export const MAX_IMAGE_PIXELS = 4_000_000;
+/** Largest rendered image in raster pixels (about 4096 x 2048). */
+export const MAX_IMAGE_PIXELS = 8_000_000;
+/** Longest raster edge; Android decodes larger bitmaps unreliably. */
+export const MAX_IMAGE_EDGE = 4096;
+/** Lowest device scale a diagram may fall back to before it is refused. */
+export const MIN_DIAGRAM_SCALE = 0.5;
 /** Longest wall-clock time for one Mermaid render task. */
 export const MERMAID_TASK_TIMEOUT_MS = 15_000;
 /** Mermaid render tasks running at once inside one plugin process. */
