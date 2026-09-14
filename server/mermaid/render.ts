@@ -131,11 +131,15 @@ function classifyFailure(output: string, code: number | null): Failure {
     return failure("invalid", line ?? "Mermaid could not parse the diagram");
   }
   if (
-    /could not find|no such file|executable doesn't exist|failed to launch|spawn .* ENOENT/i.test(
+    /could not find|no such file|executable doesn't exist|failed to launch|spawn .* ENOENT|no usable sandbox|error while loading shared libraries/i.test(
       text,
     )
   ) {
-    return failure("unavailable", "The pinned browser could not be started");
+    const cause = lastLine(text);
+    const hint = /no usable sandbox|apparmor|user namespaces/i.test(text)
+      ? " This host restricts Chrome's sandbox; set PASEO_ADVANCED_MARKDOWN_NO_SANDBOX=1 for the daemon or allow unprivileged user namespaces."
+      : "";
+    return failure("unavailable", `The pinned browser could not be started: ${cause}.${hint}`);
   }
   return failure("failed", `Mermaid renderer exited with code ${code ?? "?"}: ${lastLine(text)}`);
 }
@@ -172,7 +176,14 @@ export function browserArguments(): string[] {
     "--host-resolver-rules=MAP * ~NOTFOUND",
     "--proxy-server=127.0.0.1:1",
   ];
-  if (typeof process.getuid === "function" && process.getuid() === 0) args.push("--no-sandbox");
+  // Root (containers) and hosts that forbid unprivileged user namespaces
+  // (Ubuntu 24.04 AppArmor default) cannot use Chrome's sandbox. The explicit
+  // opt-out is a daemon environment variable, never message content.
+  if (
+    (typeof process.getuid === "function" && process.getuid() === 0) ||
+    /^(1|true|yes)$/i.test(process.env.PASEO_ADVANCED_MARKDOWN_NO_SANDBOX ?? "")
+  )
+    args.push("--no-sandbox");
   return args;
 }
 
