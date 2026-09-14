@@ -47,9 +47,33 @@ await page.setViewport({ width, height, deviceScaleFactor: 2 });
 if (dark) await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
 try {
   await page.goto(url, { waitUntil: "networkidle2", timeout });
-  if (waitText) {
-    await page.waitForFunction((text) => document.body.innerText.includes(text), { timeout }, waitText);
+  const waitFor = (text) =>
+    page.waitForFunction((needle) => document.body.innerText.includes(needle), { timeout }, text);
+  // Optional scripted steps after the first load: goto <url> | wait <text> | click <text> | sleep <ms>.
+  // Example: --steps "wait:pam-workspace;goto:http://host/h/srv/agent/id;wait:Smoke"
+  for (const step of (option("steps", "") || "").split(";").filter(Boolean)) {
+    const separator = step.indexOf(":");
+    const action = step.slice(0, separator);
+    const value = step.slice(separator + 1);
+    if (action === "goto") await page.goto(value, { waitUntil: "networkidle2", timeout });
+    else if (action === "wait") await waitFor(value);
+    else if (action === "sleep") await new Promise((resolve) => setTimeout(resolve, Number(value)));
+    else if (action === "click") {
+      const clicked = await page.evaluate((text) => {
+        const candidates = [...document.querySelectorAll("*")].filter(
+          (element) => element.children.length === 0 && element.textContent?.trim() === text,
+        );
+        const target = candidates[0]?.closest('[role="button"],[role="link"],a,button') ?? candidates[0];
+        if (!target) return false;
+        target.scrollIntoView({ block: "center" });
+        target.click();
+        return true;
+      }, value);
+      if (!clicked) throw new Error(`click target not found: ${value}`);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    } else throw new Error(`unknown step: ${step}`);
   }
+  if (waitText) await waitFor(waitText);
   // Let plugin images arrive: data-URL images appear after the host RPC settles.
   const settle = option("settle", "8000");
   await new Promise((resolve) => setTimeout(resolve, Number(settle)));

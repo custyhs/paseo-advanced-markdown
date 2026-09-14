@@ -16,7 +16,8 @@
     "test": "vitest run",
     "paseo-source": "node scripts/paseo-source.mjs",
     "smoke": "node --import tsx scripts/smoke.mjs",
-    "check": "npm run build && npm run typecheck && npm test"
+    "check": "npm run build && npm run typecheck && npm test",
+    "smoke:hermes": "node --import tsx scripts/hermes-smoke.mjs"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "2.6.2",
