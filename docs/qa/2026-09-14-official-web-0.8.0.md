@@ -125,6 +125,12 @@ completed block while the live tail stayed readable source (18 images at 14 s
 with the "10." list item still plain). After the turn completed the single
 reconciled row rendered all 105 images with no fallback status.
 
+## Git source install, update, and rollback
+
+See `docs/release/0.1.0-rc.1.md` for the table; run on host B against a local
+bare repository (`file:///tmp/pam.git`) with the manifest's three preparation
+commands executed by the daemon in its staging directory.
+
 ## Not covered here
 
 iOS and Android clients (no emulator or Xcode on this host), light theme
