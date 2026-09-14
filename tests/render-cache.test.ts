@@ -29,12 +29,19 @@ describe("client render cache", () => {
       return { ok: true, png: "AAAA" } as Output;
     };
     const key = renderKey("math", "host-a", { expression: "x", display: false, color: "#000" });
-    const [first, second] = await Promise.all([requestRender(key, {}, call), requestRender(key, {}, call)]);
+    const [first, second] = await Promise.all([
+      requestRender(key, {}, call),
+      requestRender(key, {}, call),
+    ]);
     expect(first).toBe(second);
     expect(calls).toBe(1);
     expect(peekRender<Output>(key)).toEqual({ ok: true, png: "AAAA" });
-    expect(renderKey("math", "host-b", { expression: "x" })).not.toBe(renderKey("math", "host-a", { expression: "x" }));
-    expect(renderKey("mermaid", "host-a", { source: "x" })).not.toBe(renderKey("math", "host-a", { source: "x" }));
+    expect(renderKey("math", "host-b", { expression: "x" })).not.toBe(
+      renderKey("math", "host-a", { expression: "x" }),
+    );
+    expect(renderKey("mermaid", "host-a", { source: "x" })).not.toBe(
+      renderKey("math", "host-a", { source: "x" }),
+    );
   });
 
   it("keeps results keyed by input so a stale response cannot overwrite a newer key", async () => {
@@ -62,15 +69,26 @@ describe("client render cache", () => {
     forgetRender(keyFail);
     expect(peekRender(keyFail)).toBeUndefined();
     let attempts = 0;
-    const busyThenOk = async () => (++attempts === 1 ? ({ ok: false, reason: "busy" } as Output) : ({ ok: true, png: "OK" } as Output));
+    const busyThenOk = async () =>
+      ++attempts === 1
+        ? ({ ok: false, reason: "busy" } as Output)
+        : ({ ok: true, png: "OK" } as Output);
     const keyBusy = renderKey("mermaid", "h", { source: "busy" });
-    const first = await requestRender(keyBusy, {}, busyThenOk, { retryableReasons: (r) => !r.ok && r.reason === "busy" });
+    const first = await requestRender(keyBusy, {}, busyThenOk, {
+      retryableReasons: (r) => !r.ok && r.reason === "busy",
+    });
     expect(first).toEqual({ ok: false, reason: "busy" });
     forgetRender(keyBusy);
-    const second = await requestRender(keyBusy, {}, busyThenOk, { retryableReasons: (r) => !r.ok && r.reason === "busy" });
+    const second = await requestRender(keyBusy, {}, busyThenOk, {
+      retryableReasons: (r) => !r.ok && r.reason === "busy",
+    });
     expect(second).toEqual({ ok: true, png: "OK" });
     const keyInvalid = renderKey("math", "h", { expression: "bad" });
-    const invalid = await requestRender(keyInvalid, {}, async () => ({ ok: false, reason: "invalid" }) as Output);
+    const invalid = await requestRender(
+      keyInvalid,
+      {},
+      async () => ({ ok: false, reason: "invalid" }) as Output,
+    );
     expect(invalid).toEqual({ ok: false, reason: "invalid" });
     expect(peekRender(keyInvalid)).toEqual({ ok: false, reason: "invalid" });
   });
@@ -81,7 +99,11 @@ describe("client render cache", () => {
     const keyPending = renderKey("math", "h", { expression: "pending" });
     const pendingPromise = requestRender(keyPending, {}, () => pending.promise);
     for (let index = 0; index < 140; index++) {
-      await requestRender(renderKey("math", "h", { expression: `e${index}` }), {}, async () => ({ ok: true, png: "P".repeat(1000) }) as Output);
+      await requestRender(
+        renderKey("math", "h", { expression: `e${index}` }),
+        {},
+        async () => ({ ok: true, png: "P".repeat(1000) }) as Output,
+      );
     }
     expect(peekRender(renderKey("math", "h", { expression: "e0" }))).toBeUndefined();
     expect(peekRender(renderKey("math", "h", { expression: "e139" }))).toBeDefined();

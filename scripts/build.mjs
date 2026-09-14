@@ -13,9 +13,7 @@ import { readWorkerSpec } from "./lib/worker-key.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
-const markdownRoot = path.dirname(
-  require.resolve("react-native-markdown-display/package.json"),
-);
+const markdownRoot = path.dirname(require.resolve("react-native-markdown-display/package.json"));
 
 await mkdir(path.join(root, "client/generated"), { recursive: true });
 await mkdir(path.join(root, "server/generated"), { recursive: true });
@@ -59,22 +57,10 @@ await build({
             if (!filename.startsWith(markdownRoot + path.sep)) return;
             let source = await readFile(filename, "utf8");
             if (filename.endsWith("AstRenderer.js")) {
-              source = replaceExact(
-                source,
-                "import getUniqueID from './util/getUniqueID';",
-                "",
-              );
-              source = replaceExact(
-                source,
-                "key: getUniqueID(),",
-                "key: 'rnmr_root',",
-              );
+              source = replaceExact(source, "import getUniqueID from './util/getUniqueID';", "");
+              source = replaceExact(source, "key: getUniqueID(),", "key: 'rnmr_root',");
             } else {
-              source = replaceExact(
-                source,
-                "import getUniqueID from './getUniqueID';",
-                "",
-              );
+              source = replaceExact(source, "import getUniqueID from './getUniqueID';", "");
               source = replaceExact(
                 source,
                 "function createNode(token, tokenIndex)",
@@ -83,11 +69,13 @@ await build({
               source = replaceExact(
                 source,
                 "const content = token.content;",
+                // biome-ignore lint/suspicious/noTemplateCurlyInString: literal JS source text
                 "const content = token.content;\n  const keyPath = parentKey ? `${parentKey}.${tokenIndex}` : `${tokenIndex}`;",
               );
               source = replaceExact(
                 source,
                 "key: getUniqueID() + '_' + type,",
+                // biome-ignore lint/suspicious/noTemplateCurlyInString: literal JS source text
                 "key: `rnmr_${keyPath}_${type}`,",
               );
               source = replaceExact(
@@ -124,7 +112,7 @@ const lowered = await transformAsync(await readFile(markdownFile, "utf8"), {
   plugins: [transformClasses],
 });
 if (!lowered?.code) throw new Error("Markdown class lowering produced no code");
-await writeFile(markdownFile, lowered.code + "\n");
+await writeFile(markdownFile, `${lowered.code}\n`);
 // The pinned renderer's declarations still import Markdown 10's private Token
 // path. Keep its real types, adapted to the public Markdown 15 export, alongside
 // the portable bundle. Do not modify installed dependency files.

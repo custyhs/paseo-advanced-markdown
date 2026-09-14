@@ -28,8 +28,13 @@ const require = createRequire(import.meta.url);
 // file directly so the smoke uses the exact compiler Paseo 0.8.0 runs.
 const serverDist = path.join(root, "node_modules/@getpaseo/server/dist/server/server/plugins");
 const { compilePlugin } = await import(pathToFileURL(path.join(serverDist, "compiler.js")).href);
-const { readPluginManifest } = await import(pathToFileURL(path.join(serverDist, "manifest.js")).href);
-const report = { paseo: "0.8.0 (compiler from @getpaseo/server@0.8.0; app sources at v0.8.0)", steps: {} };
+const { readPluginManifest } = await import(
+  pathToFileURL(path.join(serverDist, "manifest.js")).href
+);
+const report = {
+  paseo: "0.8.0 (compiler from @getpaseo/server@0.8.0; app sources at v0.8.0)",
+  steps: {},
+};
 
 export async function loadCompiledPlugin() {
   const manifest = await readPluginManifest(root);
@@ -41,11 +46,15 @@ export async function loadCompiledPlugin() {
   assert.ok(bundles.clientBundle && bundles.serverBundle);
   const handlers = new Map();
   const settings = [];
-  const factory = (0, eval)(bundles.serverBundle);
+  // Evaluate exactly as the daemon's plugin-process does (globalThis.eval of the wrapped bundle).
+  // biome-ignore lint/security/noGlobalEval: mirrors the daemon's bundle evaluation
+  const evaluateServer = globalThis.eval;
+  const factory = evaluateServer(bundles.serverBundle);
   const entry = factory((name) => {
     if (name === "@getpaseo/plugin") return sdk;
     if (name === "@getpaseo/plugin/server") return {};
-    if (name.startsWith("@getpaseo/plugin/client")) throw new Error(`client module in server bundle: ${name}`);
+    if (name.startsWith("@getpaseo/plugin/client"))
+      throw new Error(`client module in server bundle: ${name}`);
     return require(name);
   });
   const cleanup = entry.default({
@@ -72,7 +81,14 @@ export async function loadCompiledPlugin() {
     const parsed = await registered.contract.input.parseAsync(input);
     return registered.contract.output.parseAsync(await registered.handler(parsed, {}));
   }
-  return { bundles, invoke, cleanup, id: manifest.id, methods: [...handlers.keys()].sort(), settings };
+  return {
+    bundles,
+    invoke,
+    cleanup,
+    id: manifest.id,
+    methods: [...handlers.keys()].sort(),
+    settings,
+  };
 }
 
 async function loadStreamRuntime() {
@@ -93,7 +109,11 @@ async function loadStreamRuntime() {
     logLevel: "silent",
   });
   const module = { exports: {} };
-  new Function("require", "module", "exports", result.outputFiles[0].text)(require, module, module.exports);
+  new Function("require", "module", "exports", result.outputFiles[0].text)(
+    require,
+    module,
+    module.exports,
+  );
   return module.exports;
 }
 
@@ -142,12 +162,15 @@ async function exerciseClientBundle(bundle, id) {
     };
   }
   const requested = new Set();
-  const factory = (0, eval)(bundle);
+  // biome-ignore lint/security/noGlobalEval: mirrors the app's bundle evaluation
+  const evaluateClient = globalThis.eval;
+  const factory = evaluateClient(bundle);
   assert.equal(typeof factory, "function");
   const entry = factory((name) => {
     requested.add(name);
     if (name === "@getpaseo/plugin") return sdk;
-    if (name === "@getpaseo/plugin/client") return { ...clientSdk, useSettings: () => ({ status: "loading" }) };
+    if (name === "@getpaseo/plugin/client")
+      return { ...clientSdk, useSettings: () => ({ status: "loading" }) };
     if (name === "@getpaseo/plugin/client/react-native") return nativeSdk;
     if (name === "@getpaseo/plugin/client/ui") return uiSdk;
     if (name === "@tanstack/react-query") return require("@tanstack/react-query");
@@ -165,10 +188,14 @@ async function exerciseClientBundle(bundle, id) {
     addTimelineTransformer: (value) => register(timelineTransformers, value),
     addTimelineRenderer: (value) => register(timelineRenderers, value),
     addSettingsScreen: (value) => register(settingsScreens, value),
-    rpc(contract, input) {
+    rpc(contract) {
       rpcCalls.push(contract.name);
       assert.equal(contract.name, "settings.modules.read");
-      return Promise.resolve({ status: "ready", revision: "r1", values: { math: true, mermaid: true } });
+      return Promise.resolve({
+        status: "ready",
+        revision: "r1",
+        values: { math: true, mermaid: true },
+      });
     },
   });
   assert.equal(typeof cleanup, "function");
@@ -278,13 +305,21 @@ async function exerciseClientBundle(bundle, id) {
 
     // 4. Mermaid fence: stays assistant while unclosed, becomes plugin when closed.
     {
-      let unclosedKinds = new Set();
-      const { rows } = stream(samples.mermaid, (projected, assembled, complete) => {
-        if (assembled.includes("```mermaid") && !/```mermaid[\s\S]*\n```/.test(assembled)) {
-          for (const row of projected) unclosedKinds.add(row.kind);
-        }
-      }, 3);
-      assert.deepEqual([...unclosedKinds], ["assistant_message"], "unclosed fences stay readable source");
+      const unclosedKinds = new Set();
+      const { rows } = stream(
+        samples.mermaid,
+        (projected, assembled) => {
+          if (assembled.includes("```mermaid") && !/```mermaid[\s\S]*\n```/.test(assembled)) {
+            for (const row of projected) unclosedKinds.add(row.kind);
+          }
+        },
+        3,
+      );
+      assert.deepEqual(
+        [...unclosedKinds],
+        ["assistant_message"],
+        "unclosed fences stay readable source",
+      );
       outcomes.mermaid = rows.map((row) => [row.kind, sourceOf(row)]);
       assert.deepEqual(outcomes.mermaid, [
         ["assistant_message", "Flow:"],
@@ -311,9 +346,15 @@ async function exerciseClientBundle(bundle, id) {
     // 6. Plain, image-bearing, and user items stay with the host.
     {
       const { rows } = stream(samples.plain, () => {});
-      assert.deepEqual(rows.map((row) => row.kind), ["assistant_message"]);
+      assert.deepEqual(
+        rows.map((row) => row.kind),
+        ["assistant_message"],
+      );
       const { rows: imageRows } = stream(samples.image, () => {});
-      assert.deepEqual(imageRows.map((row) => row.kind), ["assistant_message"]);
+      assert.deepEqual(
+        imageRows.map((row) => row.kind),
+        ["assistant_message"],
+      );
       const user = { kind: "user_message", id: "user", text: samples.mathInline, timestamp };
       assert.deepEqual(projectPluginTimelineItems([user], transform), [user]);
       outcomes.hostKeeps = ["plain", "image", "user_message"];
@@ -336,13 +377,24 @@ async function exerciseClientBundle(bundle, id) {
       let state = { tail: [], head: [] };
       state = applyStreamEvent({
         ...state,
-        event: { type: "timeline", provider: "codex", item: { type: "assistant_message", messageId: "m", text: samples.mermaid } },
+        event: {
+          type: "timeline",
+          provider: "codex",
+          item: { type: "assistant_message", messageId: "m", text: samples.mermaid },
+        },
         timestamp,
       });
-      state = applyStreamEvent({ ...state, event: { type: "turn_completed", provider: "codex" }, timestamp });
+      state = applyStreamEvent({
+        ...state,
+        event: { type: "turn_completed", provider: "codex" },
+        timestamp,
+      });
       const rows = project(state, transformWithCompetitor);
       const mermaidRow = rows.find((row) => row.kind === "plugin" && sourceOf(row) === undefined);
-      assert.ok(mermaidRow && mermaidRow.pluginId === "competitor", "earlier plugin wins the Mermaid item");
+      assert.ok(
+        mermaidRow && mermaidRow.pluginId === "competitor",
+        "earlier plugin wins the Mermaid item",
+      );
       outcomes.firstTransformerWins = true;
     }
 
@@ -350,7 +402,6 @@ async function exerciseClientBundle(bundle, id) {
     {
       const item = { type: "assistant_message", text: samples.mathInline };
       assert.ok(timelineTransformers[0].transform({ item, phase: "complete" }));
-      const moduleState = null; // toggled through the rendered bundle below
       outcomes.settingsSnapshot = "checked in unit tests";
     }
     return { requestedModules: [...requested].sort(), outcomes };
@@ -389,7 +440,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       color: "#fafafa",
     });
     assert.equal(formula.ok, true);
-    assert.equal(Buffer.from(formula.png, "base64").subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+    assert.equal(
+      Buffer.from(formula.png, "base64").subarray(0, 8).toString("hex"),
+      "89504e470d0a1a0a",
+    );
     await writeFile(path.join(root, ".smoke/formula.png"), Buffer.from(formula.png, "base64"));
     const invalid = await plugin.invoke("advanced-markdown.math.render", {
       expression: String.raw`\unknownCommand{a}`,
@@ -397,7 +451,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       color: "#111111",
     });
     assert.equal(invalid.ok, false);
-    report.steps.math = { width: formula.width, height: formula.height, baseline: formula.baseline, invalidFallback: invalid.reason };
+    report.steps.math = {
+      width: formula.width,
+      height: formula.height,
+      baseline: formula.baseline,
+      invalidFallback: invalid.reason,
+    };
     const runtime = await resolveMermaidRuntime();
     const diagram = await plugin.invoke("advanced-markdown.mermaid.render", {
       source: "flowchart LR\n  A[开始] --> B{判断}\n  B -->|是| C[发布]",
@@ -406,9 +465,17 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (runtime.ready) {
       assert.equal(diagram.ok, true, JSON.stringify(diagram));
       await writeFile(path.join(root, ".smoke/diagram.png"), Buffer.from(diagram.png, "base64"));
-      const broken = await plugin.invoke("advanced-markdown.mermaid.render", { source: "notadiagram\n A --> B", theme: "default" });
+      const broken = await plugin.invoke("advanced-markdown.mermaid.render", {
+        source: "notadiagram\n A --> B",
+        theme: "default",
+      });
       assert.equal(broken.ok, false);
-      report.steps.mermaid = { width: diagram.width, height: diagram.height, scale: diagram.scale, invalidFallback: broken.reason };
+      report.steps.mermaid = {
+        width: diagram.width,
+        height: diagram.height,
+        scale: diagram.scale,
+        invalidFallback: broken.reason,
+      };
     } else {
       assert.equal(diagram.ok, false);
       assert.equal(diagram.reason, "unavailable");

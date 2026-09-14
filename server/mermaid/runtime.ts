@@ -1,7 +1,12 @@
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { cacheLayout, resolveCacheRoot } from "./cache-root.mjs";
-import { BROWSER, BROWSER_BUILD_ID, MERMAID_CLI_VERSION, WORKER_KEY } from "../generated/runtime.js";
+import {
+  BROWSER,
+  BROWSER_BUILD_ID,
+  MERMAID_CLI_VERSION,
+  WORKER_KEY,
+} from "../generated/runtime.js";
 
 export interface MermaidRuntime {
   workerDir: string;

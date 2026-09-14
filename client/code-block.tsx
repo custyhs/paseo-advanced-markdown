@@ -4,7 +4,12 @@ import { useCallback } from "react";
 import { Platform, ScrollView, Text, View, type TextStyle } from "react-native";
 import { ActionBar } from "./action-bar.js";
 
-export const monospace = Platform.OS === "ios" ? "Menlo" : Platform.OS === "android" ? "monospace" : "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+export const monospace =
+  Platform.OS === "ios"
+    ? "Menlo"
+    : Platform.OS === "android"
+      ? "monospace"
+      : "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
 /**
  * Plain, copyable source display used for ordinary fences, unclosed or
@@ -54,7 +59,9 @@ export function CodeBlock({
       }}
     >
       {label ? (
-        <Text style={{ color: colors.foregroundMuted, fontSize: compact ? 11 : 12, marginBottom: 4 }}>
+        <Text
+          style={{ color: colors.foregroundMuted, fontSize: compact ? 11 : 12, marginBottom: 4 }}
+        >
           {label}
         </Text>
       ) : null}

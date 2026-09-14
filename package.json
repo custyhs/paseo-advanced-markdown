@@ -16,8 +16,11 @@
     "test": "vitest run",
     "paseo-source": "node scripts/paseo-source.mjs",
     "smoke": "node --import tsx scripts/smoke.mjs",
-    "check": "npm run build && npm run typecheck && npm test",
-    "smoke:hermes": "node --import tsx scripts/hermes-smoke.mjs"
+    "check": "npm run build && npm run typecheck && npm run lint && npm run format:check && npm test",
+    "smoke:hermes": "node --import tsx scripts/hermes-smoke.mjs",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "format:check": "biome format ."
   },
   "dependencies": {
     "@resvg/resvg-wasm": "2.6.2",
@@ -34,6 +37,7 @@
   "devDependencies": {
     "@babel/core": "7.29.0",
     "@babel/plugin-transform-classes": "7.28.6",
+    "@biomejs/biome": "^2.5.13",
     "@getpaseo/plugin": "0.8.0",
     "@getpaseo/server": "0.8.0",
     "@puppeteer/browsers": "3.2.2",

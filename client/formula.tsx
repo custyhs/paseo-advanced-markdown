@@ -3,14 +3,29 @@
 // Changes: shared image cache, block-level source toggle, copy, and retry
 // actions, module-disabled source display, and theme-aware status text.
 import { useRpc } from "@getpaseo/plugin/client";
+import { copyText, useToast } from "@getpaseo/plugin/client/react-native";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { Image, Platform, ScrollView, Text, useWindowDimensions, type TextStyle } from "react-native";
+import {
+  Image,
+  Platform,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  type TextStyle,
+} from "react-native";
 import { renderMath, type MathRenderInput, type MathRenderOutput } from "../shared/rpc.js";
 import { MAX_MATH_EXPRESSION } from "../shared/limits.js";
+import { ActionBar } from "./action-bar.js";
 import { CodeBlock } from "./code-block.js";
 import { formulaScale } from "./formula-scale.js";
-import { forgetRender, peekRender, renderKey, requestRender, type CachedRender } from "./render-cache.js";
+import {
+  forgetRender,
+  peekRender,
+  renderKey,
+  requestRender,
+  type CachedRender,
+} from "./render-cache.js";
 
 type FormulaProps = {
   expression: string;
@@ -32,7 +47,9 @@ function statusFor(result: CachedRender<MathRenderOutput> | undefined, eligible:
   if (result === undefined) return "Rendering formula…";
   if (result === null) return "Host unreachable; showing source";
   if (result.ok) return "";
-  return result.reason === "too-large" ? "Formula is too large to render" : "Invalid TeX; showing source";
+  return result.reason === "too-large"
+    ? "Formula is too large to render"
+    : "Invalid TeX; showing source";
 }
 
 export const Formula = memo(function Formula({
@@ -62,14 +79,17 @@ export const Formula = memo(function Formula({
   const result = settled?.key === key ? settled.result : cached;
   const eligible = enabled && expression.length > 0 && expression.length <= MAX_MATH_EXPRESSION;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: key already encodes expression, display, and color; attempt forces a retry
   useEffect(() => {
     if (!eligible) return;
     let current = true;
-    void requestRender<MathRenderInput, MathRenderOutput>(key, { expression, display, color }, callRef.current).then(
-      (next) => {
-        if (current) setSettled({ key, result: next });
-      },
-    );
+    void requestRender<MathRenderInput, MathRenderOutput>(
+      key,
+      { expression, display, color },
+      callRef.current,
+    ).then((next) => {
+      if (current) setSettled({ key, result: next });
+    });
     return () => {
       current = false;
     };
@@ -103,9 +123,18 @@ export const Formula = memo(function Formula({
         status={showSource && usable ? undefined : status}
         actions={[
           ...(usable
-            ? [{ key: "render", icon: "Sigma", label: "Show formula", onPress: () => setShowSource(false) }]
+            ? [
+                {
+                  key: "render",
+                  icon: "Sigma",
+                  label: "Show formula",
+                  onPress: () => setShowSource(false),
+                },
+              ]
             : []),
-          ...(retryable ? [{ key: "retry", icon: "RefreshCw", label: "Retry", onPress: retry }] : []),
+          ...(retryable
+            ? [{ key: "retry", icon: "RefreshCw", label: "Retry", onPress: retry }]
+            : []),
         ]}
       />
     );
@@ -163,7 +192,10 @@ export const Formula = memo(function Formula({
       style={[
         textStyle,
         {
-          lineHeight: Math.max(textStyle.lineHeight ?? fontSize * 1.5, (height + descent) / fontScale),
+          lineHeight: Math.max(
+            textStyle.lineHeight ?? fontSize * 1.5,
+            (height + descent) / fontScale,
+          ),
         },
       ]}
     >
@@ -185,9 +217,6 @@ function BlockFormula({
   compact: boolean;
   onShowSource(): void;
 }) {
-  // Lazy import keeps the action bar out of the inline path.
-  const { ActionBar } = require("./action-bar.js") as typeof import("./action-bar.js");
-  const { copyText, useToast } = require("@getpaseo/plugin/client/react-native") as typeof import("@getpaseo/plugin/client/react-native");
   const toast = useToast();
   const copy = useCallback(async () => {
     try {

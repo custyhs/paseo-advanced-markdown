@@ -10,7 +10,7 @@ import path from "node:path";
  */
 export function resolveCacheRoot(env = process.env, platform = process.platform) {
   const override = env.PASEO_ADVANCED_MARKDOWN_CACHE;
-  if (override && override.trim()) return path.resolve(override);
+  if (override?.trim()) return path.resolve(override);
   if (platform === "win32") {
     const base = env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
     return path.join(base, "paseo-advanced-markdown");

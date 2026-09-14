@@ -33,7 +33,9 @@ export function ZoomModal({
   return (
     <Modal title={title} open={open} onOpenChange={onOpenChange}>
       <Modal.Content scrollable={false} contentContainerStyle={{ padding: 0, flex: 1 }}>
-        <View style={{ flexDirection: "row", gap: 8, padding: compact ? 8 : 12, alignItems: "center" }}>
+        <View
+          style={{ flexDirection: "row", gap: 8, padding: compact ? 8 : 12, alignItems: "center" }}
+        >
           <Text style={{ color: colors.foregroundMuted, fontSize: 12 }}>Zoom</Text>
           {ZOOMS.map((value) => (
             <Pressable
@@ -51,7 +53,12 @@ export function ZoomModal({
                 backgroundColor: zoom === value ? colors.accent : colors.surface1,
               }}
             >
-              <Text style={{ color: zoom === value ? colors.accentForeground : colors.foreground, fontSize: 12 }}>
+              <Text
+                style={{
+                  color: zoom === value ? colors.accentForeground : colors.foreground,
+                  fontSize: 12,
+                }}
+              >
                 {value}x
               </Text>
             </Pressable>

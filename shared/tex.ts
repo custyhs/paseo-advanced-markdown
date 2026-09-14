@@ -87,8 +87,10 @@ export function compactEquationTags(expression: string): string {
     return root;
   };
   const flush = (target: Scope, position: number) => {
-    result += expression.slice(copied, position) +
-      (trailingComment && target.tags ? "\n" : "") + target.tags;
+    result +=
+      expression.slice(copied, position) +
+      (trailingComment && target.tags ? "\n" : "") +
+      target.tags;
     target.tags = "";
     copied = position;
   };
@@ -118,9 +120,8 @@ export function compactEquationTags(expression: string): string {
           const rows = /^(align|alignat|flalign|gather)\*?$/.test(name);
           environments.push({
             name,
-            scope: rows || /^(equation|multline)\*?$/.test(name)
-              ? { tags: "", rows, depth }
-              : undefined,
+            scope:
+              rows || /^(equation|multline)\*?$/.test(name) ? { tags: "", rows, depth } : undefined,
           });
         } else if (environments[environments.length - 1]?.name === name) {
           const closing = environments.pop();
@@ -131,20 +132,18 @@ export function compactEquationTags(expression: string): string {
       }
     }
     const current = environments[environments.length - 1]?.scope;
-    if (expression[end] === "\\" && end === i + 1 &&
-        current?.rows && depth === current.depth) flush(current, i);
+    if (expression[end] === "\\" && end === i + 1 && current?.rows && depth === current.depth)
+      flush(current, i);
     if (command !== "tag") {
       i = Math.max(i + 1, end - 1);
       continue;
     }
     let start = end;
-    while (/\s/.test(expression[start] ?? "") && start < expression.length)
-      start++;
+    while (/\s/.test(expression[start] ?? "") && start < expression.length) start++;
     const starred = expression[start] === "*";
     if (starred) {
       start++;
-      while (/\s/.test(expression[start] ?? "") && start < expression.length)
-        start++;
+      while (/\s/.test(expression[start] ?? "") && start < expression.length) start++;
     }
     if (expression[start] !== "{") {
       i = end - 1;
@@ -154,9 +153,7 @@ export function compactEquationTags(expression: string): string {
     if (close < 0) break;
     const tag = expression.slice(start + 1, close - 1);
     result += expression.slice(copied, i);
-    scope().tags += starred
-      ? `\\qquad{${tag}}`
-      : `\\qquad{\\text{(}${tag}\\text{)}}`;
+    scope().tags += starred ? `\\qquad{${tag}}` : `\\qquad{\\text{(}${tag}\\text{)}}`;
     copied = close;
     i = close - 1;
   }
@@ -187,17 +184,14 @@ export function normalizeTex(expression: string): string {
       continue;
     }
     let start = end;
-    while (/\s/.test(expression[start] ?? "") && start < expression.length)
-      start++;
+    while (/\s/.test(expression[start] ?? "") && start < expression.length) start++;
     if (expression[start] !== "{") {
       i = end - 1;
       continue;
     }
     const close = balancedEnd(expression, start);
     if (close < 0) break; // Incomplete streaming text is never speculatively changed.
-    result +=
-      expression.slice(copied, start) +
-      repairText(expression.slice(start, close));
+    result += expression.slice(copied, start) + repairText(expression.slice(start, close));
     copied = close;
     i = close - 1;
   }

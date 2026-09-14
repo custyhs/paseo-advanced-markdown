@@ -4,5 +4,11 @@
     "types": ["node"],
     "jsx": "react-jsx"
   },
-  "include": ["index.server.ts", "server/**/*.ts", "shared/**/*.ts", "tests/**/*.ts", "tests/**/*.tsx"]
+  "include": [
+    "index.server.ts",
+    "server/**/*.ts",
+    "shared/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ]
 }

@@ -12,7 +12,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { Text } from "react-native";
 import { runtimeStatus } from "../shared/rpc.js";
-import { FONT_SCALES, moduleSettings, type FontScale, type ModuleSettings } from "../shared/settings.js";
+import {
+  FONT_SCALES,
+  moduleSettings,
+  type FontScale,
+  type ModuleSettings,
+} from "../shared/settings.js";
 import { moduleState } from "./module-state.js";
 
 const FONT_LABELS: Record<FontScale, string> = {
@@ -54,14 +59,26 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
           {settings.status === "loading" ? (
             <SettingsRow label="Loading settings…" />
           ) : settings.status === "error" ? (
-            <SettingsAction label="Settings unavailable" hint={settings.error} actionLabel="Reload" onPress={() => void settings.reload()} />
+            <SettingsAction
+              label="Settings unavailable"
+              hint={settings.error}
+              actionLabel="Reload"
+              onPress={() => void settings.reload()}
+            />
           ) : settings.status === "invalid" ? (
-            <SettingsAction label="Stored settings are invalid" hint={settings.error} actionLabel="Reset" onPress={() => void settings.reset()} />
+            <SettingsAction
+              label="Stored settings are invalid"
+              hint={settings.error}
+              actionLabel="Reset"
+              onPress={() => void settings.reset()}
+            />
           ) : (
             <>
               <SettingsSwitch
                 label="Math formulas"
-                hint="$…$, \\(…\\), $$…$$, \\[…\\], and ```math fences render as images on this host."
+                hint={
+                  "$…$, \\(…\\), $$…$$, \\[…\\], and ```math fences render as images on this host."
+                }
                 value={settings.values.math}
                 disabled={settings.saving}
                 onValueChange={(math) => void update({ math })}
@@ -80,20 +97,39 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
                 disabled={settings.saving}
                 onValueChange={(fontScale) => void update({ fontScale: fontScale as FontScale })}
               />
-              {settings.saveError ? <SettingsRow label="Save failed" error={settings.saveError} /> : null}
+              {settings.saveError ? (
+                <SettingsRow label="Save failed" error={settings.saveError} />
+              ) : null}
             </>
           )}
         </SettingsCard>
         <Text style={muted}>
-          These switches apply to this host only. Messages that contain enabled content are shown by this plugin; a message
-          with every module off is left to Paseo's own renderer the next time it is displayed. Existing rows update after a
-          plugin reload or when the conversation is reopened.
+          These switches apply to this host only. Messages that contain enabled content are shown by
+          this plugin; a message with every module off is left to Paseo's own renderer the next time
+          it is displayed. Existing rows update after a plugin reload or when the conversation is
+          reopened.
         </Text>
       </SettingsSection>
       <SettingsSection title="Runtime on this host">
         <SettingsCard>
-          <SettingsRow label="Plugin" hint={runtime.data ? `advanced-markdown ${runtime.data.plugin.version}` : runtime.isLoading ? "Checking…" : "Unavailable"} />
-          <SettingsRow label="Math engine" hint={runtime.data ? `${runtime.data.math.engine} · ${runtime.data.math.cached} cached` : "—"} />
+          <SettingsRow
+            label="Plugin"
+            hint={
+              runtime.data
+                ? `advanced-markdown ${runtime.data.plugin.version}`
+                : runtime.isLoading
+                  ? "Checking…"
+                  : "Unavailable"
+            }
+          />
+          <SettingsRow
+            label="Math engine"
+            hint={
+              runtime.data
+                ? `${runtime.data.math.engine} · ${runtime.data.math.cached} cached`
+                : "—"
+            }
+          />
           <SettingsRow
             label="Mermaid runtime"
             hint={
@@ -105,15 +141,24 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
                   ? `Status unavailable: ${runtime.error instanceof Error ? runtime.error.message : String(runtime.error)}`
                   : "—"
             }
-            error={runtime.data && !runtime.data.mermaid.ready ? runtime.data.mermaid.message ?? null : null}
+            error={
+              runtime.data && !runtime.data.mermaid.ready
+                ? (runtime.data.mermaid.message ?? null)
+                : null
+            }
           />
           <SettingsRow label="Cache directory" hint={runtime.data?.mermaid.cacheRoot ?? "—"} />
-          <SettingsAction label="Refresh status" actionLabel="Refresh" onPress={() => void runtime.refetch()} />
+          <SettingsAction
+            label="Refresh status"
+            actionLabel="Refresh"
+            onPress={() => void runtime.refetch()}
+          />
         </SettingsCard>
         <Text style={muted}>
-          Formulas and diagrams are rendered on the selected host by pinned local engines. Message content never leaves the
-          host. If the Mermaid runtime is not ready, run "npm run prepare-browser" in the plugin directory or reinstall the
-          plugin so its preparation step runs again.
+          Formulas and diagrams are rendered on the selected host by pinned local engines. Message
+          content never leaves the host. If the Mermaid runtime is not ready, run "npm run
+          prepare-browser" in the plugin directory or reinstall the plugin so its preparation step
+          runs again.
         </Text>
       </SettingsSection>
     </>

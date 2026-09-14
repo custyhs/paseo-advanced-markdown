@@ -75,8 +75,7 @@ function currency(source: string, candidate: Candidate): boolean {
   const number = /^[+-]?(?:\d[\d,]*(?:\.\d*)?|\.\d+)/.exec(body);
   if (!number) return false;
   // A dollar immediately introducing another number is a price, not a closer.
-  if (/^[+-]?(?:\d|\.\d)/.test(source.slice(candidate.end, candidate.end + 3)))
-    return true;
+  if (/^[+-]?(?:\d|\.\d)/.test(source.slice(candidate.end, candidate.end + 3))) return true;
   const rest = body.slice(number[0].length);
   if (!rest) return false; // Explicitly closed numeric formulas, e.g. $17$.
   if (/^\s+[A-Za-z]/.test(rest)) return true;
@@ -113,8 +112,7 @@ function discover(
         }
       }
       if (!matched) probe.pending += source[probe.pos++];
-      if (probe.pos <= start)
-        throw new Error("Markdown inline rule did not advance");
+      if (probe.pos <= start) throw new Error("Markdown inline rule did not advance");
       for (let i = before; i < probe.tokens.length; i++) {
         const type = probe.tokens[i].type;
         if (
@@ -132,10 +130,7 @@ function discover(
         const width = source[start] === "~" ? 2 : 1;
         const offset = width === 2 ? (probe.pos - start) % 2 : 0;
         for (let i = 0; i < count; i++) {
-          positions.set(
-            probe.delimiters[delimitersBefore + i].token,
-            start + offset + i * width,
-          );
+          positions.set(probe.delimiters[delimitersBefore + i].token, start + offset + i * width);
         }
       }
     }
@@ -175,12 +170,7 @@ function discover(
       next.delete("\\)");
       continue;
     }
-    const target =
-      marker.text === "\\("
-        ? "\\)"
-        : marker.text === "\\["
-          ? "\\]"
-          : marker.text;
+    const target = marker.text === "\\(" ? "\\)" : marker.text === "\\[" ? "\\]" : marker.text;
     closing[i] = next.get(target) ?? -1;
     next.set(marker.text, i);
   }
@@ -188,11 +178,7 @@ function discover(
   let consumed = -1;
   for (let i = 0; i < markers.length; i++) {
     const marker = markers[i];
-    if (
-      marker.pos < consumed ||
-      !["$", "$$", "\\(", "\\["].includes(marker.text)
-    )
-      continue;
+    if (marker.pos < consumed || !["$", "$$", "\\(", "\\["].includes(marker.text)) continue;
     const endMarker = markers[closing[i]];
     if (!endMarker) continue;
     const candidate = {
@@ -204,11 +190,7 @@ function discover(
     };
     const body = source.slice(candidate.body, candidate.close);
     if (!body.trim() || body.length > MAX_MATH_EXPRESSION) continue;
-    if (
-      marker.text === "$" &&
-      (/^\s|\s$/.test(body) || currency(source, candidate))
-    )
-      continue;
+    if (marker.text === "$" && (/^\s|\s$/.test(body) || currency(source, candidate))) continue;
     candidates.push(candidate);
     consumed = candidate.end;
   }
@@ -225,9 +207,9 @@ function discover(
     }
     return i;
   }
-  candidates.forEach((candidate, i) =>
-    owners.fill(i + 1, candidate.body, candidate.close),
-  );
+  candidates.forEach((candidate, i) => {
+    owners.fill(i + 1, candidate.body, candidate.close);
+  });
   for (const delimiter of probe.delimiters) {
     if (delimiter.end < 0) continue;
     const a = positions.get(delimiter.token);
@@ -262,22 +244,14 @@ function mathBlock(
   const lines: string[] = [];
   let size = 0;
   for (let line = startLine; line < endLine; line++) {
-    if (
-      line > startLine &&
-      state.sCount[line] < state.blkIndent &&
-      !state.isEmpty(line)
-    )
+    if (line > startLine && state.sCount[line] < state.blkIndent && !state.isEmpty(line))
       return false;
     // A lazy blockquote continuation is prose outside the display container.
     if (line > startLine && state.sCount[line] < 0) return false;
     const lineStart = state.bMarks[line] + state.tShift[line];
-    const text = state.src.slice(
-      lineStart + (line === startLine ? 2 : 0),
-      state.eMarks[line],
-    );
+    const text = state.src.slice(lineStart + (line === startLine ? 2 : 0), state.eMarks[line]);
     let close = text.indexOf(closing);
-    while (close >= 0 && escaped(text, close))
-      close = text.indexOf(closing, close + 2);
+    while (close >= 0 && escaped(text, close)) close = text.indexOf(closing, close + 2);
     if (close < 0) {
       lines.push(text);
       size += text.length + 1;
@@ -286,8 +260,7 @@ function mathBlock(
     }
     lines.push(text.slice(0, close));
     const expression = lines.join("\n");
-    if (!expression.trim() || expression.length > MAX_MATH_EXPRESSION)
-      return false;
+    if (!expression.trim() || expression.length > MAX_MATH_EXPRESSION) return false;
     if (silent) return true;
     const token = state.push(MATH_BLOCK, "math", 0);
     token.block = true;
@@ -295,10 +268,7 @@ function mathBlock(
     token.markup = opening;
     token.map = [startLine, line + 1];
     token.meta = {
-      source: state.src.slice(
-        start,
-        lineStart + (line === startLine ? 2 : 0) + close + 2,
-      ),
+      source: state.src.slice(start, lineStart + (line === startLine ? 2 : 0) + close + 2),
       display: true,
     } satisfies ExtensionMeta;
     const trailing = text.slice(close + 2).trimStart();
@@ -324,21 +294,13 @@ function fenceLanguage(info: string): string {
 export function markdownExtensions(md: MarkdownParser): void {
   // Pinned Markdown 15 packages expose state classes and named rule registries.
   // Capture the real rules rather than maintaining a competing Markdown scanner.
-  const balancePairs = md.inline.ruler2.__rules__.find(
-    (rule) => rule.name === "balance_pairs",
-  )?.fn;
-  const fence = md.block.ruler.__rules__.find(
-    (rule) => rule.name === "fence",
-  )?.fn;
-  if (!balancePairs || !fence)
-    throw new Error("Required Markdown rules are unavailable");
+  const balancePairs = md.inline.ruler2.__rules__.find((rule) => rule.name === "balance_pairs")?.fn;
+  const fence = md.block.ruler.__rules__.find((rule) => rule.name === "fence")?.fn;
+  if (!balancePairs || !fence) throw new Error("Required Markdown rules are unavailable");
   const probing = { depth: 0 };
   const cache = new WeakMap<StateInline, Map<number, Candidate>>();
   md.inline.ruler.before("escape", MATH_INLINE, (state, silent) => {
-    if (
-      probing.depth ||
-      (state.src[state.pos] !== "$" && state.src[state.pos] !== "\\")
-    )
+    if (probing.depth || (state.src[state.pos] !== "$" && state.src[state.pos] !== "\\"))
       return false;
     let candidates = cache.get(state);
     if (!candidates) {
@@ -349,10 +311,7 @@ export function markdownExtensions(md: MarkdownParser): void {
     if (!candidate || candidate.end > state.posMax) return false;
     if (!silent) {
       const token = state.push(MATH_INLINE, "math", 0);
-      token.content = expressionText(
-        state.src.slice(candidate.body, candidate.close),
-        md,
-      );
+      token.content = expressionText(state.src.slice(candidate.body, candidate.close), md);
       token.markup = state.src.slice(candidate.start, candidate.body);
       token.meta = {
         source: state.src.slice(candidate.start, candidate.end),
@@ -385,10 +344,7 @@ export function markdownExtensions(md: MarkdownParser): void {
         state.sCount[last] < state.blkIndent
       )
         return true;
-      const close = state.src.slice(
-        state.bMarks[last] + state.tShift[last],
-        state.eMarks[last],
-      );
+      const close = state.src.slice(state.bMarks[last] + state.tShift[last], state.eMarks[last]);
       let count = 0;
       while (close[count] === token.markup[0]) count++;
       if (count < token.markup.length || close.slice(count).trim()) return true;
@@ -427,8 +383,7 @@ let detector: MarkdownParser | undefined;
 /** Reports which modules have at least one complete token in the source. */
 export function detectExtensions(source: string): DetectedExtensions {
   if (source.length > MAX_DOCUMENT) return NONE;
-  const mayHaveMath =
-    source.includes("$") || source.includes("\\(") || source.includes("\\[");
+  const mayHaveMath = source.includes("$") || source.includes("\\(") || source.includes("\\[");
   const mayHaveFence = source.includes("```") || source.includes("~~~");
   if (!mayHaveMath && !mayHaveFence) return NONE;
   if (!mayHaveMath && !/mermaid/i.test(source) && !/math/i.test(source)) return NONE;

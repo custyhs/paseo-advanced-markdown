@@ -6,7 +6,12 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WORKER_KEY, BROWSER, BROWSER_BUILD_ID } from "../server/generated/runtime.js";
 import { cacheLayout } from "../server/mermaid/cache-root.mjs";
-import { mermaidQueueLength, renderDiagram, resetMermaidForTests, stopMermaid } from "../server/mermaid/render.js";
+import {
+  mermaidQueueLength,
+  renderDiagram,
+  resetMermaidForTests,
+  stopMermaid,
+} from "../server/mermaid/render.js";
 import { MERMAID_TASK_TIMEOUT_MS } from "../shared/limits.js";
 import { renderFormula } from "../server/math/render.js";
 
@@ -64,7 +69,11 @@ describe("Mermaid worker faults", () => {
     const started = Date.now();
     const result = await renderDiagram({ source: "flowchart LR\n A --> B", theme: "default" });
     const elapsed = Date.now() - started;
-    expect(result).toEqual({ ok: false, reason: "timeout", message: "Mermaid rendering exceeded 15 s" });
+    expect(result).toEqual({
+      ok: false,
+      reason: "timeout",
+      message: "Mermaid rendering exceeded 15 s",
+    });
     expect(elapsed).toBeGreaterThanOrEqual(MERMAID_TASK_TIMEOUT_MS - 200);
     expect(elapsed).toBeLessThan(MERMAID_TASK_TIMEOUT_MS + 5000);
     const after = await tempDirsNamed("paseo-advanced-markdown-");

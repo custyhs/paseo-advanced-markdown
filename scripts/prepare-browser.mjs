@@ -35,7 +35,11 @@ async function exists(target) {
 
 function run(command, args, options) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { ...options, shell: false, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(command, args, {
+      ...options,
+      shell: false,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     let output = "";
     child.stdout.on("data", (chunk) => (output += chunk));
     child.stderr.on("data", (chunk) => (output += chunk));
@@ -103,7 +107,8 @@ if (await exists(executablePath)) {
       }
     },
   });
-  if (!(await exists(executablePath))) throw new Error(`Browser install did not produce ${executablePath}`);
+  if (!(await exists(executablePath)))
+    throw new Error(`Browser install did not produce ${executablePath}`);
   log("browser installed");
 }
 let browserVersion = null;
@@ -121,9 +126,14 @@ for (const entry of await readdir(layout.workers, { withFileTypes: true })) {
   }
 }
 for (const installed of await getInstalledBrowsers({ cacheDir: layout.browsers })) {
-  if (installed.browser === Browser.CHROMEHEADLESSSHELL && installed.buildId === spec.buildId) continue;
+  if (installed.browser === Browser.CHROMEHEADLESSSHELL && installed.buildId === spec.buildId)
+    continue;
   log(`removing stale browser ${installed.browser}@${installed.buildId}`);
-  await uninstall({ browser: installed.browser, buildId: installed.buildId, cacheDir: layout.browsers });
+  await uninstall({
+    browser: installed.browser,
+    buildId: installed.buildId,
+    cacheDir: layout.browsers,
+  });
 }
 
 // 4. Record what the daemon side may use. Paths are absolute on this host only.

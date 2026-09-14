@@ -116,22 +116,35 @@ function releaseSlot(): void {
 }
 
 function classifyFailure(output: string, code: number | null): Failure {
-  const text = output.replace(/\x1b\[[0-9;]*m/g, "");
-  if (/parse error|syntax error|unknowndiagramerror|no diagram type detected|lexical error|expecting/i.test(text)) {
+  // Strip ANSI color sequences from CLI output before matching.
+  const ansi = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
+  const text = output.replace(ansi, "");
+  if (
+    /parse error|syntax error|unknowndiagramerror|no diagram type detected|lexical error|expecting/i.test(
+      text,
+    )
+  ) {
     const line = text
       .split("\n")
       .map((entry) => entry.trim())
       .find((entry) => /error/i.test(entry));
     return failure("invalid", line ?? "Mermaid could not parse the diagram");
   }
-  if (/could not find|no such file|executable doesn't exist|failed to launch|spawn .* ENOENT/i.test(text)) {
+  if (
+    /could not find|no such file|executable doesn't exist|failed to launch|spawn .* ENOENT/i.test(
+      text,
+    )
+  ) {
     return failure("unavailable", "The pinned browser could not be started");
   }
   return failure("failed", `Mermaid renderer exited with code ${code ?? "?"}: ${lastLine(text)}`);
 }
 
 function lastLine(text: string): string {
-  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   return lines[lines.length - 1] ?? "no output";
 }
 
@@ -262,7 +275,10 @@ async function runCli(
     if (!size) return failure("failed", "Mermaid produced an unreadable image");
     const logicalWidth = size.width / scale;
     const logicalHeight = size.height / scale;
-    if (size.width * size.height > MAX_IMAGE_PIXELS || Math.max(size.width, size.height) > MAX_IMAGE_EDGE) {
+    if (
+      size.width * size.height > MAX_IMAGE_PIXELS ||
+      Math.max(size.width, size.height) > MAX_IMAGE_EDGE
+    ) {
       const fitted = fitScale(logicalWidth, logicalHeight);
       if (fitted !== null && fitted < scale) {
         // One retry at a lower device scale keeps large diagrams viewable
@@ -276,7 +292,10 @@ async function runCli(
     }
     const base64 = png.toString("base64");
     if (base64.length > MAX_IMAGE_BASE64) {
-      return failure("too-large", `Diagram image is ${Math.round(png.length / 1024)} KiB, above the size budget`);
+      return failure(
+        "too-large",
+        `Diagram image is ${Math.round(png.length / 1024)} KiB, above the size budget`,
+      );
     }
     return {
       ok: true,

@@ -125,7 +125,13 @@ const MemoizedMessage = memo(
     );
 
     const rules = useMemo<RenderRules>(() => {
-      const mathRule: RenderFunction = (node: ExtensionNode, _children, _parents, _styles, inherited: TextStyle = {}) => {
+      const mathRule: RenderFunction = (
+        node: ExtensionNode,
+        _children,
+        _parents,
+        _styles,
+        inherited: TextStyle = {},
+      ) => {
         const meta = node.sourceMeta;
         const source =
           metaString(meta, "source") ??
@@ -147,7 +153,13 @@ const MemoizedMessage = memo(
           />
         );
       };
-      const mermaidRule: RenderFunction = (node: ExtensionNode, _children, _parents, _styles, inherited: TextStyle = {}) => (
+      const mermaidRule: RenderFunction = (
+        node: ExtensionNode,
+        _children,
+        _parents,
+        _styles,
+        inherited: TextStyle = {},
+      ) => (
         <Diagram
           key={node.key}
           definition={node.content}
@@ -161,7 +173,13 @@ const MemoizedMessage = memo(
           containerWidth={Math.max(64, width - 48)}
         />
       );
-      const codeRule: RenderFunction = (node: ExtensionNode, _children, _parents, _styles, inherited: TextStyle = {}) => (
+      const codeRule: RenderFunction = (
+        node: ExtensionNode,
+        _children,
+        _parents,
+        _styles,
+        inherited: TextStyle = {},
+      ) => (
         <CodeBlock
           key={node.key}
           source={node.content}
@@ -188,7 +206,16 @@ const MemoizedMessage = memo(
           </Text>
         ),
       };
-    }, [colors.foreground, host.id, width, theme, layout.compact, modules.math, modules.mermaid, mermaidTheme]);
+    }, [
+      colors.foreground,
+      host.id,
+      width,
+      theme,
+      layout.compact,
+      modules.math,
+      modules.mermaid,
+      mermaidTheme,
+    ]);
 
     const onLinkPress = useCallback(
       (url: string) => {

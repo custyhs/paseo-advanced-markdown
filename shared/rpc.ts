@@ -2,9 +2,7 @@ import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
 import { MAX_IMAGE_BASE64, MAX_MATH_EXPRESSION, MAX_MERMAID_SOURCE } from "./limits.js";
 
-const hexColor = z
-  .string()
-  .regex(/^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i);
+const hexColor = z.string().regex(/^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i);
 
 export const mathRenderInput = z.object({
   expression: z.string().min(1).max(MAX_MATH_EXPRESSION),

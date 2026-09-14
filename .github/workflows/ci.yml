@@ -1,0 +1,28 @@
+name: Validate plugin
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.0"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      # Installs the pinned Mermaid CLI runtime and Chrome headless shell into the
+      # runner's cache so the Mermaid tests run for real instead of skipping.
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - run: npm run prepare-browser
+      - run: npm test
+      - run: npm run paseo-source
+      - run: npm run smoke
+      - run: npm audit --omit=dev --audit-level=moderate

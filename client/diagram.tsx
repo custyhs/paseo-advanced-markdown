@@ -3,11 +3,22 @@ import { copyText, useToast } from "@getpaseo/plugin/client/react-native";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Image, Pressable, View, type TextStyle } from "react-native";
-import { renderMermaid, type MermaidRenderInput, type MermaidRenderOutput, type MermaidTheme } from "../shared/rpc.js";
+import {
+  renderMermaid,
+  type MermaidRenderInput,
+  type MermaidRenderOutput,
+  type MermaidTheme,
+} from "../shared/rpc.js";
 import { MAX_MERMAID_SOURCE } from "../shared/limits.js";
 import { ActionBar } from "./action-bar.js";
 import { CodeBlock } from "./code-block.js";
-import { forgetRender, peekRender, renderKey, requestRender, type CachedRender } from "./render-cache.js";
+import {
+  forgetRender,
+  peekRender,
+  renderKey,
+  requestRender,
+  type CachedRender,
+} from "./render-cache.js";
 import { ZoomModal } from "./zoom-modal.js";
 
 type DiagramProps = {
@@ -27,14 +38,19 @@ type DiagramProps = {
 
 const RETRYABLE = new Set(["busy", "timeout", "unavailable", "failed"]);
 
-function statusFor(result: CachedRender<MermaidRenderOutput> | undefined, eligible: boolean): string {
+function statusFor(
+  result: CachedRender<MermaidRenderOutput> | undefined,
+  eligible: boolean,
+): string {
   if (!eligible) return "Diagram is too long to render";
   if (result === undefined) return "Rendering diagram…";
   if (result === null) return "Host unreachable; showing source";
   if (result.ok) return "";
   switch (result.reason) {
     case "invalid":
-      return result.message ? `Mermaid error: ${result.message}` : "Mermaid could not parse this diagram";
+      return result.message
+        ? `Mermaid error: ${result.message}`
+        : "Mermaid could not parse this diagram";
     case "too-large":
       return result.message ?? "Diagram exceeds the size budget";
     case "timeout":
@@ -64,7 +80,10 @@ export const Diagram = memo(function Diagram({
   callRef.current = call;
   const input: MermaidRenderInput = { source: definition, theme: mermaidTheme };
   const key = renderKey("mermaid", hostId, input);
-  const [settled, setSettled] = useState<{ key: string; result: CachedRender<MermaidRenderOutput> }>();
+  const [settled, setSettled] = useState<{
+    key: string;
+    result: CachedRender<MermaidRenderOutput>;
+  }>();
   const [failedImage, setFailedImage] = useState<string>();
   const [showSource, setShowSource] = useState(false);
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -72,8 +91,10 @@ export const Diagram = memo(function Diagram({
   const toast = useToast();
   const cached = peekRender<MermaidRenderOutput>(key);
   const result = settled?.key === key ? settled.result : cached;
-  const eligible = enabled && definition.trim().length > 0 && definition.length <= MAX_MERMAID_SOURCE;
+  const eligible =
+    enabled && definition.trim().length > 0 && definition.length <= MAX_MERMAID_SOURCE;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: key already encodes definition and theme; attempt forces a retry
   useEffect(() => {
     if (!eligible) return;
     let current = true;
@@ -85,7 +106,6 @@ export const Diagram = memo(function Diagram({
     return () => {
       current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, eligible, attempt]);
 
   const retry = useCallback(() => {
@@ -108,7 +128,10 @@ export const Diagram = memo(function Diagram({
   if (!usable || showSource) {
     const status = enabled ? statusFor(result, eligible) : "Mermaid module is off; showing source";
     const retryable =
-      enabled && (result === null || failedImage === key || (result && !result.ok && RETRYABLE.has(result.reason)));
+      enabled &&
+      (result === null ||
+        failedImage === key ||
+        (result && !result.ok && RETRYABLE.has(result.reason)));
     return (
       <CodeBlock
         source={definition}
@@ -120,9 +143,18 @@ export const Diagram = memo(function Diagram({
         status={showSource && usable ? undefined : status}
         actions={[
           ...(usable
-            ? [{ key: "render", icon: "GitBranch", label: "Show diagram", onPress: () => setShowSource(false) }]
+            ? [
+                {
+                  key: "render",
+                  icon: "GitBranch",
+                  label: "Show diagram",
+                  onPress: () => setShowSource(false),
+                },
+              ]
             : []),
-          ...(retryable ? [{ key: "retry", icon: "RefreshCw", label: "Retry", onPress: retry }] : []),
+          ...(retryable
+            ? [{ key: "retry", icon: "RefreshCw", label: "Retry", onPress: retry }]
+            : []),
         ]}
       />
     );

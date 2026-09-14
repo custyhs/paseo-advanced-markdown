@@ -4,10 +4,7 @@ import type { MermaidTheme } from "../shared/rpc.js";
 
 /** Normalizes any React Native color to #rrggbb or #rrggbbaa for the daemon. */
 export function colorHex(color: TextStyle["color"], fallback: string): string {
-  if (
-    typeof color === "string" &&
-    /^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(color)
-  )
+  if (typeof color === "string" && /^#(?:[\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.test(color))
     return color;
   const value = processColor(color ?? fallback);
   if (typeof value !== "number") return "#808080";
@@ -16,7 +13,8 @@ export function colorHex(color: TextStyle["color"], fallback: string): string {
 }
 
 function channel(hex: string, index: number): number {
-  const digits = hex.length <= 5 ? hex[index + 1] + hex[index + 1] : hex.slice(index * 2 + 1, index * 2 + 3);
+  const digits =
+    hex.length <= 5 ? hex[index + 1] + hex[index + 1] : hex.slice(index * 2 + 1, index * 2 + 3);
   return parseInt(digits, 16) / 255;
 }
 
@@ -25,7 +23,11 @@ export function luminance(color: string): number {
   const hex = colorHex(color, "#ffffff");
   const linear = (value: number) =>
     value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  return 0.2126 * linear(channel(hex, 0)) + 0.7152 * linear(channel(hex, 1)) + 0.0722 * linear(channel(hex, 2));
+  return (
+    0.2126 * linear(channel(hex, 0)) +
+    0.7152 * linear(channel(hex, 1)) +
+    0.0722 * linear(channel(hex, 2))
+  );
 }
 
 export function isDarkTheme(theme: PluginTheme): boolean {

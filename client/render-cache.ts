@@ -59,7 +59,9 @@ function trim(): void {
   }
 }
 
-export function peekRender<Output extends ImageResult>(key: string): CachedRender<Output> | undefined {
+export function peekRender<Output extends ImageResult>(
+  key: string,
+): CachedRender<Output> | undefined {
   return get(key)?.result as CachedRender<Output> | undefined;
 }
 
@@ -110,7 +112,8 @@ export function requestRender<Input, Output extends ImageResult>(
     entry.result = result;
     // Transport failures and retryable renderer failures expire; malformed
     // input is deterministic and stays until evicted.
-    const retryable = result === null || (!result.ok && options.retryableReasons?.(result) === true);
+    const retryable =
+      result === null || (!result.ok && options.retryableReasons?.(result) === true);
     entry.expires = retryable ? Date.now() + 30_000 : Infinity;
     const added = result?.ok ? result.png.length * 2 : 0;
     entry.bytes += added;

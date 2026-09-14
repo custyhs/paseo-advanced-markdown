@@ -25,14 +25,10 @@ export default function FitImage({
   ...props
 }: FitImageProps) {
   const [natural, setNatural] = useState(
-    originalHeight && originalWidth
-      ? { height: originalHeight, width: originalWidth }
-      : undefined,
+    originalHeight && originalWidth ? { height: originalHeight, width: originalWidth } : undefined,
   );
   const uri =
-    !Array.isArray(source) && source && typeof source === "object"
-      ? source.uri
-      : undefined;
+    !Array.isArray(source) && source && typeof source === "object" ? source.uri : undefined;
 
   useEffect(() => {
     if (natural || !uri) return;
@@ -50,8 +46,7 @@ export default function FitImage({
   }, [natural, uri]);
 
   const flattened = StyleSheet.flatten(style);
-  const hasDimensions =
-    flattened?.width !== undefined && flattened?.height !== undefined;
+  const hasDimensions = flattened?.width !== undefined && flattened?.height !== undefined;
   const fittedStyle =
     !hasDimensions && natural
       ? { width: "100%" as const, aspectRatio: natural.width / natural.height }

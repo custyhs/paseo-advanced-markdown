@@ -27,7 +27,7 @@ const timed = async (label, method, input) => {
   const started = performance.now();
   const output = await call(method, input);
   const ms = Math.round(performance.now() - started);
-  const png = output && output.ok ? output.png : null;
+  const png = output?.ok ? output.png : null;
   return {
     label,
     ms,
@@ -52,23 +52,54 @@ const results = {};
 try {
   results.status = await call(`${pluginId}.status`, {});
   results.math = [
-    await timed("math cold", `${pluginId}.math.render`, { expression: "\\frac{a}{b} + \\sqrt{x}", display: true, color: "#e0e0e0" }),
-    await timed("math warm", `${pluginId}.math.render`, { expression: "\\frac{a}{b} + \\sqrt{x}", display: true, color: "#e0e0e0" }),
-    await timed("math new", `${pluginId}.math.render`, { expression: "\\sum_{i=1}^{n} i^2", display: false, color: "#e0e0e0" }),
-    await timed("math invalid", `${pluginId}.math.render`, { expression: "\\unknownCmd{x}", display: false, color: "#e0e0e0" }),
+    await timed("math cold", `${pluginId}.math.render`, {
+      expression: "\\frac{a}{b} + \\sqrt{x}",
+      display: true,
+      color: "#e0e0e0",
+    }),
+    await timed("math warm", `${pluginId}.math.render`, {
+      expression: "\\frac{a}{b} + \\sqrt{x}",
+      display: true,
+      color: "#e0e0e0",
+    }),
+    await timed("math new", `${pluginId}.math.render`, {
+      expression: "\\sum_{i=1}^{n} i^2",
+      display: false,
+      color: "#e0e0e0",
+    }),
+    await timed("math invalid", `${pluginId}.math.render`, {
+      expression: "\\unknownCmd{x}",
+      display: false,
+      color: "#e0e0e0",
+    }),
   ];
   const small = "flowchart LR\n  A[开始] --> B{判断}\n  B -->|是| C[发布]";
   results.mermaid = [
     await timed("mermaid cold", `${pluginId}.mermaid.render`, { source: small, theme: "dark" }),
     await timed("mermaid warm", `${pluginId}.mermaid.render`, { source: small, theme: "dark" }),
-    await timed("mermaid 60 nodes", `${pluginId}.mermaid.render`, { source: bigFlowchart(60), theme: "dark" }),
-    await timed("mermaid 150 nodes", `${pluginId}.mermaid.render`, { source: bigFlowchart(150), theme: "dark" }),
-    await timed("mermaid 400 nodes", `${pluginId}.mermaid.render`, { source: bigFlowchart(400), theme: "dark" }),
-    await timed("mermaid invalid", `${pluginId}.mermaid.render`, { source: "notadiagram\n  A --> B", theme: "dark" }),
+    await timed("mermaid 60 nodes", `${pluginId}.mermaid.render`, {
+      source: bigFlowchart(60),
+      theme: "dark",
+    }),
+    await timed("mermaid 150 nodes", `${pluginId}.mermaid.render`, {
+      source: bigFlowchart(150),
+      theme: "dark",
+    }),
+    await timed("mermaid 400 nodes", `${pluginId}.mermaid.render`, {
+      source: bigFlowchart(400),
+      theme: "dark",
+    }),
+    await timed("mermaid invalid", `${pluginId}.mermaid.render`, {
+      source: "notadiagram\n  A --> B",
+      theme: "dark",
+    }),
   ];
   // Concurrency: ten different diagrams at once exercise the queue (limit 8 waiting + 1 active).
   const burst = Array.from({ length: 10 }, (_, index) =>
-    timed(`burst ${index}`, `${pluginId}.mermaid.render`, { source: `flowchart LR\n  A${index} --> B${index}[burst ${index}]`, theme: "default" }),
+    timed(`burst ${index}`, `${pluginId}.mermaid.render`, {
+      source: `flowchart LR\n  A${index} --> B${index}[burst ${index}]`,
+      theme: "default",
+    }),
   );
   results.burst = await Promise.all(burst);
   results.burstSummary = {
@@ -77,7 +108,10 @@ try {
     maxMs: Math.max(...results.burst.map((entry) => entry.ms)),
   };
   results.statusAfter = await call(`${pluginId}.status`, {});
-  results.schemaRejection = await call(`${pluginId}.mermaid.render`, { source: "flowchart LR\n A-->B", theme: "neon" }).then(
+  results.schemaRejection = await call(`${pluginId}.mermaid.render`, {
+    source: "flowchart LR\n A-->B",
+    theme: "neon",
+  }).then(
     (value) => ({ accepted: true, value }),
     (error) => ({ accepted: false, error: String(error?.message ?? error).slice(0, 200) }),
   );

@@ -13,7 +13,7 @@ import {
   stopMermaid,
 } from "../server/mermaid/render.js";
 import { resolveMermaidRuntime } from "../server/mermaid/runtime.js";
-import { decodePng, inkCount } from "./math-render.test.js";
+import { decodePng, inkCount } from "./helpers/png.js";
 
 const layout = cacheLayout(resolveCacheRoot());
 let prepared = false;
@@ -34,14 +34,19 @@ const flow = [
 
 describe("Mermaid rendering through the pinned local runtime", () => {
   it("reports an actionable unavailable state when nothing is prepared", async () => {
-    const resolution = await resolveMermaidRuntime({ PASEO_ADVANCED_MARKDOWN_CACHE: "/nonexistent/paseo-advanced-markdown" });
+    const resolution = await resolveMermaidRuntime({
+      PASEO_ADVANCED_MARKDOWN_CACHE: "/nonexistent/paseo-advanced-markdown",
+    });
     expect(resolution.ready).toBe(false);
     if (!resolution.ready) expect(resolution.message).toMatch(/not prepared/);
   });
 
   it("rejects empty and oversized definitions before touching the browser", async () => {
     resetMermaidForTests();
-    expect(await renderDiagram({ source: "   ", theme: "default" })).toEqual({ ok: false, reason: "invalid" });
+    expect(await renderDiagram({ source: "   ", theme: "default" })).toEqual({
+      ok: false,
+      reason: "invalid",
+    });
     expect(await renderDiagram({ source: "x".repeat(32 * 1024 + 1), theme: "default" })).toEqual({
       ok: false,
       reason: "too-large",
@@ -66,7 +71,14 @@ describe("Mermaid rendering through the pinned local runtime", () => {
     const again = await renderDiagram({ source: flow, theme: "default" });
     expect(again).toBe(result);
     expect(mermaidCacheSize()).toBe(1);
-    console.log(JSON.stringify({ coldMs, width: result.width, height: result.height, pngKiB: Math.round((result.png.length * 3) / 4 / 1024) }));
+    console.log(
+      JSON.stringify({
+        coldMs,
+        width: result.width,
+        height: result.height,
+        pngKiB: Math.round((result.png.length * 3) / 4 / 1024),
+      }),
+    );
   });
 
   it("renders the dark theme as a different image", async (context) => {
@@ -91,10 +103,12 @@ describe("Mermaid rendering through the pinned local runtime", () => {
     if (!prepared) return context.skip();
     const sources = {
       sequence: "sequenceDiagram\n  Alice->>Bob: 你好\n  Bob-->>Alice: Hi",
-      class: "classDiagram\n  class Animal {\n    +String name\n    +speak()\n  }\n  Animal <|-- Dog",
+      class:
+        "classDiagram\n  class Animal {\n    +String name\n    +speak()\n  }\n  Animal <|-- Dog",
       state: "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Running: start\n  Running --> [*]",
       er: "erDiagram\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ LINE : contains",
-      gantt: "gantt\n  title 计划\n  dateFormat YYYY-MM-DD\n  section A\n  任务一 :a1, 2026-09-01, 3d\n  任务二 :after a1, 2d",
+      gantt:
+        "gantt\n  title 计划\n  dateFormat YYYY-MM-DD\n  section A\n  任务一 :a1, 2026-09-01, 3d\n  任务二 :after a1, 2d",
     };
     const timings: Record<string, number> = {};
     for (const [name, source] of Object.entries(sources)) {

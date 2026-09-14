@@ -27,10 +27,7 @@ export class BoundedCache<Value> {
       this.entries.delete(key);
       this.bytes -= previous.bytes;
     }
-    while (
-      this.entries.size >= this.maxEntries ||
-      this.bytes + bytes > this.maxBytes
-    ) {
+    while (this.entries.size >= this.maxEntries || this.bytes + bytes > this.maxBytes) {
       const oldest = this.entries.keys().next().value;
       if (oldest === undefined) break;
       this.bytes -= this.entries.get(oldest)!.bytes;

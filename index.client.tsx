@@ -5,12 +5,18 @@ function setupPlugin(client: PluginClientContext) {
   // Keep client dependencies lazy so an Android evaluation failure includes the
   // dependency stack in the plugin status instead of only its final message.
   const { MessageView } = require("./client/message.js") as typeof import("./client/message.js");
-  const { SettingsScreen } = require("./client/settings.js") as typeof import("./client/settings.js");
-  const { detectExtensions, shouldTakeOver } = require("./client/generated/markdown.js") as typeof import("./client/generated/markdown.js");
-  const { messageSchema, MESSAGE_KIND, MESSAGE_VERSION } = require("./shared/message.js") as typeof import("./shared/message.js");
-  const { moduleSettings } = require("./shared/settings.js") as typeof import("./shared/settings.js");
-  const { moduleState } = require("./client/module-state.js") as typeof import("./client/module-state.js");
-  const { clearRenderCache } = require("./client/render-cache.js") as typeof import("./client/render-cache.js");
+  const { SettingsScreen } =
+    require("./client/settings.js") as typeof import("./client/settings.js");
+  const { detectExtensions, shouldTakeOver } =
+    require("./client/generated/markdown.js") as typeof import("./client/generated/markdown.js");
+  const { messageSchema, MESSAGE_KIND, MESSAGE_VERSION } =
+    require("./shared/message.js") as typeof import("./shared/message.js");
+  const { moduleSettings } =
+    require("./shared/settings.js") as typeof import("./shared/settings.js");
+  const { moduleState } =
+    require("./client/module-state.js") as typeof import("./client/module-state.js");
+  const { clearRenderCache } =
+    require("./client/render-cache.js") as typeof import("./client/render-cache.js");
   const { MAX_DOCUMENT } = require("./shared/limits.js") as typeof import("./shared/limits.js");
 
   type Detected = ReturnType<typeof detectExtensions>;

@@ -96,15 +96,9 @@ function geometryOnly(root: LiteElement): void {
   while (pending.length) {
     const node = pending.pop()!;
     if (++count > 16_384) throw new RenderFailure("too-large");
-    if (!Object.hasOwn(svgElements, node.kind))
-      throw new RenderFailure("invalid");
+    if (!Object.hasOwn(svgElements, node.kind)) throw new RenderFailure("invalid");
     for (const { name, value } of adaptor.allAttributes(node)) {
-      if (
-        name === "style" ||
-        name === "role" ||
-        name === "focusable" ||
-        name.startsWith("data-")
-      ) {
+      if (name === "style" || name === "role" || name === "focusable" || name.startsWith("data-")) {
         adaptor.removeAttribute(node, name);
       } else if (!Object.hasOwn(svgAttributes, name)) {
         throw new RenderFailure("invalid");
@@ -159,9 +153,7 @@ function typeset(input: MathRenderInput): {
     macros: { boxed: ["{\\displaystyle #1}", 1] },
     formatError: (_jax: unknown, error: TexError) => {
       throw new RenderFailure(
-        /^(?:MaxBufferSize|MaxMacroSub)/.test(error.id)
-          ? "too-large"
-          : "invalid",
+        /^(?:MaxBufferSize|MaxMacroSub)/.test(error.id) ? "too-large" : "invalid",
       );
     },
   });
@@ -171,10 +163,7 @@ function typeset(input: MathRenderInput): {
       if (++count > 4096) throw new RenderFailure("too-large");
       if (node.kind === "merror") throw new RenderFailure("invalid");
       const attributes = (node as MmlNode).attributes;
-      if (
-        attributes &&
-        ["href", "src", "style"].some((name) => attributes.isSet(name))
-      ) {
+      if (attributes && ["href", "src", "style"].some((name) => attributes.isSet(name))) {
         throw new RenderFailure("invalid");
       }
     });
@@ -192,40 +181,27 @@ function typeset(input: MathRenderInput): {
   });
   try {
     // Initialize the TeX color environment too: \rule otherwise bakes in black.
-    const expression = input.display
-      ? compactEquationTags(input.expression)
-      : input.expression;
-    const container = document.convert(
-      `\\color{${color.rgb}} ${normalizeTex(expression)}`,
-      {
-        display: input.display,
-        em: EM,
-        ex: EM * 0.442,
-        containerWidth: MAX_WIDTH,
-      },
-    );
+    const expression = input.display ? compactEquationTags(input.expression) : input.expression;
+    const container = document.convert(`\\color{${color.rgb}} ${normalizeTex(expression)}`, {
+      display: input.display,
+      em: EM,
+      ex: EM * 0.442,
+      containerWidth: MAX_WIDTH,
+    });
     const svg = adaptor.tags(container, "svg")[0];
     if (!svg) throw new RenderFailure("invalid");
     const viewBox = String(adaptor.getAttribute(svg, "viewBox") ?? "")
       .trim()
       .split(/\s+/)
       .map(Number);
-    if (viewBox.length !== 4 || !viewBox.every(Number.isFinite))
-      throw new RenderFailure("invalid");
-    const [x, y, unitsWidth, unitsHeight] = viewBox as [
-      number,
-      number,
-      number,
-      number,
-    ];
+    if (viewBox.length !== 4 || !viewBox.every(Number.isFinite)) throw new RenderFailure("invalid");
+    const [x, y, unitsWidth, unitsHeight] = viewBox as [number, number, number, number];
     if (unitsWidth <= 0 || unitsHeight <= 0) throw new RenderFailure("invalid");
     // MathJax's viewBox is in 1000 units/em. One logical pixel of padding
     // protects edge antialiasing; round outward to whole 2x raster pixels.
     const width = Math.ceil(((unitsWidth * EM) / 1000 + 2) * DENSITY) / DENSITY;
-    const height =
-      Math.ceil(((unitsHeight * EM) / 1000 + 2) * DENSITY) / DENSITY;
-    if (width > MAX_WIDTH || height > MAX_HEIGHT)
-      throw new RenderFailure("too-large");
+    const height = Math.ceil(((unitsHeight * EM) / 1000 + 2) * DENSITY) / DENSITY;
+    if (width > MAX_WIDTH || height > MAX_HEIGHT) throw new RenderFailure("too-large");
     const baseline = Math.max(0, Math.min(height, (-y * EM) / 1000 + 1));
     geometryOnly(svg);
     adaptor.setAttribute(
@@ -271,19 +247,15 @@ export async function renderFormula(input: MathRenderInput): Promise<MathRenderO
   ) {
     return { ok: false, reason: "invalid" };
   }
-  if (input.expression.length > MAX_MATH_EXPRESSION)
-    return { ok: false, reason: "too-large" };
+  if (input.expression.length > MAX_MATH_EXPRESSION) return { ok: false, reason: "too-large" };
   if (input.color.length > 9) return { ok: false, reason: "invalid" };
-  const key = JSON.stringify([
-    input.expression,
-    input.display,
-    input.color.toLowerCase(),
-  ]);
+  const key = JSON.stringify([input.expression, input.display, input.color.toLowerCase()]);
   const cached = cache.get(key);
   if (cached) return cached;
   // Await before allocating TeX trees so a burst during WASM startup retains
   // inputs only. After this await rendering is synchronous and serialized.
-  await (wasmReady ??= initWasm(Buffer.from(wasmBase64, "base64")));
+  wasmReady ??= initWasm(Buffer.from(wasmBase64, "base64"));
+  await wasmReady;
   const readyCached = cache.get(key);
   if (readyCached) return readyCached;
   try {
@@ -295,11 +267,9 @@ export async function renderFormula(input: MathRenderInput): Promise<MathRenderO
         const pngBytes = image.asPng();
         if (Math.ceil(pngBytes.length / 3) * 4 > MAX_PNG_BASE64)
           throw new RenderFailure("too-large");
-        const png = Buffer.from(
-          pngBytes.buffer,
-          pngBytes.byteOffset,
-          pngBytes.byteLength,
-        ).toString("base64");
+        const png = Buffer.from(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength).toString(
+          "base64",
+        );
         return remember(key, { ok: true, png, width, height, baseline });
       } finally {
         image.free();
