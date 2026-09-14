@@ -30,7 +30,7 @@ in `config.json`).
 From Git, pinned to a tag (recommended):
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.0
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.1
 paseo plugin ls
 ```
 
@@ -61,7 +61,7 @@ codebase: its server side runs unsandboxed on the daemon host.
 ```bash
 paseo plugin update advanced-markdown        # tracks the ref you installed
 paseo plugin remove advanced-markdown
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.0   # pin an earlier tag
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.1   # pin an earlier tag
 ```
 
 A failed preparation keeps the installed version running. Updates never touch
