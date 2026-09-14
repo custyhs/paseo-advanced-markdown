@@ -77,6 +77,54 @@ pass. The final client bundle contains no class syntax (checked by `npm run smok
 `chrome-headless-shell` or `mermaid-cli` processes and no
 `paseo-advanced-markdown-*` temp directories remained afterwards.
 
+## Full-spec sample (agent `advanced-markdown sample 2`)
+
+Blockquote with inline math, ordered list items with math, a very long display
+formula, invalid TeX beside valid math, six Mermaid types (sequence, class,
+state, ER, Gantt, a 20-node wide flowchart), an invalid Mermaid fence, prices,
+inline code, and a `math` fence with a matrix.
+
+| Check | Result (1280×900, dark) |
+| --- | --- |
+| Plugin images | 11 = 4 formulas + 6 diagrams + 1 matrix fence |
+| Invalid TeX `$\unknowncommand{x}$` | shown as source inline; `$\alpha + \beta$` beside it rendered |
+| Invalid Mermaid fence | source with "Mermaid error: Parse error on line 2:" and a Retry button; the valid diagrams around it rendered |
+| Wide diagrams | "Scaled to fit; expand for full size" hint; Expand opens a modal titled Diagram with Zoom 1x/1.5x/2x/3x controls (12 images while open) |
+| Show source | replaces the block image with its source and a "Show formula" / "Show diagram" button (10 images while one is toggled) |
+| Long display formula | horizontal scroll inside the block; no page overflow |
+
+## Load sample (agent `advanced-markdown sample 3`: 50 inline + 50 display formulas + 5 diagrams)
+
+| Measurement | Value |
+| --- | --- |
+| Time from navigation until all 105 images are decoded, host caches cold (plugin just reloaded) | 3.5 s |
+| Same, host caches warm, fresh page | 1.26 s |
+| Page with 8 images, warm | 1.28 s (page load dominates) |
+| Plugin subprocess RSS | ~50 MiB idle after reload; ~50 MiB after serving the 105-image page (formulas only); ~213 MiB after also serving the 400-node diagrams from the RPC probe |
+| Lingering `chrome-headless-shell` processes after the run | 0 |
+
+## Settings and hosts
+
+Settings were changed through the daemon's `settings.modules.write` RPC (the
+same path the settings screen uses) and the agent page was re-captured:
+
+| State on host A | Result on host A | Host B (second isolated daemon, port 6791, same plugin) |
+| --- | --- | --- |
+| Mermaid off | 7 images; the Mermaid block shows source with "Mermaid module is off; showing source" | settings still both on; its page shows 8 images including the diagram |
+| Both off | 0 images; the row returns to Paseo's renderer (raw `$E = mc^2$`, no plugin copy button) | unaffected |
+| Restored | 8 images | unaffected |
+
+The settings screen (Settings → Plugins → Advanced Markdown) renders on the
+official web UI with both switches, the text-size select, and the runtime
+status rows filled from the status RPC.
+
+## Streaming (agent `streaming capture 2`)
+
+Captures while the reply was streaming showed the plugin rendering each
+completed block while the live tail stayed readable source (18 images at 14 s
+with the "10." list item still plain). After the turn completed the single
+reconciled row rendered all 105 images with no fallback status.
+
 ## Not covered here
 
 iOS and Android clients (no emulator or Xcode on this host), light theme

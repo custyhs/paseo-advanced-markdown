@@ -126,7 +126,7 @@ try {
       title: document.title,
       images,
       buttonLabels: buttons,
-      bodyExcerpt: body.slice(0, 4000),
+      bodyExcerpt: body.slice(0, 40000),
       rawDollarMath: body.includes("$E = mc^2$"),
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
