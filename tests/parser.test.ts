@@ -223,6 +223,38 @@ describe("raw-source math within Markdown", () => {
     ).toEqual(["mathematica"]);
   });
 
+  it("drops a redundant display wrapper inside a math fence, keeping the source", () => {
+    for (const [open, close] of [
+      ["\\[", "\\]"],
+      ["$$", "$$"],
+      ["\\(", "\\)"],
+      ["$", "$"],
+    ]) {
+      const fence = `\`\`\`math\n${open}\nx+y\n${close}\n\`\`\``;
+      const tokens = formulas(fence);
+      expect(tokens, fence).toHaveLength(1);
+      expect(tokens[0].content.trim(), fence).toBe("x+y");
+      expect(meta(tokens[0]).source, fence).toBe(fence);
+    }
+  });
+
+  it("keeps fence content that is not a single display wrapper", () => {
+    for (const body of [
+      "\\[a\\] + \\[b\\]",
+      "$$a$$ then $$b$$",
+      "\\[a+b",
+      "a+b\\]",
+      "$a$ + $b$",
+      "$$",
+      "x+y",
+    ]) {
+      const fence = `\`\`\`math\n${body}\n\`\`\``;
+      const tokens = formulas(fence);
+      expect(tokens, fence).toHaveLength(1);
+      expect(tokens[0].content.trim(), fence).toBe(body);
+    }
+  });
+
   it("detects math from tokens rather than dollar-shaped strings", () => {
     for (const source of [
       "$-7 and $.25",

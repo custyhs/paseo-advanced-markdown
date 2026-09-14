@@ -47,6 +47,9 @@ function statusFor(result: CachedRender<MathRenderOutput> | undefined, eligible:
   if (result === undefined) return "Rendering formula…";
   if (result === null) return "Host unreachable; showing source";
   if (result.ok) return "";
+  // The daemon explains environment problems (such as a missing text font);
+  // only a bare failure is described as invalid TeX.
+  if (result.message) return result.message;
   return result.reason === "too-large"
     ? "Formula is too large to render"
     : "Invalid TeX; showing source";

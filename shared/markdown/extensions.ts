@@ -286,6 +286,29 @@ function mathBlock(
   return false;
 }
 
+/**
+ * A `math` fence already declares display math, but authors and agents often
+ * wrap its body in delimiters as well. MathJax has no `\[` in math mode, so the
+ * whole formula would fail. Drop exactly one wrapper when the body is a single
+ * wrapped expression; leave anything else untouched.
+ */
+function unwrapDisplayDelimiters(content: string): string {
+  const trimmed = content.trim();
+  for (const [open, close] of [
+    ["\\[", "\\]"],
+    ["$$", "$$"],
+    ["\\(", "\\)"],
+    ["$", "$"],
+  ] as const) {
+    if (trimmed.length <= open.length + close.length) continue;
+    if (!trimmed.startsWith(open) || !trimmed.endsWith(close)) continue;
+    const inner = trimmed.slice(open.length, trimmed.length - close.length);
+    if (!inner.trim() || inner.includes(open) || inner.includes(close)) continue;
+    return inner;
+  }
+  return content;
+}
+
 /** Info-string language of a fence, lowercased; extra words are ignored. */
 function fenceLanguage(info: string): string {
   return (info.trim().split(/\s+/)[0] ?? "").toLowerCase();
@@ -355,7 +378,7 @@ export function markdownExtensions(md: MarkdownParser): void {
       if (language === "math") {
         token.type = MATH_BLOCK;
         token.tag = "math";
-        token.content = expressionText(token.content, md);
+        token.content = expressionText(unwrapDisplayDelimiters(token.content), md);
         token.meta = { source, display: true } satisfies ExtensionMeta;
         return true;
       }

@@ -20,7 +20,11 @@ export const mathRenderOutput = z.discriminatedUnion("ok", [
     /** Distance from the top edge to the text baseline, logical pixels. */
     baseline: z.number().nonnegative().max(1024),
   }),
-  z.object({ ok: z.literal(false), reason: z.enum(["invalid", "too-large"]) }),
+  z.object({
+    ok: z.literal(false),
+    reason: z.enum(["invalid", "too-large"]),
+    message: z.string().max(512).optional(),
+  }),
 ]);
 
 export const renderMath = defineRpc({
