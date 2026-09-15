@@ -35,6 +35,20 @@ collection as well; the existing raster comparison remains the regression gate.
 The local commands above were run as targeted files, sometimes in the same
 Vitest invocation. The complete plugin suite was not run locally.
 
+## Official Web client Retry check
+
+On the isolated official 0.8.0 daemon (port 6790), install the candidate and
+open the synthetic CJK/fence sample in a fresh Chrome profile. Inject one
+`unavailable` font response per math input at the WebSocket boundary, then
+allow subsequent requests to reach the real daemon unchanged.
+
+The page displayed three inline Retry controls and two block Retry controls.
+Clicking the first inline Retry and the first block Retry produced two loaded
+formula images; the respective controls disappeared. No page errors were
+reported. Before/after screenshots were visually inspected. This verifies
+actual client interaction after a controlled RPC fault; physical font-install
+recovery is covered separately by the client-cache/server test.
+
 ## Platform scope
 
 Host tests run on macOS arm64; CI runs the full suite and compiler smoke on
