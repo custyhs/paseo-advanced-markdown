@@ -14,7 +14,12 @@ import {
   useWindowDimensions,
   type TextStyle,
 } from "react-native";
-import { renderMath, type MathRenderInput, type MathRenderOutput } from "../shared/rpc.js";
+import {
+  renderMath,
+  isRetryableMathResult,
+  type MathRenderInput,
+  type MathRenderOutput,
+} from "../shared/rpc.js";
 import { MAX_MATH_EXPRESSION } from "../shared/limits.js";
 import { ActionBar } from "./action-bar.js";
 import { CodeBlock } from "./code-block.js";
@@ -90,6 +95,7 @@ export const Formula = memo(function Formula({
       key,
       { expression, display, color },
       callRef.current,
+      { retryableReasons: isRetryableMathResult },
     ).then((next) => {
       if (current) setSettled({ key, result: next });
     });
@@ -113,9 +119,28 @@ export const Formula = memo(function Formula({
 
   const usable = eligible && result?.ok && failedImage !== key && (block || maxInlineWidth > 1);
   if (!usable || (block && showSource)) {
-    if (!block) return sourceText;
     const status = enabled ? statusFor(result, eligible) : "Math module is off; showing source";
-    const retryable = enabled && (result === null || failedImage === key);
+    const retryable =
+      enabled &&
+      (result === null ||
+        failedImage === key ||
+        (result !== undefined && isRetryableMathResult(result)));
+    if (!block)
+      return retryable ? (
+        <Text style={textStyle}>
+          {sourceText}{" "}
+          <Text
+            accessibilityRole="button"
+            accessibilityLabel={`Retry formula: ${status}`}
+            onPress={retry}
+            style={{ color: theme.colors.accent }}
+          >
+            Retry
+          </Text>
+        </Text>
+      ) : (
+        sourceText
+      );
     return (
       <CodeBlock
         source={source}

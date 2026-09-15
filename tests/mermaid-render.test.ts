@@ -3,7 +3,7 @@
 import { access } from "node:fs/promises";
 import { beforeAll, describe, expect, it } from "vitest";
 import { cacheLayout, resolveCacheRoot } from "../server/mermaid/cache-root.mjs";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import {
   browserArguments,
@@ -134,11 +134,38 @@ describe("Mermaid rendering through the pinned local runtime", () => {
     const address = server.address();
     const port = typeof address === "object" && address ? address.port : 0;
     try {
-      const result = spawnSync(
-        runtime.runtime.executablePath,
-        [...browserArguments(), "--dump-dom", `http://127.0.0.1:${port}/probe`],
-        { encoding: "utf8", timeout: 20_000 },
+      const dump = (args: string[]) =>
+        new Promise<{ stdout: string; code: number | null }>((resolve, reject) => {
+          const child = spawn(
+            runtime.runtime.executablePath,
+            [...args, "--dump-dom", `http://127.0.0.1:${port}/probe`],
+            { stdio: ["ignore", "pipe", "ignore"] },
+          );
+          let stdout = "";
+          child.stdout.on("data", (chunk) => {
+            stdout += chunk;
+          });
+          const timer = setTimeout(() => child.kill("SIGKILL"), 10_000);
+          child.once("error", (error) => {
+            clearTimeout(timer);
+            reject(error);
+          });
+          child.once("close", (code) => {
+            clearTimeout(timer);
+            resolve({ stdout, code });
+          });
+        });
+      // Positive control: the same asynchronous HTTP service is reachable when
+      // the worker's network restrictions are absent. spawnSync hid this test.
+      const unrestricted = browserArguments().filter(
+        (arg) => !arg.startsWith("--proxy-server=") && !arg.startsWith("--host-resolver-rules="),
       );
+      const control = await dump(unrestricted);
+      expect(control.stdout).toContain("reached");
+      expect(hits).toBeGreaterThan(0);
+      hits = 0;
+      const result = await dump(browserArguments());
+      expect(result.code).toBe(0);
       expect(result.stdout).not.toContain("reached");
       expect(hits).toBe(0);
       // A diagram that names a remote image still renders without contacting it.

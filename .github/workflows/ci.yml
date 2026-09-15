@@ -20,7 +20,7 @@ jobs:
       - run: npm run format:check
       # Installs the pinned Mermaid CLI runtime and Chrome headless shell into the
       # runner's cache so the Mermaid tests run for real instead of skipping.
-      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk fonts-dejavu-core procps
       # Ubuntu 24.04 runners restrict unprivileged user namespaces, which Chrome's
       # sandbox needs. Allow them here so the tests use the default sandboxed launch.
       - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0

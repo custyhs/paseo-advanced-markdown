@@ -445,6 +445,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       "89504e470d0a1a0a",
     );
     await writeFile(path.join(root, ".smoke/formula.png"), Buffer.from(formula.png, "base64"));
+    const chineseBox = await plugin.invoke("advanced-markdown.math.render", {
+      expression: String.raw`\boxed{\textbf{中文}}`,
+      display: true,
+      color: "#fafafa",
+    });
+    assert.equal(chineseBox.ok, true, JSON.stringify(chineseBox));
+    await writeFile(
+      path.join(root, ".smoke/chinese-box.png"),
+      Buffer.from(chineseBox.png, "base64"),
+    );
     const invalid = await plugin.invoke("advanced-markdown.math.render", {
       expression: String.raw`\unknownCommand{a}`,
       display: false,
@@ -456,6 +466,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       height: formula.height,
       baseline: formula.baseline,
       invalidFallback: invalid.reason,
+      chineseBoldBox: { width: chineseBox.width, height: chineseBox.height },
     };
     const runtime = await resolveMermaidRuntime();
     const diagram = await plugin.invoke("advanced-markdown.mermaid.render", {

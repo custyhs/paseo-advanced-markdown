@@ -23,6 +23,77 @@ async function render(
 }
 
 describe("local math rasterization", () => {
+  it("renders Chinese bold text and retains boxed equation borders", async () => {
+    const regular = await render(String.raw`\text{中文}`, true);
+    const bold = await render(String.raw`\textbf{中文}`, true);
+    expect(inkCount(decodePng(bold.png).rgba)).toBeGreaterThan(200);
+    expect(bold.png).not.toBe(regular.png);
+    const boxed = await render(String.raw`\boxed{x}`, true);
+    const plain = await render(String.raw`{\displaystyle x}`, true);
+    expect(boxed.width).toBeGreaterThan(plain.width);
+    expect(boxed.height).toBeGreaterThan(plain.height);
+    const decoded = decodePng(boxed.png);
+    // A box has a long horizontal border, beyond the ink width of x.
+    let longest = 0;
+    for (let y = 0; y < decoded.height; y++) {
+      let run = 0;
+      for (let x = 0; x < decoded.width; x++) {
+        run = decoded.rgba[(y * decoded.width + x) * 4 + 3]! > 0 ? run + 1 : 0;
+        longest = Math.max(longest, run);
+      }
+    }
+    expect(longest).toBeGreaterThan(plain.width * 2);
+  });
+
+  it("rejects a truncated sfnt header and a real font missing CJK glyphs", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "pam-truncated-font-"));
+    const target = path.join(directory, "broken.otf");
+    const previous = process.env.PASEO_ADVANCED_MARKDOWN_FONT;
+    try {
+      await writeFile(target, "OTTO");
+      process.env.PASEO_ADVANCED_MARKDOWN_FONT = target;
+      clearMathCache();
+      const result = await renderFormula({
+        expression: String.raw`\text{中文}`,
+        display: true,
+        color: "#111111",
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.message).toMatch(/font/i);
+      const latinCandidates = [
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "C:\\Windows\\Fonts\\arial.ttf",
+      ];
+      let latin: string | undefined;
+      for (const candidate of latinCandidates) {
+        if (
+          await access(candidate).then(
+            () => true,
+            () => false,
+          )
+        ) {
+          latin = candidate;
+          break;
+        }
+      }
+      expect(latin, "test host needs a real Latin-only sfnt font").toBeDefined();
+      process.env.PASEO_ADVANCED_MARKDOWN_FONT = latin!;
+      clearMathCache();
+      const missingGlyph = await renderFormula({
+        expression: String.raw`\text{中文}`,
+        display: true,
+        color: "#111111",
+      });
+      expect(missingGlyph.ok).toBe(false);
+    } finally {
+      if (previous === undefined) delete process.env.PASEO_ADVANCED_MARKDOWN_FONT;
+      else process.env.PASEO_ADVANCED_MARKDOWN_FONT = previous;
+      clearMathCache();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("typesets real glyphs with 2x pixels and a descender-aware inline baseline", async () => {
     const result = await render("q_j + 2");
     const decoded = decodePng(result.png);
@@ -99,7 +170,7 @@ describe("local math rasterization", () => {
       });
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.reason).toBe("invalid");
+        expect(result.reason).toBe("unavailable");
         expect(result.message ?? "").toMatch(/font/i);
       }
     } finally {

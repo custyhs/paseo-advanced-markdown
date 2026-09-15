@@ -1,6 +1,6 @@
 {
   "name": "paseo-advanced-markdown",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Advanced Markdown rendering for Paseo 0.8: math formulas and Mermaid diagrams in assistant messages",
   "type": "module",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@resvg/resvg-wasm": "2.6.2",
+    "fontkit": "2.0.4",
     "markdown-it": "15.0.1",
     "mathjax-full": "3.2.2",
     "react-native-markdown-display": "7.0.2"
@@ -42,6 +43,7 @@
     "@getpaseo/server": "0.8.0",
     "@puppeteer/browsers": "3.2.2",
     "@tanstack/react-query": "^5.90.11",
+    "@types/fontkit": "2.0.8",
     "@types/node": "^22.0.0",
     "@types/react": "~19.2.0",
     "esbuild": "^0.25.0",

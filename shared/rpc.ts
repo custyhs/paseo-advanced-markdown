@@ -22,7 +22,7 @@ export const mathRenderOutput = z.discriminatedUnion("ok", [
   }),
   z.object({
     ok: z.literal(false),
-    reason: z.enum(["invalid", "too-large"]),
+    reason: z.enum(["invalid", "too-large", "unavailable", "failed"]),
     message: z.string().max(512).optional(),
   }),
 ]);
@@ -34,6 +34,10 @@ export const renderMath = defineRpc({
 });
 export type MathRenderInput = z.infer<typeof mathRenderInput>;
 export type MathRenderOutput = z.infer<typeof mathRenderOutput>;
+
+export function isRetryableMathResult(result: MathRenderOutput): boolean {
+  return !result.ok && (result.reason === "unavailable" || result.reason === "failed");
+}
 
 export const MERMAID_THEMES = ["default", "dark"] as const;
 export type MermaidTheme = (typeof MERMAID_THEMES)[number];

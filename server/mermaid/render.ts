@@ -16,6 +16,7 @@ import {
   MERMAID_TASK_TIMEOUT_MS,
 } from "../../shared/limits.js";
 import { BoundedCache } from "../cache.js";
+import { checkProcessCleanup, terminateRenderTree } from "./process.js";
 import { pngDimensions } from "./png.js";
 import { describe, resolveMermaidRuntime, type MermaidRuntime } from "./runtime.js";
 
@@ -45,7 +46,7 @@ type Failure = Extract<MermaidRenderOutput, { ok: false }>;
 const cache = new BoundedCache<MermaidRenderOutput>(IMAGE_CACHE_ENTRIES, IMAGE_CACHE_BYTES);
 const inflight = new Map<string, Promise<MermaidRenderOutput>>();
 const queue: Array<() => void> = [];
-const children = new Set<ChildProcess>();
+const children = new Map<ChildProcess, () => Promise<void>>();
 let active = 0;
 let stopped = false;
 
@@ -76,9 +77,8 @@ export async function stopMermaid(): Promise<void> {
   stopped = true;
   const waiting = queue.splice(0, queue.length);
   for (const release of waiting) release();
-  for (const child of children) {
-    if (!child.killed) child.kill("SIGKILL");
-  }
+  await Promise.all([...children.values()].map((terminate) => terminate()));
+  await Promise.all([...inflight.values()]);
   children.clear();
   cache.clear();
   inflight.clear();
@@ -192,6 +192,7 @@ async function runCli(
   input: MermaidRenderInput,
   scale: number = SCALE,
 ): Promise<MermaidRenderOutput> {
+  await checkProcessCleanup();
   const workDir = await mkdtemp(path.join(os.tmpdir(), "paseo-advanced-markdown-"));
   try {
     const inputPath = path.join(workDir, "diagram.mmd");
@@ -218,6 +219,7 @@ async function runCli(
         maxTextSize: MAX_MERMAID_SOURCE,
       }),
     );
+    if (stopped) return failure("unavailable", "Plugin is stopping");
     const node = nodeExecutable();
     const args = [
       runtime.cliEntry,
@@ -252,8 +254,14 @@ async function runCli(
           },
           stdio: ["ignore", "pipe", "pipe"],
           shell: false,
+          detached: process.platform !== "win32",
         });
-        children.add(child);
+        let termination: Promise<void> | undefined;
+        const terminate = () => {
+          termination ??= terminateRenderTree(child);
+          return termination;
+        };
+        children.set(child, terminate);
         let output = "";
         let timedOut = false;
         const append = (chunk: Buffer | string) => {
@@ -263,7 +271,9 @@ async function runCli(
         child.stderr?.on("data", append);
         const timer = setTimeout(() => {
           timedOut = true;
-          child.kill("SIGKILL");
+          void terminate().catch((error) => {
+            output += `\nProcess cleanup failed: ${describe(error)}`;
+          });
         }, MERMAID_TASK_TIMEOUT_MS);
         child.once("error", (error) => {
           clearTimeout(timer);
@@ -272,8 +282,15 @@ async function runCli(
         });
         child.once("close", (code) => {
           clearTimeout(timer);
-          children.delete(child);
-          resolve({ code, output, timedOut });
+          void (async () => {
+            try {
+              await termination;
+            } catch (error) {
+              output += `\nProcess cleanup failed: ${describe(error)}`;
+            }
+            children.delete(child);
+            resolve({ code, output, timedOut });
+          })();
         });
       },
     );
@@ -335,6 +352,7 @@ export async function renderDiagram(input: MermaidRenderInput): Promise<MermaidR
     if (!admitted) return failure("busy", "Too many diagrams are waiting; retry shortly");
     try {
       const resolution = await resolveMermaidRuntime();
+      if (stopped) return failure("unavailable", "Plugin is stopping");
       if (!resolution.ready) return failure("unavailable", resolution.message);
       const output = await runCli(resolution.runtime, input);
       // Retryable outcomes are not cached so a later attempt can succeed.

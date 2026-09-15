@@ -50,8 +50,7 @@ class RenderFailure extends Error {
   }
 }
 
-// These are geometry-only outputs. No text/font fallback, image, link, use,
-// foreignObject, stylesheet, or resource references can reach the rasterizer.
+// Geometry and validated text are allowed; resource references are rejected.
 const svgElements: Record<string, true> = {
   svg: true,
   g: true,
@@ -104,15 +103,14 @@ const svgAttributes: Record<string, true> = {
 const MAX_TEXT_CONTENT = 256;
 
 /** Rejects anything the rasterizer should not see; reports whether text glyphs are needed. */
-function sanitize(root: LiteElement): { hasText: boolean } {
+function sanitize(root: LiteElement): { text: string } {
   const pending = [root];
   let count = 0;
-  let hasText = false;
+  let text = "";
   while (pending.length) {
     const node = pending.pop()!;
     if (++count > 16_384) throw new RenderFailure("too-large");
     if (!Object.hasOwn(svgElements, node.kind)) throw new RenderFailure("invalid");
-    if (node.kind === "text") hasText = true;
     for (const { name, value } of adaptor.allAttributes(node)) {
       if (name === "style" || name === "role" || name === "focusable" || name.startsWith("data-")) {
         adaptor.removeAttribute(node, name);
@@ -125,12 +123,13 @@ function sanitize(root: LiteElement): { hasText: boolean } {
         throw new RenderFailure("invalid");
       } else if (name === "font-family" && !/^[\w\s,'"-]{1,128}$/.test(value)) {
         throw new RenderFailure("invalid");
-      } else if (
-        (name === "font-size" || name === "font-weight") &&
-        !/^[\d.]{1,12}(?:px|em|ex|pt)?$/.test(value)
-      ) {
+      } else if (name === "font-size" && !/^[\d.]{1,12}(?:px|em|ex|pt)?$/.test(value)) {
         throw new RenderFailure("invalid");
       }
+    }
+    const weight = adaptor.getAttribute(node, "font-weight");
+    if (weight !== undefined && !/^(?:normal|bold|[1-9]00)$/.test(String(weight))) {
+      throw new RenderFailure("invalid");
     }
     for (const child of node.children) {
       if (!("children" in child)) {
@@ -138,12 +137,13 @@ function sanitize(root: LiteElement): { hasText: boolean } {
         if (node.kind !== "text" || typeof child.value !== "string")
           throw new RenderFailure("invalid");
         if (child.value.length > MAX_TEXT_CONTENT) throw new RenderFailure("too-large");
+        text += child.value;
         continue;
       }
       pending.push(child);
     }
   }
-  return { hasText };
+  return { text };
 }
 
 function themeColor(color: string): { rgb: string; alpha: number } {
@@ -163,7 +163,7 @@ function typeset(input: MathRenderInput): {
   width: number;
   height: number;
   baseline: number;
-  hasText: boolean;
+  text: string;
 } {
   const color = themeColor(input.color);
   // TeX configuration creates fresh newcommand/configmacros maps. Conversion is
@@ -181,7 +181,6 @@ function typeset(input: MathRenderInput): {
     ],
     maxMacros: 512,
     maxBuffer: 16_384,
-    macros: { boxed: ["{\\displaystyle #1}", 1] },
     formatError: (_jax: unknown, error: TexError) => {
       throw new RenderFailure(
         /^(?:MaxBufferSize|MaxMacroSub)/.test(error.id) ? "too-large" : "invalid",
@@ -234,7 +233,7 @@ function typeset(input: MathRenderInput): {
     const height = Math.ceil(((unitsHeight * EM) / 1000 + 2) * DENSITY) / DENSITY;
     if (width > MAX_WIDTH || height > MAX_HEIGHT) throw new RenderFailure("too-large");
     const baseline = Math.max(0, Math.min(height, (-y * EM) / 1000 + 1));
-    const { hasText } = sanitize(svg);
+    const { text } = sanitize(svg);
     adaptor.setAttribute(
       svg,
       "viewBox",
@@ -246,7 +245,7 @@ function typeset(input: MathRenderInput): {
     adaptor.setAttribute(svg, "opacity", color.alpha);
     const serialized = adaptor.outerHTML(svg);
     if (serialized.length > MAX_SVG) throw new RenderFailure("too-large");
-    return { svg: serialized, width, height, baseline, hasText };
+    return { svg: serialized, width, height, baseline, text };
   } finally {
     document.clear();
   }
@@ -285,19 +284,34 @@ export async function renderFormula(input: MathRenderInput): Promise<MathRenderO
   if (cached) return cached;
   // Await before allocating TeX trees so a burst during WASM startup retains
   // inputs only. After this await rendering is synchronous and serialized.
-  wasmReady ??= initWasm(Buffer.from(wasmBase64, "base64"));
-  await wasmReady;
-  const readyCached = cache.get(key);
-  if (readyCached) return readyCached;
   try {
-    const { svg, width, height, baseline, hasText } = typeset(input);
+    wasmReady ??= initWasm(Buffer.from(wasmBase64, "base64")).catch((error) => {
+      wasmReady = undefined;
+      throw error;
+    });
+    await wasmReady;
+    const readyCached = cache.get(key);
+    if (readyCached) return readyCached;
+    const { svg, width, height, baseline, text } = typeset(input);
     // Fonts are read only for formulas that need glyph fallback, and a missing
     // font is an environment problem, so it is reported rather than cached.
-    const font = hasText ? await loadTextFont() : null;
-    if (hasText && !font) {
-      return { ok: false, reason: "invalid", message: missingFontMessage() };
+    const font = text ? await loadTextFont(text) : null;
+    if (text && !font) {
+      return { ok: false, reason: "unavailable", message: missingFontMessage() };
     }
-    const renderer = new Resvg(svg, { font: { fontBuffers: font ? [font] : [] } });
+    const renderer = new Resvg(svg, {
+      font: {
+        fontBuffers: font ? [font.buffer] : [],
+        ...(font
+          ? {
+              defaultFontFamily: font.family,
+              serifFamily: font.family,
+              sansSerifFamily: font.family,
+              monospaceFamily: font.family,
+            }
+          : {}),
+      },
+    });
     try {
       const image = renderer.render();
       try {
@@ -320,7 +334,7 @@ export async function renderFormula(input: MathRenderInput): Promise<MathRenderO
       // trace in the plugin log. Such failures are not cached.
       console.error("[advanced-markdown] math render failed", error);
       const cause = error instanceof Error ? error.message : String(error);
-      return { ok: false, reason: "invalid", message: `Renderer error: ${cause}`.slice(0, 512) };
+      return { ok: false, reason: "failed", message: `Renderer error: ${cause}`.slice(0, 512) };
     }
     return remember(key, {
       ok: false,

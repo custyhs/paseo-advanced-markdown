@@ -410,7 +410,10 @@ export function detectExtensions(source: string): DetectedExtensions {
   const mayHaveFence = source.includes("```") || source.includes("~~~");
   if (!mayHaveMath && !mayHaveFence) return NONE;
   if (!mayHaveMath && !/mermaid/i.test(source) && !/math/i.test(source)) return NONE;
-  detector ??= new MarkdownIt().use(markdownExtensions);
+  if (!detector) {
+    detector = new MarkdownIt().use(markdownExtensions);
+    detector.validateLink = () => true;
+  }
   let math = false;
   let mermaid = false;
   let unsupported = false;
@@ -420,6 +423,11 @@ export function detectExtensions(source: string): DetectedExtensions {
     if (token.type === MATH_INLINE || token.type === MATH_BLOCK) math = true;
     else if (token.type === MERMAID_BLOCK) mermaid = true;
     else if (token.type === "image") unsupported = true;
+    else if (
+      token.type === "link_open" &&
+      !/^(?:https?:\/\/|mailto:)/i.test(String(token.attrGet("href") ?? ""))
+    )
+      unsupported = true;
     if (token.children) for (const child of token.children) pending.push(child);
   }
   if (!math && !mermaid) return NONE;

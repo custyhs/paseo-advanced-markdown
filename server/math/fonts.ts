@@ -1,11 +1,11 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { create, type Font } from "fontkit";
 
 /**
  * MathJax has no glyphs for CJK and other scripts outside its math fonts; it
  * emits `<text>` and expects the renderer to supply a font. resvg has no system
  * font access in WebAssembly, so the daemon reads one font file from the host
- * and hands it over as a buffer. One font is enough: it is the only face in the
- * database, so every family request resolves to it.
+ * and hands it over as a buffer. Font parsing and glyph coverage are checked before the buffer is accepted.
  */
 const CANDIDATES: Readonly<Record<string, readonly string[]>> = {
   darwin: [
@@ -41,35 +41,53 @@ export function fontCandidates(
   return CANDIDATES[platform] ?? [];
 }
 
-// Accepted sfnt signatures. A file that is not a font would leave resvg with no
-// usable face and silently drop the glyphs, which reads as a rendering bug.
-const SIGNATURES = ["\u0000\u0001\u0000\u0000", "OTTO", "ttcf", "true", "typ1"];
-
-function isFontFile(buffer: Buffer): boolean {
-  if (buffer.length < 4) return false;
-  const header = buffer.subarray(0, 4).toString("latin1");
-  return SIGNATURES.includes(header);
+export interface TextFont {
+  buffer: Uint8Array;
+  family: string;
 }
 
-let cache: { key: string; font: Uint8Array } | undefined;
+let cache: { key: string; buffer: Uint8Array; faces: Font[] } | undefined;
 
-/** Reads and caches the first readable candidate. Returns null when none exists. */
+/** Validate the font itself and every fallback character before resvg sees it. */
 export async function loadTextFont(
+  text: string,
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
-): Promise<Uint8Array | null> {
-  const candidates = fontCandidates(env, platform);
-  const key = candidates.join("|");
-  if (cache?.key === key) return cache.font;
-  for (const candidate of candidates) {
-    const buffer = await readFile(candidate).catch(() => null);
-    if (buffer && isFontFile(buffer)) {
-      cache = { key, font: new Uint8Array(buffer) };
-      return cache.font;
+): Promise<TextFont | null> {
+  const codepoints = [
+    ...new Set([...text].filter((char) => !/\s/u.test(char)).map((char) => char.codePointAt(0)!)),
+  ];
+  for (const candidate of fontCandidates(env, platform)) {
+    try {
+      const info = await stat(candidate);
+      if (!info.isFile() || info.size > 128 * 1024 * 1024) continue;
+      const key = `${candidate}|${info.size}|${info.mtimeMs}`;
+      if (cache?.key !== key) {
+        const buffer = await readFile(candidate);
+        // resvg's font database accepts sfnt fonts, not WOFF containers.
+        if (
+          !["\u0000\u0001\u0000\u0000", "OTTO", "ttcf", "true"].includes(
+            buffer.subarray(0, 4).toString("latin1"),
+          )
+        )
+          continue;
+        const parsed = create(buffer);
+        const faces = "fonts" in parsed ? parsed.fonts : [parsed];
+        cache = { key, buffer: new Uint8Array(buffer), faces };
+      }
+      const face = cache.faces.find((font) =>
+        codepoints.every((cp) => {
+          if (!font.hasGlyphForCodePoint(cp)) return false;
+          // Force lazy outline parsing too: a valid cmap alone is insufficient.
+          return font.glyphForCodePoint(cp).path.commands.length > 0;
+        }),
+      );
+      if (face) return { buffer: cache.buffer, family: face.familyName };
+    } catch {
+      // Corrupt/unreadable candidates must not prevent a later usable font.
     }
   }
-  // A missing font is not cached: installing one must take effect without a
-  // plugin reload, and probing a handful of paths is cheap.
+  // Failed results are not cached: a new/replaced font is usable on retry.
   return null;
 }
 
@@ -83,7 +101,7 @@ export function missingFontMessage(
 ): string {
   const candidates = fontCandidates(env, platform);
   const looked = candidates.length ? candidates.join(", ") : "no known location on this platform";
-  return `This formula needs a text font for characters outside MathJax's math fonts, and none was found (looked in: ${looked}). Install one or set PASEO_ADVANCED_MARKDOWN_FONT to a font file.`.slice(
+  return `This formula needs a text font for characters outside MathJax's math fonts, but no usable font covers them (looked in: ${looked}). Install one or set PASEO_ADVANCED_MARKDOWN_FONT to a font file.`.slice(
     0,
     512,
   );

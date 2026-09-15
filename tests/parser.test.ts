@@ -434,3 +434,29 @@ describe("context-limited text percent repair", () => {
     expect(normalizeTex(String.raw`a\% + \verb*+6%+`)).toBe(String.raw`a\% + \verb*+6%+`);
   });
 });
+
+describe("host-owned file navigation", () => {
+  it("declines relative and file links beside extensions but preserves supported web links", () => {
+    for (const link of [
+      "src/main.ts",
+      "../README.md",
+      "/tmp/foo.ts",
+      "file:///tmp/foo.ts",
+      "C:/project/main.ts",
+    ]) {
+      expect(
+        shouldTakeOver(detectExtensions(`$x$ [source](${link})`), { math: true, mermaid: true }),
+        link,
+      ).toBe(false);
+    }
+    for (const link of ["https://example.org/a", "http://example.org", "mailto:a@example.org"]) {
+      expect(
+        shouldTakeOver(detectExtensions(`$x$ [source](${link})`), { math: true, mermaid: true }),
+        link,
+      ).toBe(true);
+    }
+    expect(
+      shouldTakeOver(detectExtensions("$x$ `src/main.ts`"), { math: true, mermaid: true }),
+    ).toBe(true);
+  });
+});
