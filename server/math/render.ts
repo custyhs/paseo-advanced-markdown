@@ -103,10 +103,11 @@ const svgAttributes: Record<string, true> = {
 const MAX_TEXT_CONTENT = 256;
 
 /** Rejects anything the rasterizer should not see; reports whether text glyphs are needed. */
-function sanitize(root: LiteElement): { text: string } {
+function sanitize(root: LiteElement): { text: string; needsBold: boolean } {
   const pending = [root];
   let count = 0;
   let text = "";
+  let needsBold = false;
   while (pending.length) {
     const node = pending.pop()!;
     if (++count > 16_384) throw new RenderFailure("too-large");
@@ -131,6 +132,7 @@ function sanitize(root: LiteElement): { text: string } {
     if (weight !== undefined && !/^(?:normal|bold|[1-9]00)$/.test(String(weight))) {
       throw new RenderFailure("invalid");
     }
+    if (weight === "bold" || Number(weight) >= 600) needsBold = true;
     for (const child of node.children) {
       if (!("children" in child)) {
         // Character data is only meaningful inside <text>; nothing else may carry it.
@@ -143,7 +145,7 @@ function sanitize(root: LiteElement): { text: string } {
       pending.push(child);
     }
   }
-  return { text };
+  return { text, needsBold };
 }
 
 function themeColor(color: string): { rgb: string; alpha: number } {
@@ -164,6 +166,7 @@ function typeset(input: MathRenderInput): {
   height: number;
   baseline: number;
   text: string;
+  needsBold: boolean;
 } {
   const color = themeColor(input.color);
   // TeX configuration creates fresh newcommand/configmacros maps. Conversion is
@@ -233,7 +236,7 @@ function typeset(input: MathRenderInput): {
     const height = Math.ceil(((unitsHeight * EM) / 1000 + 2) * DENSITY) / DENSITY;
     if (width > MAX_WIDTH || height > MAX_HEIGHT) throw new RenderFailure("too-large");
     const baseline = Math.max(0, Math.min(height, (-y * EM) / 1000 + 1));
-    const { text } = sanitize(svg);
+    const { text, needsBold } = sanitize(svg);
     adaptor.setAttribute(
       svg,
       "viewBox",
@@ -245,7 +248,7 @@ function typeset(input: MathRenderInput): {
     adaptor.setAttribute(svg, "opacity", color.alpha);
     const serialized = adaptor.outerHTML(svg);
     if (serialized.length > MAX_SVG) throw new RenderFailure("too-large");
-    return { svg: serialized, width, height, baseline, text };
+    return { svg: serialized, width, height, baseline, text, needsBold };
   } finally {
     document.clear();
   }
@@ -292,16 +295,16 @@ export async function renderFormula(input: MathRenderInput): Promise<MathRenderO
     await wasmReady;
     const readyCached = cache.get(key);
     if (readyCached) return readyCached;
-    const { svg, width, height, baseline, text } = typeset(input);
+    const { svg, width, height, baseline, text, needsBold } = typeset(input);
     // Fonts are read only for formulas that need glyph fallback, and a missing
     // font is an environment problem, so it is reported rather than cached.
-    const font = text ? await loadTextFont(text) : null;
+    const font = text ? await loadTextFont(text, process.env, process.platform, needsBold) : null;
     if (text && !font) {
       return { ok: false, reason: "unavailable", message: missingFontMessage() };
     }
     const renderer = new Resvg(svg, {
       font: {
-        fontBuffers: font ? [font.buffer] : [],
+        fontBuffers: font?.buffers ?? [],
         ...(font
           ? {
               defaultFontFamily: font.family,

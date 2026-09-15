@@ -5,7 +5,7 @@ import { access, copyFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { clearMathCache, mathCacheSize, renderFormula } from "../server/math/render.js";
-import { fontCandidates } from "../server/math/fonts.js";
+import { fontCandidates, loadTextFont } from "../server/math/fonts.js";
 import type { MathRenderOutput } from "../shared/rpc.js";
 import { decodePng, inkCount } from "./helpers/png.js";
 
@@ -43,6 +43,49 @@ describe("local math rasterization", () => {
       }
     }
     expect(longest).toBeGreaterThan(plain.width * 2);
+  });
+
+  it("loads a separate bold font instead of silently rendering regular weight", async () => {
+    const fonts = [
+      [
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+      ],
+      [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+      ],
+      ["C:\\Windows\\Fonts\\arial.ttf", "C:\\Windows\\Fonts\\arialbd.ttf"],
+    ];
+    let pair: string[] | undefined;
+    for (const candidates of fonts) {
+      if (
+        await Promise.all(
+          candidates.map((font) =>
+            access(font).then(
+              () => true,
+              () => false,
+            ),
+          ),
+        ).then((found) => found.every(Boolean))
+      ) {
+        pair = candidates;
+        break;
+      }
+    }
+    expect(pair).toBeDefined();
+    const directory = await mkdtemp(path.join(os.tmpdir(), "pam-font-weight-"));
+    const target = path.join(directory, "Text-Regular.ttf");
+    try {
+      await copyFile(pair![0]!, target);
+      const env = { PASEO_ADVANCED_MARKDOWN_FONT: target };
+      expect(await loadTextFont("A", env, process.platform, true)).toBeNull();
+      await copyFile(pair![1]!, path.join(directory, "Text-Bold.ttf"));
+      const selected = await loadTextFont("A", env, process.platform, true);
+      expect(selected?.buffers).toHaveLength(2);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it("rejects a truncated sfnt header and a real font missing CJK glyphs", async () => {

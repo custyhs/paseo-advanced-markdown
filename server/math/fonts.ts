@@ -4,8 +4,8 @@ import { create, type Font } from "fontkit";
 /**
  * MathJax has no glyphs for CJK and other scripts outside its math fonts; it
  * emits `<text>` and expects the renderer to supply a font. resvg has no system
- * font access in WebAssembly, so the daemon reads one font file from the host
- * and hands it over as a buffer. Font parsing and glyph coverage are checked before the buffer is accepted.
+ * font access in WebAssembly, so the daemon supplies validated host font buffers,
+ * including a separate bold face when the selected collection lacks one.
  */
 const CANDIDATES: Readonly<Record<string, readonly string[]>> = {
   darwin: [
@@ -42,57 +42,105 @@ export function fontCandidates(
 }
 
 export interface TextFont {
-  buffer: Uint8Array;
+  buffers: Uint8Array[];
   family: string;
 }
 
-let cache: { key: string; buffer: Uint8Array; faces: Font[] } | undefined;
+type FontFile = { key: string; buffer: Uint8Array; faces: Font[] };
+// Regular and bold may be separate large collections on Linux.
+const cache = new Map<string, FontFile>();
 
-/** Validate the font itself and every fallback character before resvg sees it. */
+async function readFont(candidate: string): Promise<FontFile | null> {
+  try {
+    const info = await stat(candidate);
+    if (!info.isFile() || info.size > 128 * 1024 * 1024) return null;
+    const key = `${candidate}|${info.size}|${info.mtimeMs}`;
+    const cached = cache.get(candidate);
+    if (cached?.key === key) return cached;
+    const buffer = await readFile(candidate);
+    // resvg accepts sfnt fonts, not WOFF containers.
+    if (
+      !["\u0000\u0001\u0000\u0000", "OTTO", "ttcf", "true"].includes(
+        buffer.subarray(0, 4).toString("latin1"),
+      )
+    )
+      return null;
+    const parsed = create(buffer);
+    const font = {
+      key,
+      buffer: new Uint8Array(buffer),
+      faces: "fonts" in parsed ? parsed.fonts : [parsed],
+    };
+    cache.delete(candidate);
+    cache.set(candidate, font);
+    while (cache.size > 2) cache.delete(cache.keys().next().value!);
+    return font;
+  } catch {
+    return null;
+  }
+}
+
+function covers(font: Font, codepoints: number[]): boolean {
+  try {
+    return codepoints.every(
+      (cp) => font.hasGlyphForCodePoint(cp) && font.glyphForCodePoint(cp).path.commands.length > 0,
+    );
+  } catch {
+    return false;
+  }
+}
+
+function boldCandidates(candidate: string): string[] {
+  return [
+    ...new Set([
+      candidate.replace(/-Regular(?=\.(?:ttc|ttf|otf)$)/i, "-Bold"),
+      candidate.replace(/\.(ttc|ttf|otf)$/i, "-Bold.$1"),
+      candidate.replace(/\.(ttc|ttf|otf)$/i, " Bold.$1"),
+      candidate.replace(/(msyh|msjh)\.ttc$/i, "$1bd.ttc"),
+    ]),
+  ].filter((name) => name !== candidate);
+}
+
+/** Validate glyph outlines and requested weight before resvg sees the fonts. */
 export async function loadTextFont(
   text: string,
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
+  needsBold = false,
 ): Promise<TextFont | null> {
   const codepoints = [
     ...new Set([...text].filter((char) => !/\s/u.test(char)).map((char) => char.codePointAt(0)!)),
   ];
   for (const candidate of fontCandidates(env, platform)) {
-    try {
-      const info = await stat(candidate);
-      if (!info.isFile() || info.size > 128 * 1024 * 1024) continue;
-      const key = `${candidate}|${info.size}|${info.mtimeMs}`;
-      if (cache?.key !== key) {
-        const buffer = await readFile(candidate);
-        // resvg's font database accepts sfnt fonts, not WOFF containers.
-        if (
-          !["\u0000\u0001\u0000\u0000", "OTTO", "ttcf", "true"].includes(
-            buffer.subarray(0, 4).toString("latin1"),
-          )
-        )
-          continue;
-        const parsed = create(buffer);
-        const faces = "fonts" in parsed ? parsed.fonts : [parsed];
-        cache = { key, buffer: new Uint8Array(buffer), faces };
+    const file = await readFont(candidate);
+    if (!file) continue;
+    const face = file.faces.find((font) => covers(font, codepoints));
+    if (!face) continue;
+    const boldFace = (font: Font) =>
+      font.familyName === face.familyName &&
+      font["OS/2"].usWeightClass >= 600 &&
+      covers(font, codepoints);
+    const buffers = [file.buffer];
+    if (needsBold && !file.faces.some(boldFace)) {
+      let bold: FontFile | null = null;
+      for (const sibling of boldCandidates(candidate)) {
+        const other = await readFont(sibling);
+        if (other?.faces.some(boldFace)) {
+          bold = other;
+          break;
+        }
       }
-      const face = cache.faces.find((font) =>
-        codepoints.every((cp) => {
-          if (!font.hasGlyphForCodePoint(cp)) return false;
-          // Force lazy outline parsing too: a valid cmap alone is insufficient.
-          return font.glyphForCodePoint(cp).path.commands.length > 0;
-        }),
-      );
-      if (face) return { buffer: cache.buffer, family: face.familyName };
-    } catch {
-      // Corrupt/unreadable candidates must not prevent a later usable font.
+      if (!bold) continue;
+      buffers.push(bold.buffer);
     }
+    return { buffers, family: face.familyName };
   }
   // Failed results are not cached: a new/replaced font is usable on retry.
   return null;
 }
 
 export function forgetTextFont(): void {
-  cache = undefined;
+  cache.clear();
 }
 
 export function missingFontMessage(
@@ -101,7 +149,7 @@ export function missingFontMessage(
 ): string {
   const candidates = fontCandidates(env, platform);
   const looked = candidates.length ? candidates.join(", ") : "no known location on this platform";
-  return `This formula needs a text font for characters outside MathJax's math fonts, but no usable font covers them (looked in: ${looked}). Install one or set PASEO_ADVANCED_MARKDOWN_FONT to a font file.`.slice(
+  return `This formula needs a text font for characters outside MathJax's math fonts, but no usable font covers the characters and requested weight (looked in: ${looked}). Install one or set PASEO_ADVANCED_MARKDOWN_FONT to a font file.`.slice(
     0,
     512,
   );

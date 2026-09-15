@@ -98,7 +98,7 @@ each row copies itself.
 
 MathJax's math fonts cover Latin, Greek, and mathematical symbols. Anything else,
 including Chinese, Japanese, and Korean in `\text{…}`, needs a text font on the
-daemon host. The plugin reads one font file and hands it to the rasterizer; it
+daemon host. The plugin reads a font collection, plus a matching bold companion when needed, and hands them to the rasterizer; it
 looks for these, in order, and the first parseable font covering all required fallback characters wins:
 
 | Platform | Looked for |
@@ -113,7 +113,9 @@ font file instead. On a minimal Linux host, install one first, for example
 its source and says so; installing a font takes effect on the next render, with
 no plugin reload. Font and renderer failures expose Retry, including an inline
 Retry control beside inline formulas. A damaged font or missing glyph returns
-source with an error instead of a successful blank image.
+source with an error instead of a successful blank image. If bold text is requested,
+the font must include a matching bold face; common sibling filenames such as
+`NotoSansCJK-Bold.ttc` are discovered automatically.
 
 ## Settings
 
