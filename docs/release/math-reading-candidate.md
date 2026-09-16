@@ -15,8 +15,9 @@ Read the [candidate evidence](../qa/math-reading-candidate.md),
 [MathJax 4 decision](../qa/mathjax4-layout-experiment.md).
 
 Web interaction, local checks, public 0.8.0 compiler and Hermes loading are
-verified. Native iPhone interaction for these new controls, Electron, fixed-ref
-installation/rollback of this candidate, and CI remain pending. Older release QA
+verified. Fixed local Git installation and rollback to v0.1.3 passed on the isolated host.
+Native iPhone interaction for these new controls, Electron, cached-client
+reconnect compatibility, and CI remain pending. Older release QA
 must not be used to mark those rows complete. No production installation was made.
 
 After creating and verifying the proposed release tag, installation would be:

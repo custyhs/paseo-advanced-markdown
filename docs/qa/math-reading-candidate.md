@@ -1,9 +1,11 @@
 # Mathematical reading candidate evidence — 2026-09-16
 
-This is an uncommitted candidate in `/private/tmp/paseo-math-reading-parity`,
-based on v0.1.3 commit `839c81bb8b9af9bc5e8336c19fbeb2f682034aa3`.
+Implementation commit: `a0b211066ec483f14c47f95a141b95c2f1758b51`, on local branch
+`math-reading-parity` in `/Users/cyouwa/projects/paseo-advanced-markdown`, based on
+v0.1.3 commit `839c81bb8b9af9bc5e8336c19fbeb2f682034aa3`.
 The package version still reads 0.1.3; that is not a published candidate identity.
-The implementation is synchronized to the independent plugin repository after verification.
+The temporary checkout was used for parallel implementation; the independent
+plugin repository now owns the committed result.
 Measured renderer SHA-256:
 `73e0e6972dcb05fbf2501bfc035faf3e1f4846bdfd242c46344693da3cfb9388`.
 No production daemon was targeted by these measurements.
@@ -91,7 +93,7 @@ device rows only after recording the relevant build and actual source.
 | 4.3 | Executed official host splitter + fallthrough reproductions; capability gap table | Complete source/API reproduction report; native semantic interaction remains unobserved |
 | 5.1 | Same-corpus host comparison passes; density budgets pass | Full platform/theme/size/inspector/stream matrix pending; Android unverified |
 | 5.2 | Typecheck passed during integration; corpus test file passed 44 checks | Root integration owns final build/lint/format/affected tests/compiler/Hermes evidence |
-| 5.3 | No install/rollback action performed by these probes | Isolated fixed-ref installation/cache/reconnect/rollback still required |
+| 5.3 | Fixed local Git SHA installed, rolled back to v0.1.3, then reinstalled on 6790 | Cached-client/reconnect compatibility still needs explicit validation |
 | 5.4 | Candidate/baseline/gap/experiment documents separate actual evidence and unobserved rows | Root release review owns final tag/install command; not released or deployed here |
 
 ## Official browser execution
@@ -146,3 +148,17 @@ inspection/recovery, stream paint timing and repeated-inspection memory remain
 pending. Android and ChatGPT/Codex reference-client captures are unobserved.
 The fixed 50-formula host benchmark is not an interaction benchmark. Production
 6767 and its plugin registrations were not changed.
+
+## Fixed-ref installation and rollback
+
+The official CLI installed implementation SHA `a0b211066ec483f14c47f95a141b95c2f1758b51`
+through `plugin add file:///Users/cyouwa/projects/paseo-advanced-markdown --ref <sha>`
+on host `127.0.0.1:6790`. The managed checkout completed preparation and reported
+`source: git`, `status: running`, and the matching commit. The actual plugin RPC
+rendered `\cancel{x}` with `ok: true`, `density: 4`.
+
+The same host was rolled back to commit `839c81bb8b9af9bc5e8336c19fbeb2f682034aa3`
+(v0.1.3). It ran successfully and again returned `invalid` for the unsupported
+`\cancel` command. The fixed candidate was then reinstalled from the persistent
+local plugin repository. This exercises local Git distribution, not GitHub release
+availability or the CI pipeline. The host is left on the candidate for local QA.
