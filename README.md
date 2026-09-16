@@ -11,8 +11,13 @@ patch: the official app, daemon, and plugin SDK are the only dependencies.
 - Both in one message, mixed with ordinary Markdown (headings, emphasis,
   lists, quotes, tables, code, HTTP(S) links).
 - Chinese bold text and boxed equation borders are preserved.
-- Copy source per formula, per diagram, and per message; show source; retry;
-  expand diagrams; light and dark themes; per-host module switches.
+- Copy TeX and original source, formula/diagram inspection, light and dark themes,
+  and per-host size/module settings.
+
+The mathematical reading controls below are implemented in the **unreleased
+0.2 candidate**. The published installation command still selects v0.1.3. New
+native iPhone/Electron interaction verification is pending; see the
+[candidate evidence](docs/qa/math-reading-candidate.md).
 
 ## Requirements
 
@@ -94,6 +99,35 @@ block, delimiters included. **Copy this message's source** copies the timeline
 row's text. Paseo may split one long reply into several rows while it streams;
 each row copies itself.
 
+## Reading formulas
+
+Formula size offers 75%, 100%, 125%, 150%, and 200%, relative to the text size.
+This preference is shared by clients of the selected host and affects only math.
+Reset formula size restores 100% without changing prose, Mermaid, or module switches.
+
+Each paragraph/list/table cell measures its own width. A formula can shrink by
+up to 15% to fit; longer formulas keep their reading size and scroll horizontally.
+An oversized inline formula moves into a scrollable block at the same source
+position. Short formulas do not stretch to fill the available width.
+
+Tap a formula or use its keyboard-accessible entry to inspect it. **Fit** starts
+with the complete image inside the available width and height. **Reading size**
+restores the saved size; 1.5×/2×/3× provide temporary zoom with scrolling.
+These controls do not change the saved formula-size setting. **Show source**,
+**Copy TeX**, **Copy source**, and **Close formula** are available in the inspector.
+Copy TeX preserves the original expression body (excluding a redundant outer
+wrapper); Copy source includes the original delimiters or fence.
+
+Sharper PNGs are requested by display density and scale, up to 8×. Available
+images stay visible while more detail loads. Image/payload limits can cap detail;
+zoom cannot provide unlimited resolution. Images have source accessibility labels,
+not semantic MathML navigation or selectable mathematical glyphs.
+
+The reviewed TeX profile adds `mathtools` and `cancel`, including `\mathclap`,
+`\coloneqq`, `\cancel`, and `\cancelto`. Undefined macros fail locally; custom
+macro definitions do not carry across formulas. Markdown link labels keep their
+existing literal behavior. See the [host limitations](docs/qa/math-reading-gaps.md).
+
 ## Text inside formulas
 
 MathJax's math fonts cover Latin, Greek, and mathematical symbols. Anything else,
@@ -126,6 +160,7 @@ Settings → Plugins → Advanced Markdown, per host:
   renderer the next time it is displayed; rows already on screen update after a
   reload or when the conversation is reopened.
 - Text size inside plugin rows.
+- Formula size and its independent reset (unreleased candidate).
 - Runtime status: engine versions, browser, cache directory, queue and cache
   counts.
 
@@ -139,6 +174,8 @@ plugin does not own.
 | Formula | 4096 characters |
 | Mermaid definition | 32 KiB |
 | Image | 2,000,000 base64 characters; 8 M raster pixels and 4096 px longest edge (large diagrams are re-rendered at a lower scale, down to 0.5x) |
+| Math raster | Density 1/2/3/4/6/8; logical size independent of density; lower detail is used when an image budget is reached |
+| Math queue | 1 rendering, up to 128 waiting inputs; duplicate requests share work |
 | Mermaid queue | 1 running, 8 waiting per plugin process; 15 s per task |
 | Caches | 128 images / 8 MiB on the host and in each client |
 

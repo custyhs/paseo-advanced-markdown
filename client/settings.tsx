@@ -14,8 +14,10 @@ import { Text } from "react-native";
 import { runtimeStatus } from "../shared/rpc.js";
 import {
   FONT_SCALES,
+  MATH_SCALES,
   moduleSettings,
   type FontScale,
+  type MathScale,
   type ModuleSettings,
 } from "../shared/settings.js";
 import { moduleState } from "./module-state.js";
@@ -96,6 +98,24 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
                 options={FONT_SCALES.map((value) => ({ value, label: FONT_LABELS[value] }))}
                 disabled={settings.saving}
                 onValueChange={(fontScale) => void update({ fontScale: fontScale as FontScale })}
+              />
+              <SettingsSelect
+                label="Formula size"
+                hint="Changes math only. Clients connected to this host share this preference; each client fits formulas to its own available space."
+                value={String(settings.values.mathScale)}
+                options={MATH_SCALES.map((value) => ({
+                  value: String(value),
+                  label: `${value * 100}%${value === 1 ? " (default)" : ""}`,
+                }))}
+                disabled={settings.saving}
+                onValueChange={(value) => void update({ mathScale: Number(value) as MathScale })}
+              />
+              <SettingsAction
+                label="Reset formula size"
+                hint="Restores 100% without changing text size or module switches. Inspector zoom is temporary and does not change this preference."
+                actionLabel="Reset to 100%"
+                disabled={settings.saving || settings.values.mathScale === 1}
+                onPress={() => void update({ mathScale: 1 })}
               />
               {settings.saveError ? (
                 <SettingsRow label="Save failed" error={settings.saveError} />

@@ -25,7 +25,8 @@ function createModuleState(): ModuleStateApi {
       if (
         values.math === current.math &&
         values.mermaid === current.mermaid &&
-        values.fontScale === current.fontScale
+        values.fontScale === current.fontScale &&
+        values.mathScale === current.mathScale
       )
         return;
       current = values;

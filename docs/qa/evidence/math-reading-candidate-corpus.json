@@ -1,0 +1,633 @@
+{
+  "measuredAt": "2026-09-16T08:00:58.689Z",
+  "root": "/private/tmp/paseo-math-reading-parity",
+  "corpus": "math-reading-v1",
+  "results": [
+    {
+      "id": "inline-energy",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$E = mc^2$",
+          "texSource": "E = mc^2",
+          "display": false,
+          "ok": true,
+          "width": 64,
+          "height": 17,
+          "pngBytes": 1871
+        }
+      ]
+    },
+    {
+      "id": "inline-fraction",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$\\frac{1}{1+\\frac{1}{x}}$",
+          "texSource": "\\frac{1}{1+\\frac{1}{x}}",
+          "display": false,
+          "ok": true,
+          "width": 33.5,
+          "height": 27.5,
+          "pngBytes": 761
+        }
+      ]
+    },
+    {
+      "id": "scripts",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$x_{i_j}^{n+1}$",
+          "texSource": "x_{i_j}^{n+1}",
+          "display": false,
+          "ok": true,
+          "width": 34,
+          "height": 24.5,
+          "pngBytes": 1387
+        }
+      ]
+    },
+    {
+      "id": "inline-sum",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$\\sum_{i=1}^{n} i^2$",
+          "texSource": "\\sum_{i=1}^{n} i^2",
+          "display": false,
+          "ok": true,
+          "width": 54,
+          "height": 21,
+          "pngBytes": 1948
+        }
+      ]
+    },
+    {
+      "id": "integral",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\\int_0^1 x^2\\,dx=\\frac{1}{3}\\]",
+          "texSource": "\\int_0^1 x^2\\,dx=\\frac{1}{3}",
+          "display": true,
+          "ok": true,
+          "width": 101,
+          "height": 42,
+          "pngBytes": 3847
+        }
+      ]
+    },
+    {
+      "id": "limit",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\\lim_{x\\to0}\\frac{\\sin x}{x}=1\\]",
+          "texSource": "\\lim_{x\\to0}\\frac{\\sin x}{x}=1",
+          "display": true,
+          "ok": true,
+          "width": 96,
+          "height": 36,
+          "pngBytes": 3245
+        }
+      ]
+    },
+    {
+      "id": "probability",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[P(A\\mid B)=\\frac{P(A\\cap B)}{P(B)}\\]",
+          "texSource": "P(A\\mid B)=\\frac{P(A\\cap B)}{P(B)}",
+          "display": true,
+          "ok": true,
+          "width": 159,
+          "height": 41,
+          "pngBytes": 6608
+        }
+      ]
+    },
+    {
+      "id": "sets",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[S=\\{x\\in\\mathbb R:x\\ge0\\}\\setminus\\varnothing\\]",
+          "texSource": "S=\\{x\\in\\mathbb R:x\\ge0\\}\\setminus\\varnothing",
+          "display": true,
+          "ok": true,
+          "width": 169.5,
+          "height": 18,
+          "pngBytes": 4886
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}\\]",
+          "texSource": "\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}",
+          "display": true,
+          "ok": true,
+          "width": 58.5,
+          "height": 40.5,
+          "pngBytes": 3288
+        }
+      ]
+    },
+    {
+      "id": "cases",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[f(x)=\\begin{cases}x^2&x\\ge0\\\\-x&x<0\\end{cases}\\]",
+          "texSource": "f(x)=\\begin{cases}x^2&x\\ge0\\\\-x&x<0\\end{cases}",
+          "display": true,
+          "ok": true,
+          "width": 142,
+          "height": 40.5,
+          "pngBytes": 6040
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\\begin{aligned}(a+b)^2&=a^2+2ab+b^2\\\\&\\ge0\\end{aligned}\\]",
+          "texSource": "\\begin{aligned}(a+b)^2&=a^2+2ab+b^2\\\\&\\ge0\\end{aligned}",
+          "display": true,
+          "ok": true,
+          "width": 169.5,
+          "height": 41,
+          "pngBytes": 5630
+        }
+      ]
+    },
+    {
+      "id": "boxed",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\\boxed{x^2+y^2=z^2}\\]",
+          "texSource": "\\boxed{x^2+y^2=z^2}",
+          "display": true,
+          "ok": true,
+          "width": 97,
+          "height": 28.5,
+          "pngBytes": 2636
+        }
+      ]
+    },
+    {
+      "id": "tag",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[a+b=c\\tag{12}\\]",
+          "texSource": "a+b=c\\tag{12}",
+          "display": true,
+          "ok": true,
+          "width": 126,
+          "height": 18,
+          "pngBytes": 2736
+        }
+      ]
+    },
+    {
+      "id": "bold-symbol",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$\\boldsymbol\\alpha+\\mathbf v$",
+          "texSource": "\\boldsymbol\\alpha+\\mathbf v",
+          "display": false,
+          "ok": true,
+          "width": 43.5,
+          "height": 13,
+          "pngBytes": 1029
+        }
+      ]
+    },
+    {
+      "id": "cjk",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$\\alpha_{\\text{学习率}}$",
+          "texSource": "\\alpha_{\\text{学习率}}",
+          "display": false,
+          "ok": true,
+          "width": 48,
+          "height": 14.5,
+          "pngBytes": 1788
+        }
+      ]
+    },
+    {
+      "id": "missing-font",
+      "expectation": "unavailable",
+      "formulas": [
+        {
+          "exactSource": "$\\text{缺字测试}$",
+          "texSource": "\\text{缺字测试}",
+          "display": false,
+          "ok": false,
+          "reason": "unavailable"
+        }
+      ]
+    },
+    {
+      "id": "bold-cjk",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\\textbf{中文标签}+x\\]",
+          "texSource": "\\textbf{中文标签}+x",
+          "display": true,
+          "ok": true,
+          "width": 95,
+          "height": 18.5,
+          "pngBytes": 3799
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\n   \\Delta(S)=\n   \\log\\frac{P(S)}{\\widehat P(S)}\n   +\\underbrace{\\log\\!\\left(1-\\epsilon_0+\\frac{\\epsilon_0}{P(S)}\\right)}_{\\text{随集合变化，不能被共同 offset 吸收}}\n   +\\underbrace{\\widehat b_q-\\log\\bar P(\\varnothing)}_{\\text{共同 offset}},\n   \\]",
+          "texSource": "\n   \\Delta(S)=\n   \\log\\frac{P(S)}{\\widehat P(S)}\n   +\\underbrace{\\log\\!\\left(1-\\epsilon_0+\\frac{\\epsilon_0}{P(S)}\\right)}_{\\text{随集合变化，不能被共同 offset 吸收}}\n   +\\underbrace{\\widehat b_q-\\log\\bar P(\\varnothing)}_{\\text{共同 offset}},\n   ",
+          "display": true,
+          "ok": true,
+          "width": 440.5,
+          "height": 66,
+          "pngBytes": 26766
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[a_{0}x^{0}+a_{1}x^{1}+a_{2}x^{2}+a_{3}x^{3}+a_{4}x^{4}+a_{5}x^{5}+a_{6}x^{6}+a_{7}x^{7}+a_{8}x^{8}+a_{9}x^{9}+a_{10}x^{10}+a_{11}x^{11}+a_{12}x^{12}+a_{13}x^{13}+a_{14}x^{14}+a_{15}x^{15}+a_{16}x^{16}+a_{17}x^{17}+a_{18}x^{18}+a_{19}x^{19}+a_{20}x^{20}+a_{21}x^{21}+a_{22}x^{22}+a_{23}x^{23}\\]",
+          "texSource": "a_{0}x^{0}+a_{1}x^{1}+a_{2}x^{2}+a_{3}x^{3}+a_{4}x^{4}+a_{5}x^{5}+a_{6}x^{6}+a_{7}x^{7}+a_{8}x^{8}+a_{9}x^{9}+a_{10}x^{10}+a_{11}x^{11}+a_{12}x^{12}+a_{13}x^{13}+a_{14}x^{14}+a_{15}x^{15}+a_{16}x^{16}+a_{17}x^{17}+a_{18}x^{18}+a_{19}x^{19}+a_{20}x^{20}+a_{21}x^{21}+a_{22}x^{22}+a_{23}x^{23}",
+          "display": true,
+          "ok": true,
+          "width": 1368.5,
+          "height": 19,
+          "pngBytes": 36950
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$\\prod_{i=1}^{n}\\left(1+\\frac{x_i^2+y_i^2}{1+z_i^2}\\right)=\\frac{P(S\\mid Q)}{P(S)}+\\frac{P(S\\mid R)}{P(R)}$",
+          "texSource": "\\prod_{i=1}^{n}\\left(1+\\frac{x_i^2+y_i^2}{1+z_i^2}\\right)=\\frac{P(S\\mid Q)}{P(S)}+\\frac{P(S\\mid R)}{P(R)}",
+          "display": false,
+          "ok": true,
+          "width": 252,
+          "height": 31,
+          "pngBytes": 10756
+        }
+      ]
+    },
+    {
+      "id": "tall-matrix",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\[\\begin{pmatrix}0&1\\\\1&2\\\\2&3\\\\3&4\\\\4&5\\\\5&6\\\\6&7\\\\7&8\\\\8&9\\\\9&10\\\\10&11\\\\11&12\\end{pmatrix}\\]",
+          "texSource": "\\begin{pmatrix}0&1\\\\1&2\\\\2&3\\\\3&4\\\\4&5\\\\5&6\\\\6&7\\\\7&8\\\\8&9\\\\9&10\\\\10&11\\\\11&12\\end{pmatrix}",
+          "display": true,
+          "ok": true,
+          "width": 78,
+          "height": 314,
+          "pngBytes": 14559
+        }
+      ]
+    },
+    {
+      "id": "mathclap",
+      "expectation": "new-profile",
+      "formulas": [
+        {
+          "exactSource": "\\[\\sum_{\\mathclap{1\\le i\\le j\\le n}}a_{ij}\\]",
+          "texSource": "\\sum_{\\mathclap{1\\le i\\le j\\le n}}a_{ij}",
+          "display": true,
+          "ok": true,
+          "width": 58,
+          "height": 39,
+          "pngBytes": 3252
+        }
+      ]
+    },
+    {
+      "id": "coloneqq",
+      "expectation": "new-profile",
+      "formulas": [
+        {
+          "exactSource": "\\[f(x)\\coloneqq x^2\\]",
+          "texSource": "f(x)\\coloneqq x^2",
+          "display": true,
+          "ok": true,
+          "width": 73.5,
+          "height": 20.5,
+          "pngBytes": 2435
+        }
+      ]
+    },
+    {
+      "id": "cancel",
+      "expectation": "new-profile",
+      "formulas": [
+        {
+          "exactSource": "\\[\\frac{\\cancel{x}y}{\\cancel{x}}=y\\]",
+          "texSource": "\\frac{\\cancel{x}y}{\\cancel{x}}=y",
+          "display": true,
+          "ok": true,
+          "width": 64,
+          "height": 41,
+          "pngBytes": 2733
+        }
+      ]
+    },
+    {
+      "id": "cancelto",
+      "expectation": "new-profile",
+      "formulas": [
+        {
+          "exactSource": "\\[\\cancelto{0}{x}+1=1\\]",
+          "texSource": "\\cancelto{0}{x}+1=1",
+          "display": true,
+          "ok": true,
+          "width": 84,
+          "height": 21.5,
+          "pngBytes": 1703
+        }
+      ]
+    },
+    {
+      "id": "local-macro",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$\\newcommand{\\local}[1]{\\mathbf{#1}}\\local{x}$",
+          "texSource": "\\newcommand{\\local}[1]{\\mathbf{#1}}\\local{x}",
+          "display": false,
+          "ok": true,
+          "width": 12,
+          "height": 9.5,
+          "pngBytes": 444
+        }
+      ]
+    },
+    {
+      "id": "parenthesis-delimiter",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "\\(x+y\\)",
+          "texSource": "x+y",
+          "display": false,
+          "ok": true,
+          "width": 39,
+          "height": 15,
+          "pngBytes": 1147
+        }
+      ]
+    },
+    {
+      "id": "dollar-display",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$$\nx+y\n$$",
+          "texSource": "\nx+y\n",
+          "display": true,
+          "ok": true,
+          "width": 39,
+          "height": 15,
+          "pngBytes": 1147
+        }
+      ]
+    },
+    {
+      "id": "redundant-fence",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "```math\n\\[x+y\\]\n```",
+          "texSource": "x+y",
+          "display": true,
+          "ok": true,
+          "width": 39,
+          "height": 15,
+          "pngBytes": 1147
+        }
+      ]
+    },
+    {
+      "id": "nested-quote-list",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$a_1$",
+          "texSource": "a_1",
+          "display": false,
+          "ok": true,
+          "width": 17.5,
+          "height": 11.5,
+          "pngBytes": 644
+        },
+        {
+          "exactSource": "$b^2$",
+          "texSource": "b^2",
+          "display": false,
+          "ok": true,
+          "width": 16,
+          "height": 16,
+          "pngBytes": 835
+        },
+        {
+          "exactSource": "$c$",
+          "texSource": "c",
+          "display": false,
+          "ok": true,
+          "width": 9,
+          "height": 9.5,
+          "pngBytes": 402
+        }
+      ]
+    },
+    {
+      "id": "table",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$a^2$",
+          "texSource": "a^2",
+          "display": false,
+          "ok": true,
+          "width": 17.5,
+          "height": 16,
+          "pngBytes": 805
+        },
+        {
+          "exactSource": "$\\frac{1}{x}$",
+          "texSource": "\\frac{1}{x}",
+          "display": false,
+          "ok": true,
+          "width": 16,
+          "height": 21.5,
+          "pngBytes": 543
+        }
+      ]
+    },
+    {
+      "id": "mixed-code",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$x$",
+          "texSource": "x",
+          "display": false,
+          "ok": true,
+          "width": 11.5,
+          "height": 9.5,
+          "pngBytes": 522
+        }
+      ]
+    },
+    {
+      "id": "currency",
+      "expectation": "source",
+      "formulas": []
+    },
+    {
+      "id": "fenced-code",
+      "expectation": "source",
+      "formulas": []
+    },
+    {
+      "id": "incomplete-inline",
+      "expectation": "source",
+      "formulas": []
+    },
+    {
+      "id": "incomplete-display",
+      "expectation": "source",
+      "formulas": []
+    },
+    {
+      "id": "complete-then-stream",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$x$",
+          "texSource": "x",
+          "display": false,
+          "ok": true,
+          "width": 11.5,
+          "height": 9.5,
+          "pngBytes": 522
+        }
+      ]
+    },
+    {
+      "id": "invalid-tex",
+      "expectation": "invalid",
+      "formulas": [
+        {
+          "exactSource": "$\\frac{$",
+          "texSource": "\\frac{",
+          "display": false,
+          "ok": false,
+          "reason": "invalid"
+        }
+      ]
+    },
+    {
+      "id": "unsupported-physics",
+      "expectation": "invalid",
+      "formulas": [
+        {
+          "exactSource": "$\\pdv{x}{y}$",
+          "texSource": "\\pdv{x}{y}",
+          "display": false,
+          "ok": false,
+          "reason": "invalid"
+        }
+      ]
+    },
+    {
+      "id": "host-blank-line",
+      "expectation": "host-gap",
+      "formulas": [
+        {
+          "exactSource": "$$\na^2\n\n+b^2=c^2\n$$",
+          "texSource": "\na^2\n\n+b^2=c^2\n",
+          "display": true,
+          "ok": true,
+          "width": 86.5,
+          "height": 17.5,
+          "pngBytes": 2225
+        }
+      ]
+    },
+    {
+      "id": "host-image",
+      "expectation": "host-gap",
+      "formulas": [
+        {
+          "exactSource": "$x$",
+          "texSource": "x",
+          "display": false,
+          "ok": true,
+          "width": 11.5,
+          "height": 9.5,
+          "pngBytes": 522
+        }
+      ]
+    },
+    {
+      "id": "host-file-link",
+      "expectation": "host-gap",
+      "formulas": [
+        {
+          "exactSource": "$x$",
+          "texSource": "x",
+          "display": false,
+          "ok": true,
+          "width": 11.5,
+          "height": 9.5,
+          "pngBytes": 522
+        }
+      ]
+    },
+    {
+      "id": "entity-source",
+      "expectation": "render",
+      "formulas": [
+        {
+          "exactSource": "$a&lt;b$",
+          "texSource": "a&lt;b",
+          "display": false,
+          "ok": true,
+          "width": 39,
+          "height": 14,
+          "pngBytes": 1212
+        }
+      ]
+    }
+  ]
+}

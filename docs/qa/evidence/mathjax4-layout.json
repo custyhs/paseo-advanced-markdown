@@ -1,0 +1,1328 @@
+{
+  "measuredAt": "2026-09-16T07:54:34.965Z",
+  "version": "4.0.0",
+  "font": "mathjax-newcm 4.0.0",
+  "note": "SVG typesetting only, no production sanitizer/raster/visual acceptance",
+  "results": [
+    {
+      "id": "long-polynomial",
+      "width": 320,
+      "mode": "display-overflow",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 22.676958,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 86397,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "193.2ex",
+          "height": "2.392ex",
+          "viewBox": "0 -891.7 85394.3 1057.3"
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "width": 320,
+      "mode": "display-linebreak",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 16.616667000000007,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 86719,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "40.626ex",
+          "height": "17.722ex",
+          "viewBox": "0 -891.7 17956.9 7833.3"
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "width": 320,
+      "mode": "inline-break",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 16.443416999999982,
+      "svgCount": 24,
+      "topLevelSvgCount": 24,
+      "outputBytes": 100093,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "4.466ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 1974.1 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.47ex",
+          "viewBox": "0 -841.7 2974.3 1091.7"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.468ex",
+          "viewBox": "0 -841 2974.3 1091"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.47ex",
+          "viewBox": "0 -841.7 3681.4 1091.7"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.468ex",
+          "viewBox": "0 -841 3681.4 1091"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "width": 320,
+      "mode": "inline-single",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 14.241040999999996,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 86382,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "193.2ex",
+          "height": "2.279ex",
+          "viewBox": "0 -841.7 85394.3 1007.3"
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "width": 800,
+      "mode": "display-overflow",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 14.309000000000026,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 86397,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "193.2ex",
+          "height": "2.392ex",
+          "viewBox": "0 -891.7 85394.3 1057.3"
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "width": 800,
+      "mode": "display-linebreak",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.930999999999983,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 86548,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "96.647ex",
+          "height": "5.619ex",
+          "viewBox": "0 -891.7 42718 2483.4"
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "width": 800,
+      "mode": "inline-break",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 14.011415999999997,
+      "svgCount": 24,
+      "topLevelSvgCount": 24,
+      "outputBytes": 100093,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "4.466ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 1974.1 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.47ex",
+          "viewBox": "0 -841.7 2974.3 1091.7"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.468ex",
+          "viewBox": "0 -841 2974.3 1091"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "6.729ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 2974.3 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.47ex",
+          "viewBox": "0 -841.7 3681.4 1091.7"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.468ex",
+          "viewBox": "0 -841 3681.4 1091"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        },
+        {
+          "width": "8.329ex",
+          "height": "2.452ex",
+          "viewBox": "0 -833.9 3681.4 1083.9"
+        }
+      ]
+    },
+    {
+      "id": "long-polynomial",
+      "width": 800,
+      "mode": "inline-single",
+      "sourceHash": "462af90a0a99a708b9f6750c6bb7ae0a54f885da31e03d932d99b34d0fcf6155",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.707082999999983,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 86382,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 147,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "193.2ex",
+          "height": "2.279ex",
+          "viewBox": "0 -841.7 85394.3 1007.3"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 320,
+      "mode": "display-overflow",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 16.275000000000006,
+      "svgCount": 5,
+      "topLevelSvgCount": 1,
+      "outputBytes": 34799,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "62.214ex",
+          "height": "8.426ex",
+          "viewBox": "0 -1456 27498.7 3724.2"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 320,
+      "mode": "display-linebreak",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.293499999999995,
+      "svgCount": 5,
+      "topLevelSvgCount": 1,
+      "outputBytes": 35022,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "27.864ex",
+          "height": "21.535ex",
+          "viewBox": "0 -1456 12316.1 9518.5"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 320,
+      "mode": "inline-break",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 13.15504199999998,
+      "svgCount": 8,
+      "topLevelSvgCount": 4,
+      "outputBytes": 36527,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "5.104ex",
+          "height": "2.262ex",
+          "viewBox": "0 -750 2256 1000"
+        },
+        {
+          "width": "10.135ex",
+          "height": "4.098ex",
+          "viewBox": "0 -1044.3 4479.8 1811.3"
+        },
+        {
+          "width": "27.864ex",
+          "height": "8.403ex",
+          "viewBox": "0 -1446 12316.1 3714.2"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "16.034ex",
+          "height": "6.057ex",
+          "viewBox": "0 -1078 7086.9 2677.3"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 320,
+      "mode": "inline-single",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.868875000000003,
+      "svgCount": 5,
+      "topLevelSvgCount": 1,
+      "outputBytes": 34869,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "60.772ex",
+          "height": "8.403ex",
+          "viewBox": "0 -1446 26861 3714.2"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 800,
+      "mode": "display-overflow",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.807082999999977,
+      "svgCount": 5,
+      "topLevelSvgCount": 1,
+      "outputBytes": 34799,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "62.214ex",
+          "height": "8.426ex",
+          "viewBox": "0 -1456 27498.7 3724.2"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 800,
+      "mode": "display-linebreak",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.434792000000016,
+      "svgCount": 5,
+      "topLevelSvgCount": 1,
+      "outputBytes": 34800,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "62.214ex",
+          "height": "8.426ex",
+          "viewBox": "0 -1456 27498.7 3724.2"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 800,
+      "mode": "inline-break",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 14.798833000000002,
+      "svgCount": 8,
+      "topLevelSvgCount": 4,
+      "outputBytes": 36527,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "5.104ex",
+          "height": "2.262ex",
+          "viewBox": "0 -750 2256 1000"
+        },
+        {
+          "width": "10.135ex",
+          "height": "4.098ex",
+          "viewBox": "0 -1044.3 4479.8 1811.3"
+        },
+        {
+          "width": "27.864ex",
+          "height": "8.403ex",
+          "viewBox": "0 -1446 12316.1 3714.2"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "16.034ex",
+          "height": "6.057ex",
+          "viewBox": "0 -1078 7086.9 2677.3"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "user-delta",
+      "width": 800,
+      "mode": "inline-single",
+      "sourceHash": "6e089e853173bb8e447f7ac7143a7334946f57108be52624150492eb1116b2c0",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.619040999999982,
+      "svgCount": 5,
+      "topLevelSvgCount": 1,
+      "outputBytes": 34869,
+      "textNodes": 3,
+      "foreignObjectNodes": 0,
+      "pathNodes": 75,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "60.772ex",
+          "height": "8.403ex",
+          "viewBox": "0 -1446 26861 3714.2"
+        },
+        {
+          "width": "2773.6",
+          "height": "306",
+          "viewBox": "693.4 -394 2773.6 306"
+        },
+        {
+          "width": "2774.6",
+          "height": "306",
+          "viewBox": "693.6 -394 2774.6 306"
+        },
+        {
+          "width": "1100.9",
+          "height": "306",
+          "viewBox": "275.2 -394 1100.9 306"
+        },
+        {
+          "width": "1101.9",
+          "height": "306",
+          "viewBox": "275.5 -394 1101.9 306"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 320,
+      "mode": "display-overflow",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.77962500000001,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10175,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 320,
+      "mode": "display-linebreak",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.306667000000004,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10176,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 320,
+      "mode": "inline-break",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.281499999999994,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10160,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 320,
+      "mode": "inline-single",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.875042000000008,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10160,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 800,
+      "mode": "display-overflow",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 10.227708000000007,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10175,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 800,
+      "mode": "display-linebreak",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 10.367917000000034,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10176,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 800,
+      "mode": "inline-break",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 10.710499999999968,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10160,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "aligned",
+      "width": 800,
+      "mode": "inline-single",
+      "sourceHash": "c32c3e4601ad5b0d44c9815d38415a465a0ecf81afcb5724cd277c9dded243cb",
+      "sourceUnchanged": true,
+      "elapsedMs": 10.75687499999998,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 10160,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 18,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "23.671ex",
+          "height": "5.507ex",
+          "viewBox": "0 -1467 10462.5 2433.9"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 320,
+      "mode": "display-overflow",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.093000000000018,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4222,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 320,
+      "mode": "display-linebreak",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 10.011624999999981,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4223,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 320,
+      "mode": "inline-break",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 9.920542000000012,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4207,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 320,
+      "mode": "inline-single",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 9.908166999999992,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4207,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 800,
+      "mode": "display-overflow",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 9.80479200000002,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4222,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 800,
+      "mode": "display-linebreak",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 14.188750000000027,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4223,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 800,
+      "mode": "inline-break",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 9.847291999999982,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4207,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "matrix",
+      "width": 800,
+      "mode": "inline-single",
+      "sourceHash": "07cb8af7adf91e894af3e204fdc36bf2bdd00c8f7fdd44603498d33fb8f2192b",
+      "sourceUnchanged": true,
+      "elapsedMs": 9.806916999999999,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 4207,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 6,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "7.966ex",
+          "height": "5.43ex",
+          "viewBox": "0 -1450 3521 2400"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 320,
+      "mode": "display-overflow",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.451333000000034,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 25541,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "44.167ex",
+          "height": "6.765ex",
+          "viewBox": "0 -1745 19521.8 2990"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 320,
+      "mode": "display-linebreak",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.093875000000025,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 25709,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "24.275ex",
+          "height": "12.683ex",
+          "viewBox": "0 -1745 10729.3 5606"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 320,
+      "mode": "inline-break",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.195583000000056,
+      "svgCount": 3,
+      "topLevelSvgCount": 3,
+      "outputBytes": 26360,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "17.231ex",
+          "height": "4.054ex",
+          "viewBox": "0 -1146 7616.2 1792"
+        },
+        {
+          "width": "8.577ex",
+          "height": "3.6ex",
+          "viewBox": "0 -1047.1 3791 1591.4"
+        },
+        {
+          "width": "8.4ex",
+          "height": "3.6ex",
+          "viewBox": "0 -1047.1 3712.9 1591.4"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 320,
+      "mode": "inline-single",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.202583000000004,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 25540,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "35.34ex",
+          "height": "4.054ex",
+          "viewBox": "0 -1146 15620.1 1792"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 800,
+      "mode": "display-overflow",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.255957999999964,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 25541,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "44.167ex",
+          "height": "6.765ex",
+          "viewBox": "0 -1745 19521.8 2990"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 800,
+      "mode": "display-linebreak",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.318540999999982,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 25542,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "44.167ex",
+          "height": "6.765ex",
+          "viewBox": "0 -1745 19521.8 2990"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 800,
+      "mode": "inline-break",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 11.075624999999945,
+      "svgCount": 3,
+      "topLevelSvgCount": 3,
+      "outputBytes": 26360,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "17.231ex",
+          "height": "4.054ex",
+          "viewBox": "0 -1146 7616.2 1792"
+        },
+        {
+          "width": "8.577ex",
+          "height": "3.6ex",
+          "viewBox": "0 -1047.1 3791 1591.4"
+        },
+        {
+          "width": "8.4ex",
+          "height": "3.6ex",
+          "viewBox": "0 -1047.1 3712.9 1591.4"
+        }
+      ]
+    },
+    {
+      "id": "long-inline",
+      "width": 800,
+      "mode": "inline-single",
+      "sourceHash": "f40b4de69accbe642e8e1872ee5e631578acd450049b6d5be6181958c9aa074e",
+      "sourceUnchanged": true,
+      "elapsedMs": 12.362167,
+      "svgCount": 1,
+      "topLevelSvgCount": 1,
+      "outputBytes": 25540,
+      "textNodes": 0,
+      "foreignObjectNodes": 0,
+      "pathNodes": 43,
+      "mathErrors": 0,
+      "bounds": [
+        {
+          "width": "35.34ex",
+          "height": "4.054ex",
+          "viewBox": "0 -1146 15620.1 1792"
+        }
+      ]
+    }
+  ]
+}

@@ -1,43 +1,40 @@
-// Adapted from paseo-math (Apache-2.0), client/formula.tsx at
-// https://github.com/q5m-ai/paseo-math/tree/3644aa73d40f2e4e51f7a4ef48b22b668db017d8
-// Changes: shared image cache, block-level source toggle, copy, and retry
-// actions, module-disabled source display, and theme-aware status text.
-import { useRpc } from "@getpaseo/plugin/client";
+// Adapted from paseo-math (Apache-2.0); see NOTICE.
 import { copyText, useToast } from "@getpaseo/plugin/client/react-native";
 import type { PluginTheme } from "@getpaseo/plugin";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useContext, useEffect, useState, type ReactNode } from "react";
 import {
   Image,
+  PixelRatio,
   Platform,
+  Pressable,
   ScrollView,
   Text,
+  View,
   useWindowDimensions,
   type TextStyle,
 } from "react-native";
-import {
-  renderMath,
-  isRetryableMathResult,
-  type MathRenderInput,
-  type MathRenderOutput,
-} from "../shared/rpc.js";
-import { MAX_MATH_EXPRESSION } from "../shared/limits.js";
+import { isRetryableMathResult, type MathRenderOutput } from "../shared/rpc.js";
 import { ActionBar } from "./action-bar.js";
 import { CodeBlock } from "./code-block.js";
-import { formulaScale } from "./formula-scale.js";
-import {
-  forgetRender,
-  peekRender,
-  renderKey,
-  requestRender,
-  type CachedRender,
-} from "./render-cache.js";
+import { preferredFormulaScale } from "./formula-scale.js";
+import { MathLayoutContext } from "./math-context.js";
+import { useMathInspector } from "./math-inspector.js";
+import { chooseMathDensity, fitFormula } from "./math-layout.js";
+import type { CachedRender } from "./render-cache.js";
+import { useMathImage } from "./use-math-image.js";
 
-type FormulaProps = {
+export type FormulaProps = {
+  formulaId: string;
   expression: string;
-  /** Exact source range including delimiters; the copy target. */
+  /** Original expression body before entity decoding or normalization. */
+  texSource?: string;
+  /** Exact source range including delimiters or fence; never reconstructed. */
   source: string;
   display: boolean;
   block: boolean;
+  promoted?: boolean;
+  onOpenLink?: () => void;
+  mathScale?: number;
   color: string;
   hostId: string;
   theme: PluginTheme;
@@ -52,96 +49,95 @@ function statusFor(result: CachedRender<MathRenderOutput> | undefined, eligible:
   if (result === undefined) return "Rendering formula…";
   if (result === null) return "Host unreachable; showing source";
   if (result.ok) return "";
-  // The daemon explains environment problems (such as a missing text font);
-  // only a bare failure is described as invalid TeX.
-  if (result.message) return result.message;
-  return result.reason === "too-large"
-    ? "Formula is too large to render"
-    : "Invalid TeX; showing source";
+  return (
+    result.message ??
+    (result.reason === "too-large"
+      ? "Formula is too large to render"
+      : "Invalid TeX; showing source")
+  );
 }
 
-export const Formula = memo(function Formula({
-  expression,
-  source,
-  display,
-  block,
-  color,
-  hostId,
-  theme,
-  compact,
-  enabled,
-  textStyle,
-  maxInlineWidth,
-}: FormulaProps) {
-  const call = useRpc(renderMath);
-  const callRef = useRef(call);
-  callRef.current = call;
-  const input: MathRenderInput = { expression, display, color };
-  const key = renderKey("math", hostId, input);
-  const [settled, setSettled] = useState<{ key: string; result: CachedRender<MathRenderOutput> }>();
+export const Formula = memo(function Formula(props: FormulaProps) {
+  const {
+    expression,
+    source,
+    texSource,
+    display,
+    block,
+    promoted,
+    color,
+    hostId,
+    theme,
+    compact,
+    enabled,
+    textStyle,
+    maxInlineWidth,
+    formulaId,
+    mathScale,
+    onOpenLink,
+  } = props;
+  const layout = useContext(MathLayoutContext);
+  const inspect = useMathInspector();
+  const toast = useToast();
+  const { fontScale } = useWindowDimensions();
+  const [blockWidth, setBlockWidth] = useState(0);
   const [failedImage, setFailedImage] = useState<string>();
   const [showSource, setShowSource] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const { fontScale } = useWindowDimensions();
-  const cached = peekRender<MathRenderOutput>(key);
-  const result = settled?.key === key ? settled.result : cached;
-  const eligible = enabled && expression.length > 0 && expression.length <= MAX_MATH_EXPRESSION;
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: key already encodes expression, display, and color; attempt forces a retry
+  const fontSize = textStyle.fontSize ?? 16;
+  const preferredScale = preferredFormulaScale({
+    fontSize,
+    fontScale,
+    block,
+    display,
+    platform: Platform.OS,
+    mathScale,
+  });
+  // Preferred density also covers the permitted 15% fit reduction. Resizing a
+  // paragraph therefore never starts a second RPC just to discard image detail.
+  const detail = useMathImage({
+    expression,
+    display,
+    color,
+    hostId,
+    enabled,
+    density: chooseMathDensity(PixelRatio.get(), preferredScale),
+  });
+  const { result, eligible, key } = detail;
+  const availableWidth = block ? blockWidth : (layout?.width ?? maxInlineWidth);
+  const fit = fitFormula({ width: result?.ok ? result.width : 0, preferredScale, availableWidth });
+  const reportOverflow = layout?.reportOverflow;
   useEffect(() => {
-    if (!eligible) return;
-    let current = true;
-    void requestRender<MathRenderInput, MathRenderOutput>(
-      key,
-      { expression, display, color },
-      callRef.current,
-      { retryableReasons: isRetryableMathResult },
-    ).then((next) => {
-      if (current) setSettled({ key, result: next });
-    });
-    return () => {
-      current = false;
-    };
-  }, [key, expression, display, color, eligible, attempt]);
-
-  const retry = useCallback(() => {
-    forgetRender(key);
-    setSettled(undefined);
+    if (!block)
+      reportOverflow?.(formulaId, !!(enabled && eligible && fit.measured && fit.overflow));
+  }, [block, enabled, eligible, fit.measured, fit.overflow, formulaId, reportOverflow]);
+  const asBlock = block || promoted;
+  const usable = eligible && result?.ok && failedImage !== key && fit.measured;
+  const retry = () => {
     setFailedImage(undefined);
-    setAttempt((value) => value + 1);
-  }, [key]);
-
+    detail.retry();
+  };
+  const copy = async (text: string, label: string) => {
+    try {
+      await copyText(text);
+      toast.show(`${label} copied`, { variant: "success" });
+    } catch {
+      toast.error("Unable to copy the formula.");
+    }
+  };
   const sourceText = (
     <Text selectable style={textStyle} accessibilityLabel={source}>
       {source}
     </Text>
   );
-
-  const usable = eligible && result?.ok && failedImage !== key && (block || maxInlineWidth > 1);
-  if (!usable || (block && showSource)) {
+  let body: ReactNode;
+  if (!usable || showSource || (!asBlock && fit.overflow)) {
     const status = enabled ? statusFor(result, eligible) : "Math module is off; showing source";
     const retryable =
       enabled &&
       (result === null ||
         failedImage === key ||
         (result !== undefined && isRetryableMathResult(result)));
-    if (!block)
-      return retryable ? (
-        <Text style={textStyle}>
-          {sourceText}{" "}
-          <Text
-            accessibilityRole="button"
-            accessibilityLabel={`Retry formula: ${status}`}
-            onPress={retry}
-            style={{ color: theme.colors.accent }}
-          >
-            Retry
-          </Text>
-        </Text>
-      ) : (
-        sourceText
-      );
-    return (
+    body = asBlock ? (
       <CodeBlock
         source={source}
         label="math"
@@ -165,115 +161,111 @@ export const Formula = memo(function Formula({
             : []),
         ]}
       />
+    ) : retryable ? (
+      <Text style={textStyle}>
+        {sourceText}{" "}
+        <Text
+          accessibilityRole="button"
+          accessibilityLabel={`Retry formula: ${status}`}
+          onPress={retry}
+          style={{ color: theme.colors.accent }}
+        >
+          Retry
+        </Text>
+      </Text>
+    ) : (
+      sourceText
     );
-  }
-
-  const fontSize = textStyle.fontSize ?? 16;
-  const scale = formulaScale({
-    fontSize,
-    fontScale,
-    block,
-    display,
-    platform: Platform.OS,
-    maxInlineWidth,
-    width: result.width,
-  });
-  const width = result.width * scale;
-  const height = result.height * scale;
-  const descent = Math.max(0, result.height - result.baseline) * scale;
-  const image = (
-    <Image
-      key={key}
-      source={{ uri: `data:image/png;base64,${result.png}` }}
-      accessible
-      accessibilityLabel={source}
-      resizeMode="contain"
-      fadeDuration={0}
-      onError={() => setFailedImage(key)}
-      style={{
-        width,
-        height,
-        ...(block ? {} : { transform: [{ translateY: descent }] }),
-      }}
-    />
-  );
-
-  if (block) {
-    return (
-      <BlockFormula
-        image={image}
-        source={source}
-        theme={theme}
-        compact={compact}
-        onShowSource={() => setShowSource(true)}
+  } else {
+    const width = result.width * fit.scale;
+    const height = result.height * fit.scale;
+    const descent = Math.max(0, result.height - result.baseline) * fit.scale;
+    const open = (event?: { stopPropagation(): void }) => {
+      event?.stopPropagation();
+      inspect({ ...props, preferredScale, image: result });
+    };
+    const image = (
+      <Image
+        key={key}
+        source={{ uri: `data:image/png;base64,${result.png}` }}
+        accessible
+        accessibilityLabel={source}
+        resizeMode="contain"
+        fadeDuration={0}
+        onError={() => setFailedImage(key)}
+        style={{ width, height, ...(asBlock ? {} : { transform: [{ translateY: descent }] }) }}
       />
     );
-  }
-
-  // Native inline images occupy a text attachment ending at the baseline.
-  // Shift its descender below that baseline, reserving enough line height for
-  // both the attachment and descender instead of clipping tall fractions.
-  return (
-    <Text
-      accessible
-      accessibilityLabel={source}
-      style={[
-        textStyle,
-        {
-          lineHeight: Math.max(
-            textStyle.lineHeight ?? fontSize * 1.5,
-            (height + descent) / fontScale,
-          ),
-        },
-      ]}
-    >
-      {image}
-    </Text>
-  );
-});
-
-function BlockFormula({
-  image,
-  source,
-  theme,
-  compact,
-  onShowSource,
-}: {
-  image: React.ReactElement;
-  source: string;
-  theme: PluginTheme;
-  compact: boolean;
-  onShowSource(): void;
-}) {
-  const toast = useToast();
-  const copy = useCallback(async () => {
-    try {
-      await copyText(source);
-      toast.show("Formula source copied", { variant: "success" });
-    } catch {
-      toast.error("Unable to copy the source.");
-    }
-  }, [source, toast]);
-  return (
-    <>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator
-        removeClippedSubviews={false}
-        style={{ width: "100%", flexGrow: 0, marginTop: 6 }}
-        contentContainerStyle={{ padding: 4 }}
-        accessibilityLabel={`Formula: ${source}`}
+    body = asBlock ? (
+      <View style={{ minWidth: 0, width: "100%", marginVertical: 4 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator
+          nestedScrollEnabled
+          style={{ maxWidth: "100%" }}
+        >
+          <Pressable accessibilityRole="button" accessibilityLabel="Inspect formula" onPress={open}>
+            {image}
+          </Pressable>
+        </ScrollView>
+        <ActionBar
+          theme={theme}
+          compact={compact}
+          hint={fit.overflow ? "Scroll to read · Expand for details" : undefined}
+          actions={[
+            { key: "expand", icon: "Maximize2", label: "Expand", onPress: open },
+            {
+              key: "tex",
+              icon: "Copy",
+              label: "Copy TeX",
+              onPress: () => {
+                void copy(texSource ?? expression, "TeX");
+              },
+            },
+            {
+              key: "source",
+              icon: "Copy",
+              label: "Copy source",
+              onPress: () => {
+                void copy(source, "Formula source");
+              },
+            },
+            { key: "show", icon: "Code", label: "Show source", onPress: () => setShowSource(true) },
+            ...(onOpenLink
+              ? [{ key: "link", icon: "ExternalLink", label: "Open link", onPress: onOpenLink }]
+              : []),
+          ]}
+        />
+      </View>
+    ) : (
+      <Text
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={`Inspect formula: ${source}`}
+        onPress={open}
+        style={[
+          textStyle,
+          {
+            lineHeight: Math.max(
+              textStyle.lineHeight ?? fontSize * 1.5,
+              (height + descent) / fontScale,
+            ),
+          },
+        ]}
       >
         {image}
-      </ScrollView>
-      <ActionBar
-        theme={theme}
-        compact={compact}
-        actions={[
-          { key: "copy", icon: "Copy", label: "Copy source", onPress: () => void copy() },
-          { key: "source", icon: "Code", label: "Show source", onPress: onShowSource },
-        ]}
-      />
-    </>
+      </Text>
+    );
+  }
+  // Always keep the measurement wrapper, including before the first RPC/layout.
+  return block ? (
+    <View
+      style={{ width: "100%", minWidth: 0 }}
+      onLayout={(event) => setBlockWidth(event.nativeEvent.layout.width)}
+    >
+      {body}
+    </View>
+  ) : (
+    body
   );
-}
+});

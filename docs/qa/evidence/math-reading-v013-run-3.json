@@ -1,0 +1,70 @@
+{
+  "measuredAt": "2026-09-16T07:50:32.738Z",
+  "corpus": "math-reading-v1",
+  "fixtureCount": 50,
+  "transcriptSha256": "00c0accf4efb7a95419b9ef66826da4c5c6c7cf6237cc7cd2b495ee741a6f45c",
+  "rendererSha256": "ca42ae086d10baf2bf1b60b50be886a56f6f403cd5b139bd8bd0a5361afaf812",
+  "root": "/Users/cyouwa/projects/paseo-advanced-markdown",
+  "commit": "839c81bb8b9af9bc5e8336c19fbeb2f682034aa3",
+  "version": "0.1.3",
+  "node": "v24.15.0",
+  "os": "Darwin 25.6.0 arm64",
+  "hardware": "Apple M4",
+  "ramBytes": 17179869184,
+  "density": 2,
+  "logicalEm": 16,
+  "textSize": 16,
+  "formulaSize": 1,
+  "color": "#dedede",
+  "scope": "direct host render; no daemon transport, browser, interaction, or native measurements",
+  "memoryBefore": {
+    "rss": 137904128,
+    "heapTotal": 68075520,
+    "heapUsed": 40259744,
+    "external": 15924853,
+    "arrayBuffers": 4997972
+  },
+  "results": [
+    {
+      "mode": "cold",
+      "totalMs": 205.392917,
+      "p50Ms": 2.762833999999998,
+      "p95Ms": 7.662583000000041,
+      "maxMs": 44.26204100000001,
+      "imageBytes": 181316,
+      "payloadBytes": 245041,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 342032384,
+      "memoryAfter": {
+        "rss": 342048768,
+        "heapTotal": 123781120,
+        "heapUsed": 74584056,
+        "external": 83268979,
+        "arrayBuffers": 48502711
+      },
+      "failures": []
+    },
+    {
+      "mode": "warm",
+      "totalMs": 0.2668750000000273,
+      "p50Ms": 0.0007919999999899119,
+      "p95Ms": 0.003333999999995285,
+      "maxMs": 0.0072920000000067375,
+      "imageBytes": 181316,
+      "payloadBytes": 245041,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 342048768,
+      "memoryAfter": {
+        "rss": 342048768,
+        "heapTotal": 123781120,
+        "heapUsed": 74910848,
+        "external": 83268979,
+        "arrayBuffers": 48502711
+      },
+      "failures": []
+    }
+  ],
+  "processMaxRssKiB": 356944
+}

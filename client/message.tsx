@@ -22,6 +22,8 @@ import Markdown, {
 import { CodeBlock, monospace } from "./code-block.js";
 import { Diagram } from "./diagram.js";
 import { Formula } from "./formula.js";
+import { MathTextGroup } from "./math-text-group.js";
+import { MathInspectorProvider } from "./math-inspector.js";
 import { moduleState } from "./module-state.js";
 import { colorHex, mermaidThemeFor } from "./theme.js";
 
@@ -139,7 +141,10 @@ const MemoizedMessage = memo(
         return (
           <Formula
             key={node.key}
+            formulaId={`${node.key}:${node.content}`}
             expression={node.content}
+            texSource={metaString(meta, "texSource")}
+            mathScale={modules.mathScale}
             source={source}
             display={metaBoolean(meta, "display") ?? node.type === MATH_BLOCK}
             block={node.type === MATH_BLOCK}
@@ -190,6 +195,11 @@ const MemoizedMessage = memo(
         />
       );
       return {
+        textgroup: (node, children, _parents, ruleStyles, inherited = {}) => (
+          <MathTextGroup key={node.key} style={{ ...inherited, ...ruleStyles.textgroup }}>
+            {children}
+          </MathTextGroup>
+        ),
         [MATH_INLINE]: mathRule,
         [MATH_BLOCK]: mathRule,
         [MERMAID_BLOCK]: mermaidRule,
@@ -213,6 +223,7 @@ const MemoizedMessage = memo(
       theme,
       layout.compact,
       modules.math,
+      modules.mathScale,
       modules.mermaid,
       mermaidTheme,
     ]);
@@ -245,9 +256,14 @@ const MemoizedMessage = memo(
         style={{ minWidth: 0, width: "100%", paddingRight: 44, minHeight: 44 }}
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       >
-        <Markdown markdownit={markdown} style={styles} rules={rules} onLinkPress={onLinkPress}>
-          {text}
-        </Markdown>
+        <MathInspectorProvider
+          source={text}
+          resetKey={`${host.id}:${colors.foreground}:${modules.mathScale}:${fontSize}:${modules.math}`}
+        >
+          <Markdown markdownit={markdown} style={styles} rules={rules} onLinkPress={onLinkPress}>
+            {text}
+          </Markdown>
+        </MathInspectorProvider>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Copy this message's source"
@@ -278,6 +294,7 @@ const MemoizedMessage = memo(
       previous.modules.math === next.modules.math &&
       previous.modules.mermaid === next.modules.mermaid &&
       previous.modules.fontScale === next.modules.fontScale &&
+      previous.modules.mathScale === next.modules.mathScale &&
       a.surface0 === b.surface0 &&
       a.foreground === b.foreground &&
       a.foregroundMuted === b.foregroundMuted &&

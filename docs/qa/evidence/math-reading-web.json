@@ -1,0 +1,636 @@
+{
+  "views": [
+    {
+      "width": 360,
+      "images": [
+        {
+          "label": "$E=mc^2$",
+          "width": 56,
+          "height": 14.875,
+          "naturalWidth": 128
+        },
+        {
+          "label": "$\\frac{1}{x^2}$",
+          "width": 17.9375,
+          "height": 19.6875,
+          "naturalWidth": 41
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "width": 284,
+          "height": 21.703125,
+          "naturalWidth": 680
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 219.625,
+          "height": 22.75,
+          "naturalWidth": 502
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 217,
+          "height": 21.4375,
+          "naturalWidth": 496
+        },
+        {
+          "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+          "width": 54.25,
+          "height": 274.75,
+          "naturalWidth": 124
+        },
+        {
+          "label": "$$\n\\cancel{x}+\\underbrace{a+b}_{\\mathclap{1234567890}} \\coloneqq c\n$$",
+          "width": 92.75,
+          "height": 32.375,
+          "naturalWidth": 212
+        },
+        {
+          "label": "```math\n\\[\n  a &lt; b + \\text{中文}\n\\]\n```",
+          "width": 79.1875,
+          "height": 16.625,
+          "naturalWidth": 181
+        },
+        {
+          "label": "flowchart LR\n  A[公式] --> B[阅读]\n",
+          "width": 250,
+          "height": 70,
+          "naturalWidth": 500
+        }
+      ],
+      "inspectEntries": [
+        {
+          "label": "Inspect formula: $E=mc^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\frac{1}{x^2}$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        }
+      ],
+      "overflow": false,
+      "body": "main\npam-workspace\n·\nmajor0.local\nMath reading candidate QA\nRead MATH-READING.md and reply with its exact content, byte for byte. Do not add explanations or an outer code fence. Do not modify files.\n16:01\nRead\nMATH-READING.md\nMath reading candidate\nShort bold \n and \n stay with text.\nBefore emphasis \n after emphasis after text.\n1.\nBefore \n after list.\nContext\nFormula\nnarrow cell\nbefore \nExpand\nCopy TeX\nCopy source\nShow source\nScroll to read · Expand for details\n after cell\nBefore $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$ after link\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nCopy source\nShow source\nExpand\n⌘L 聚焦\nOpus 5\nHigh\nDrop files here"
+    },
+    {
+      "width": 390,
+      "images": [
+        {
+          "label": "$E=mc^2$",
+          "width": 56,
+          "height": 14.875,
+          "naturalWidth": 128
+        },
+        {
+          "label": "$\\frac{1}{x^2}$",
+          "width": 17.9375,
+          "height": 19.6875,
+          "naturalWidth": 41
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "width": 297.5,
+          "height": 22.75,
+          "naturalWidth": 680
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 219.625,
+          "height": 22.75,
+          "naturalWidth": 502
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 217,
+          "height": 21.4375,
+          "naturalWidth": 496
+        },
+        {
+          "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+          "width": 54.25,
+          "height": 274.75,
+          "naturalWidth": 124
+        },
+        {
+          "label": "$$\n\\cancel{x}+\\underbrace{a+b}_{\\mathclap{1234567890}} \\coloneqq c\n$$",
+          "width": 92.75,
+          "height": 32.375,
+          "naturalWidth": 212
+        },
+        {
+          "label": "```math\n\\[\n  a &lt; b + \\text{中文}\n\\]\n```",
+          "width": 79.1875,
+          "height": 16.625,
+          "naturalWidth": 181
+        },
+        {
+          "label": "flowchart LR\n  A[公式] --> B[阅读]\n",
+          "width": 250,
+          "height": 70,
+          "naturalWidth": 500
+        }
+      ],
+      "inspectEntries": [
+        {
+          "label": "Inspect formula: $E=mc^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\frac{1}{x^2}$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        }
+      ],
+      "overflow": false,
+      "body": "main\npam-workspace\n·\nmajor0.local\nMath reading candidate QA\nRead MATH-READING.md and reply with its exact content, byte for byte. Do not add explanations or an outer code fence. Do not modify files.\n16:01\nRead\nMATH-READING.md\nMath reading candidate\nShort bold \n and \n stay with text.\nBefore emphasis \n after emphasis after text.\n1.\nBefore \n after list.\nContext\nFormula\nnarrow cell\nbefore \nExpand\nCopy TeX\nCopy source\nShow source\nScroll to read · Expand for details\n after cell\nBefore $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$ after link\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nCopy source\nShow source\nExpand\n⌘L 聚焦\nOpus 5\nHigh\nDrop files here"
+    },
+    {
+      "width": 430,
+      "images": [
+        {
+          "label": "$E=mc^2$",
+          "width": 56,
+          "height": 14.875,
+          "naturalWidth": 128
+        },
+        {
+          "label": "$\\frac{1}{x^2}$",
+          "width": 17.9375,
+          "height": 19.6875,
+          "naturalWidth": 41
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "width": 297.5,
+          "height": 22.75,
+          "naturalWidth": 680
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 219.625,
+          "height": 22.749984741210938,
+          "naturalWidth": 502
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 217,
+          "height": 21.4375,
+          "naturalWidth": 496
+        },
+        {
+          "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+          "width": 54.25,
+          "height": 274.75,
+          "naturalWidth": 124
+        },
+        {
+          "label": "$$\n\\cancel{x}+\\underbrace{a+b}_{\\mathclap{1234567890}} \\coloneqq c\n$$",
+          "width": 92.75,
+          "height": 32.375,
+          "naturalWidth": 212
+        },
+        {
+          "label": "```math\n\\[\n  a &lt; b + \\text{中文}\n\\]\n```",
+          "width": 79.1875,
+          "height": 16.625,
+          "naturalWidth": 181
+        },
+        {
+          "label": "flowchart LR\n  A[公式] --> B[阅读]\n",
+          "width": 250,
+          "height": 70,
+          "naturalWidth": 500
+        }
+      ],
+      "inspectEntries": [
+        {
+          "label": "Inspect formula: $E=mc^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\frac{1}{x^2}$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        }
+      ],
+      "overflow": false,
+      "body": "main\npam-workspace\n·\nmajor0.local\nMath reading candidate QA\nRead MATH-READING.md and reply with its exact content, byte for byte. Do not add explanations or an outer code fence. Do not modify files.\n16:01\nRead\nMATH-READING.md\nMath reading candidate\nShort bold \n and \n stay with text.\nBefore emphasis \n after emphasis after text.\n1.\nBefore \n after list.\nContext\nFormula\nnarrow cell\nbefore \nExpand\nCopy TeX\nCopy source\nShow source\nScroll to read · Expand for details\n after cell\nBefore $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$ after link\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nCopy source\nShow source\nExpand\n⌘L 聚焦\nOpus 5\nHigh\nDrop files here"
+    },
+    {
+      "width": 1280,
+      "images": [
+        {
+          "label": "$E=mc^2$",
+          "width": 64,
+          "height": 17.00000762939453,
+          "naturalWidth": 128
+        },
+        {
+          "label": "$\\frac{1}{x^2}$",
+          "width": 20.5,
+          "height": 22.49999237060547,
+          "naturalWidth": 41
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "width": 340,
+          "height": 26,
+          "naturalWidth": 680
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 251,
+          "height": 26,
+          "naturalWidth": 502
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 248,
+          "height": 24.5,
+          "naturalWidth": 496
+        },
+        {
+          "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+          "width": 62,
+          "height": 314,
+          "naturalWidth": 124
+        },
+        {
+          "label": "$$\n\\cancel{x}+\\underbrace{a+b}_{\\mathclap{1234567890}} \\coloneqq c\n$$",
+          "width": 106,
+          "height": 37,
+          "naturalWidth": 212
+        },
+        {
+          "label": "```math\n\\[\n  a &lt; b + \\text{中文}\n\\]\n```",
+          "width": 90.5,
+          "height": 19,
+          "naturalWidth": 181
+        },
+        {
+          "label": "flowchart LR\n  A[公式] --> B[阅读]\n",
+          "width": 250,
+          "height": 70,
+          "naturalWidth": 500
+        }
+      ],
+      "inspectEntries": [
+        {
+          "label": "Inspect formula: $E=mc^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\frac{1}{x^2}$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        }
+      ],
+      "overflow": false,
+      "body": "新建工作区\n历史\n搜索\n计划\nWorkspaces\nP\npam-workspace\nmain\nP\npam-workspace\nmain\n设置 worktree scripts\n添加 setup 命令，让新的 worktree 自动安装依赖并完成准备。\n打开 project 设置\n添加 project\nmain\npam-workspace\nCommit\nMath reading candidate QA\nMath reading candidate QA\nRead MATH-READING.md and reply with its exact content, byte for byte. Do not add explanations or an outer code fence. Do not modify files.\n16:01\nRead\nMATH-READING.md\nMath reading candidate\nShort bold \n and \n stay with text.\nBefore emphasis \n after emphasis after text.\n1.\nBefore \n after list.\nContext\nFormula\nnarrow cell\nbefore \n after cell\nBefore $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$ after link\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nCopy source\nShow source\nExpand\nOpus 5\nHigh\nAlways ask\nDrop files here"
+    }
+  ],
+  "inspector": {
+    "keyboardOpened": true,
+    "zoomed": {
+      "images": [
+        {
+          "label": "$E=mc^2$",
+          "width": 112,
+          "height": 29.75,
+          "naturalWidth": 256
+        },
+        {
+          "label": "$\\frac{1}{x^2}$",
+          "width": 35.875,
+          "height": 39.375,
+          "naturalWidth": 82
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+          "width": 595,
+          "height": 45.5,
+          "naturalWidth": 1360
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 439.25,
+          "height": 45.5,
+          "naturalWidth": 1004
+        },
+        {
+          "label": "$\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+          "width": 434,
+          "height": 42.875,
+          "naturalWidth": 992
+        },
+        {
+          "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+          "width": 108.5,
+          "height": 549.5,
+          "naturalWidth": 248
+        },
+        {
+          "label": "$$\n\\cancel{x}+\\underbrace{a+b}_{\\mathclap{1234567890}} \\coloneqq c\n$$",
+          "width": 185.5,
+          "height": 64.75,
+          "naturalWidth": 424
+        },
+        {
+          "label": "```math\n\\[\n  a &lt; b + \\text{中文}\n\\]\n```",
+          "width": 158.375,
+          "height": 33.25,
+          "naturalWidth": 362
+        },
+        {
+          "label": "flowchart LR\n  A[公式] --> B[阅读]\n",
+          "width": 250,
+          "height": 70,
+          "naturalWidth": 500
+        },
+        {
+          "label": "$E=mc^2$",
+          "width": 336,
+          "height": 89.25,
+          "naturalWidth": 512
+        }
+      ],
+      "inspectEntries": [
+        {
+          "label": "Inspect formula: $E=mc^2$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula: $\\frac{1}{x^2}$",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        },
+        {
+          "label": "Inspect formula",
+          "tabIndex": 0
+        }
+      ],
+      "overflow": false,
+      "body": "main\npam-workspace\n·\nmajor0.local\nMath reading candidate QA\nRead MATH-READING.md and reply with its exact content, byte for byte. Do not add explanations or an outer code fence. Do not modify files.\n16:01\nRead\nMATH-READING.md\nMath reading candidate\nShort bold \n and \n stay with text.\nBefore emphasis \nExpand\nCopy TeX\nCopy source\nShow source\nScroll to read · Expand for details\n after emphasis after text.\n1.\nBefore \nExpand\nCopy TeX\nCopy source\nShow source\nScroll to read · Expand for details\n after list.\nContext\nFormula\nnarrow cell\nbefore \nExpand\nCopy TeX\nCopy source\nShow source\nScroll to read · Expand for details\n after cell\nBefore $\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$ after link\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nExpand\nCopy TeX\nCopy source\nShow source\nCopy source\nShow source\nExpand\n⌘L 聚焦\nOpus 5\nHigh\nDrop files here\nFormula\nFit\nReading size\n1.5×\n2×\n3× (selected)\nCopy TeX\nCopy source\nShow source\nClose formula\nZoom is temporary; reading size follows Formula size."
+    },
+    "tex": "E=mc^2",
+    "source": "$E=mc^2$",
+    "closed": true,
+    "wideFit": {
+      "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+      "width": 374,
+      "height": 28.59375,
+      "naturalWidth": 1360
+    },
+    "wideReading": {
+      "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+      "width": 595,
+      "height": 45.5,
+      "naturalWidth": 1360
+    },
+    "tallFit": {
+      "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+      "width": 52.90625,
+      "height": 267.9999694824219,
+      "naturalWidth": 248
+    },
+    "tallZoom": {
+      "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+      "width": 325.5,
+      "height": 1648.5,
+      "naturalWidth": 496
+    }
+  },
+  "settings": {
+    "original": {
+      "math": true,
+      "mermaid": true,
+      "fontScale": "default",
+      "mathScale": 1
+    },
+    "before": [
+      {
+        "label": "$E=mc^2$",
+        "width": 56,
+        "height": 14.875,
+        "naturalWidth": 128
+      },
+      {
+        "label": "$\\frac{1}{x^2}$",
+        "width": 17.9375,
+        "height": 19.6875,
+        "naturalWidth": 41
+      },
+      {
+        "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+        "width": 297.5,
+        "height": 22.75,
+        "naturalWidth": 680
+      },
+      {
+        "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+        "width": 219.625,
+        "height": 22.75,
+        "naturalWidth": 502
+      },
+      {
+        "label": "$\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+        "width": 217,
+        "height": 21.4375,
+        "naturalWidth": 496
+      },
+      {
+        "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+        "width": 54.25,
+        "height": 274.75,
+        "naturalWidth": 124
+      },
+      {
+        "label": "$$\n\\cancel{x}+\\underbrace{a+b}_{\\mathclap{1234567890}} \\coloneqq c\n$$",
+        "width": 92.75,
+        "height": 32.375,
+        "naturalWidth": 212
+      },
+      {
+        "label": "```math\n\\[\n  a &lt; b + \\text{中文}\n\\]\n```",
+        "width": 79.1875,
+        "height": 16.625,
+        "naturalWidth": 181
+      },
+      {
+        "label": "flowchart LR\n  A[公式] --> B[阅读]\n",
+        "width": 250,
+        "height": 70,
+        "naturalWidth": 500
+      }
+    ],
+    "enlarged": [
+      {
+        "label": "$E=mc^2$",
+        "width": 112,
+        "height": 29.75006103515625,
+        "naturalWidth": 256
+      },
+      {
+        "label": "$\\frac{1}{x^2}$",
+        "width": 35.875,
+        "height": 39.37493896484375,
+        "naturalWidth": 82
+      },
+      {
+        "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2 + \\int_0^\\infty e^{-t^2}\\,dt$",
+        "width": 595,
+        "height": 45.5,
+        "naturalWidth": 1360
+      },
+      {
+        "label": "$\\sum_{i=1}^{n} x_i + \\frac{\\alpha+\\beta+\\gamma+\\delta}{\\lambda+\\mu+\\nu} + \\prod_{j=1}^{m}(1+x_j)^2$",
+        "width": 439.25,
+        "height": 45.5,
+        "naturalWidth": 1004
+      },
+      {
+        "label": "$\\sum_{i=1}^{n} x_i + \\frac{a+b+c+d}{x+y+z} + \\prod_{j=1}^{m}(1+x_j)^2$",
+        "width": 434,
+        "height": 42.875,
+        "naturalWidth": 992
+      },
+      {
+        "label": "$$\n\\begin{pmatrix}1&0\\\\0&1\\\\2&3\\\\4&5\\\\6&7\\\\8&9\\\\1&2\\\\3&4\\\\5&6\\\\7&8\\\\9&0\\\\1&2\\end{pmatrix}\n$$",
+        "width": 108.5,
+        "height": 549.5,
+        "naturalWidth": 248
+      },
+      {
+        "label": "$$\n\\cancel{x}+\\underbrace{a+b}_{\\mathclap{1234567890}} \\coloneqq c\n$$",
+        "width": 185.5,
+        "height": 64.75,
+        "naturalWidth": 424
+      },
+      {
+        "label": "```math\n\\[\n  a &lt; b + \\text{中文}\n\\]\n```",
+        "width": 158.375,
+        "height": 33.25,
+        "naturalWidth": 362
+      },
+      {
+        "label": "flowchart LR\n  A[公式] --> B[阅读]\n",
+        "width": 250,
+        "height": 70,
+        "naturalWidth": 500
+      }
+    ],
+    "conflict": "conflict"
+  },
+  "errors": []
+}

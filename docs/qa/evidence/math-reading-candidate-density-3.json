@@ -1,0 +1,70 @@
+{
+  "measuredAt": "2026-09-16T07:58:41.946Z",
+  "corpus": "math-reading-v1",
+  "fixtureCount": 50,
+  "transcriptSha256": "00c0accf4efb7a95419b9ef66826da4c5c6c7cf6237cc7cd2b495ee741a6f45c",
+  "rendererSha256": "73e0e6972dcb05fbf2501bfc035faf3e1f4846bdfd242c46344693da3cfb9388",
+  "root": "/private/tmp/paseo-math-reading-parity",
+  "commit": "839c81bb8b9af9bc5e8336c19fbeb2f682034aa3",
+  "version": "0.1.3",
+  "node": "v24.15.0",
+  "os": "Darwin 25.6.0 arm64",
+  "hardware": "Apple M4",
+  "ramBytes": 17179869184,
+  "density": 3,
+  "logicalEm": 16,
+  "textSize": 16,
+  "formulaSize": 1,
+  "color": "#dedede",
+  "scope": "direct host render; no daemon transport, browser, interaction, or native measurements",
+  "memoryBefore": {
+    "rss": 139132928,
+    "heapTotal": 68599808,
+    "heapUsed": 41425760,
+    "external": 15929000,
+    "arrayBuffers": 5002119
+  },
+  "results": [
+    {
+      "mode": "cold",
+      "totalMs": 219.77725,
+      "p50Ms": 3.4775829999999814,
+      "p95Ms": 6.37458300000003,
+      "maxMs": 28.46795799999998,
+      "imageBytes": 289885,
+      "payloadBytes": 390445,
+      "maxImageBytes": 11728,
+      "cacheEntries": 50,
+      "peakSampledRss": 408027136,
+      "memoryAfter": {
+        "rss": 408207360,
+        "heapTotal": 124829696,
+        "heapUsed": 82778544,
+        "external": 83639499,
+        "arrayBuffers": 48545551
+      },
+      "failures": []
+    },
+    {
+      "mode": "warm",
+      "totalMs": 0.315084000000013,
+      "p50Ms": 0.0009580000000255495,
+      "p95Ms": 0.0027499999999918145,
+      "maxMs": 0.007208999999988919,
+      "imageBytes": 289885,
+      "payloadBytes": 390445,
+      "maxImageBytes": 11728,
+      "cacheEntries": 50,
+      "peakSampledRss": 408436736,
+      "memoryAfter": {
+        "rss": 408436736,
+        "heapTotal": 124829696,
+        "heapUsed": 83262920,
+        "external": 83639499,
+        "arrayBuffers": 48545551
+      },
+      "failures": []
+    }
+  ],
+  "processMaxRssKiB": 401120
+}

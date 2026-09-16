@@ -1,0 +1,70 @@
+{
+  "measuredAt": "2026-09-16T07:58:42.390Z",
+  "corpus": "math-reading-v1",
+  "fixtureCount": 50,
+  "transcriptSha256": "00c0accf4efb7a95419b9ef66826da4c5c6c7cf6237cc7cd2b495ee741a6f45c",
+  "rendererSha256": "73e0e6972dcb05fbf2501bfc035faf3e1f4846bdfd242c46344693da3cfb9388",
+  "root": "/private/tmp/paseo-math-reading-parity",
+  "commit": "839c81bb8b9af9bc5e8336c19fbeb2f682034aa3",
+  "version": "0.1.3",
+  "node": "v24.15.0",
+  "os": "Darwin 25.6.0 arm64",
+  "hardware": "Apple M4",
+  "ramBytes": 17179869184,
+  "density": 4,
+  "logicalEm": 16,
+  "textSize": 16,
+  "formulaSize": 1,
+  "color": "#dedede",
+  "scope": "direct host render; no daemon transport, browser, interaction, or native measurements",
+  "memoryBefore": {
+    "rss": 138985472,
+    "heapTotal": 68337664,
+    "heapUsed": 41400488,
+    "external": 15929000,
+    "arrayBuffers": 5002119
+  },
+  "results": [
+    {
+      "mode": "cold",
+      "totalMs": 238.691958,
+      "p50Ms": 4.07245800000004,
+      "p95Ms": 7.661667000000023,
+      "maxMs": 29.099249999999984,
+      "imageBytes": 404948,
+      "payloadBytes": 543849,
+      "maxImageBytes": 16198,
+      "cacheEntries": 50,
+      "peakSampledRss": 416104448,
+      "memoryAfter": {
+        "rss": 416104448,
+        "heapTotal": 124567552,
+        "heapUsed": 82901360,
+        "external": 84062170,
+        "arrayBuffers": 48575006
+      },
+      "failures": []
+    },
+    {
+      "mode": "warm",
+      "totalMs": 0.3859160000000088,
+      "p50Ms": 0.0010419999999840002,
+      "p95Ms": 0.0024589999999875545,
+      "maxMs": 0.008708000000012817,
+      "imageBytes": 404948,
+      "payloadBytes": 543849,
+      "maxImageBytes": 16198,
+      "cacheEntries": 50,
+      "peakSampledRss": 416104448,
+      "memoryAfter": {
+        "rss": 416104448,
+        "heapTotal": 124567552,
+        "heapUsed": 83569832,
+        "external": 84062170,
+        "arrayBuffers": 48575006
+      },
+      "failures": []
+    }
+  ],
+  "processMaxRssKiB": 407424
+}

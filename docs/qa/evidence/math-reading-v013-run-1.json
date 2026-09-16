@@ -1,0 +1,70 @@
+{
+  "measuredAt": "2026-09-16T07:49:43.771Z",
+  "corpus": "math-reading-v1",
+  "fixtureCount": 50,
+  "transcriptSha256": "00c0accf4efb7a95419b9ef66826da4c5c6c7cf6237cc7cd2b495ee741a6f45c",
+  "rendererSha256": "ca42ae086d10baf2bf1b60b50be886a56f6f403cd5b139bd8bd0a5361afaf812",
+  "root": "/Users/cyouwa/projects/paseo-advanced-markdown",
+  "commit": "839c81bb8b9af9bc5e8336c19fbeb2f682034aa3",
+  "version": "0.1.3",
+  "node": "v24.15.0",
+  "os": "Darwin 25.6.0 arm64",
+  "hardware": "Apple M4",
+  "ramBytes": 17179869184,
+  "density": 2,
+  "logicalEm": 16,
+  "textSize": 16,
+  "formulaSize": 1,
+  "color": "#dedede",
+  "scope": "direct host render; no daemon transport, browser, interaction, or native measurements",
+  "memoryBefore": {
+    "rss": 144867328,
+    "heapTotal": 65978368,
+    "heapUsed": 44161664,
+    "external": 15924853,
+    "arrayBuffers": 4997980
+  },
+  "results": [
+    {
+      "mode": "cold",
+      "totalMs": 205.713125,
+      "p50Ms": 2.893000000000029,
+      "p95Ms": 5.1652500000000146,
+      "maxMs": 41.66904199999999,
+      "imageBytes": 181316,
+      "payloadBytes": 245041,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 347602944,
+      "memoryAfter": {
+        "rss": 347619328,
+        "heapTotal": 124043264,
+        "heapUsed": 74827600,
+        "external": 83268179,
+        "arrayBuffers": 48501919
+      },
+      "failures": []
+    },
+    {
+      "mode": "warm",
+      "totalMs": 0.25758300000006784,
+      "p50Ms": 0.0007500000001527951,
+      "p95Ms": 0.0032089999999698193,
+      "maxMs": 0.00937500000009095,
+      "imageBytes": 181316,
+      "payloadBytes": 245041,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 347881472,
+      "memoryAfter": {
+        "rss": 347947008,
+        "heapTotal": 124043264,
+        "heapUsed": 75160592,
+        "external": 83268179,
+        "arrayBuffers": 48501919
+      },
+      "failures": []
+    }
+  ],
+  "processMaxRssKiB": 363712
+}

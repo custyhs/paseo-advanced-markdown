@@ -24,6 +24,7 @@ export const MERMAID_BLOCK = "mermaid_block";
 export interface ExtensionMeta {
   /** Exact source range, including delimiters or fence lines. */
   source: string;
+  texSource?: string;
   display?: boolean;
   language?: string;
 }
@@ -242,6 +243,7 @@ function mathBlock(
   if (opening !== "$$" && opening !== "\\[") return false;
   const closing = opening === "$$" ? "$$" : "\\]";
   const lines: string[] = [];
+  const originalLines: string[] = [];
   let size = 0;
   for (let line = startLine; line < endLine; line++) {
     if (line > startLine && state.sCount[line] < state.blkIndent && !state.isEmpty(line))
@@ -252,12 +254,20 @@ function mathBlock(
     const text = state.src.slice(lineStart + (line === startLine ? 2 : 0), state.eMarks[line]);
     let close = text.indexOf(closing);
     while (close >= 0 && escaped(text, close)) close = text.indexOf(closing, close + 2);
+    const originalStart =
+      line === startLine
+        ? start + 2
+        : state.bMarks[line] + Math.min(state.tShift[line], state.blkIndent);
     if (close < 0) {
+      originalLines.push(state.src.slice(originalStart, state.eMarks[line]));
       lines.push(text);
       size += text.length + 1;
       if (size > MAX_MATH_EXPRESSION) return false;
       continue;
     }
+    originalLines.push(
+      state.src.slice(originalStart, lineStart + (line === startLine ? 2 : 0) + close),
+    );
     lines.push(text.slice(0, close));
     const expression = lines.join("\n");
     if (!expression.trim() || expression.length > MAX_MATH_EXPRESSION) return false;
@@ -269,6 +279,7 @@ function mathBlock(
     token.map = [startLine, line + 1];
     token.meta = {
       source: state.src.slice(start, lineStart + (line === startLine ? 2 : 0) + close + 2),
+      texSource: originalLines.join("\n"),
       display: true,
     } satisfies ExtensionMeta;
     const trailing = text.slice(close + 2).trimStart();
@@ -338,6 +349,7 @@ export function markdownExtensions(md: MarkdownParser): void {
       token.markup = state.src.slice(candidate.start, candidate.body);
       token.meta = {
         source: state.src.slice(candidate.start, candidate.end),
+        texSource: state.src.slice(candidate.body, candidate.close),
         display: candidate.display,
       } satisfies ExtensionMeta;
     }
@@ -378,8 +390,10 @@ export function markdownExtensions(md: MarkdownParser): void {
       if (language === "math") {
         token.type = MATH_BLOCK;
         token.tag = "math";
+        const originalBody = state.getLines(startLine + 1, last, state.blkIndent, true);
+        const texSource = unwrapDisplayDelimiters(originalBody);
         token.content = expressionText(unwrapDisplayDelimiters(token.content), md);
-        token.meta = { source, display: true } satisfies ExtensionMeta;
+        token.meta = { source, texSource, display: true } satisfies ExtensionMeta;
         return true;
       }
       if (!token.content.trim()) return true;

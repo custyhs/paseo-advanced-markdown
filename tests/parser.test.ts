@@ -158,9 +158,9 @@ describe("raw-source math within Markdown", () => {
     }
     const source = String.raw`Result $u+v$; \(w+z\); inline \[a+b\] ends.`;
     expect(formulas(source).map((token) => [token.type, token.meta])).toEqual([
-      [MATH_INLINE, { source: "$u+v$", display: false }],
-      [MATH_INLINE, { source: String.raw`\(w+z\)`, display: false }],
-      [MATH_INLINE, { source: String.raw`\[a+b\]`, display: true }],
+      [MATH_INLINE, { source: "$u+v$", texSource: "u+v", display: false }],
+      [MATH_INLINE, { source: String.raw`\(w+z\)`, texSource: "w+z", display: false }],
+      [MATH_INLINE, { source: String.raw`\[a+b\]`, texSource: "a+b", display: true }],
     ]);
     expect(detectExtensions(source).math).toBe(true);
   });

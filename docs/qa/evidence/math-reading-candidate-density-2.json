@@ -1,0 +1,70 @@
+{
+  "measuredAt": "2026-09-16T07:58:41.510Z",
+  "corpus": "math-reading-v1",
+  "fixtureCount": 50,
+  "transcriptSha256": "00c0accf4efb7a95419b9ef66826da4c5c6c7cf6237cc7cd2b495ee741a6f45c",
+  "rendererSha256": "73e0e6972dcb05fbf2501bfc035faf3e1f4846bdfd242c46344693da3cfb9388",
+  "root": "/private/tmp/paseo-math-reading-parity",
+  "commit": "839c81bb8b9af9bc5e8336c19fbeb2f682034aa3",
+  "version": "0.1.3",
+  "node": "v24.15.0",
+  "os": "Darwin 25.6.0 arm64",
+  "hardware": "Apple M4",
+  "ramBytes": 17179869184,
+  "density": 2,
+  "logicalEm": 16,
+  "textSize": 16,
+  "formulaSize": 1,
+  "color": "#dedede",
+  "scope": "direct host render; no daemon transport, browser, interaction, or native measurements",
+  "memoryBefore": {
+    "rss": 139001856,
+    "heapTotal": 68337664,
+    "heapUsed": 41378744,
+    "external": 15929000,
+    "arrayBuffers": 5002119
+  },
+  "results": [
+    {
+      "mode": "cold",
+      "totalMs": 206.67808399999998,
+      "p50Ms": 2.981999999999971,
+      "p95Ms": 6.49170799999996,
+      "maxMs": 29.62975,
+      "imageBytes": 181340,
+      "payloadBytes": 245705,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 407633920,
+      "memoryAfter": {
+        "rss": 407896064,
+        "heapTotal": 125091840,
+        "heapUsed": 82608192,
+        "external": 83284972,
+        "arrayBuffers": 48518704
+      },
+      "failures": []
+    },
+    {
+      "mode": "warm",
+      "totalMs": 0.25983300000001464,
+      "p50Ms": 0.0009580000000255495,
+      "p95Ms": 0.0028340000000071086,
+      "maxMs": 0.005957999999964159,
+      "imageBytes": 181340,
+      "payloadBytes": 245705,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 408240128,
+      "memoryAfter": {
+        "rss": 408240128,
+        "heapTotal": 125091840,
+        "heapUsed": 82938896,
+        "external": 83284972,
+        "arrayBuffers": 48518704
+      },
+      "failures": []
+    }
+  ],
+  "processMaxRssKiB": 402512
+}

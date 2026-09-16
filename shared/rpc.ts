@@ -8,17 +8,21 @@ export const mathRenderInput = z.object({
   expression: z.string().min(1).max(MAX_MATH_EXPRESSION),
   display: z.boolean(),
   color: hexColor,
+  /** Finite requested detail; the host clamps and buckets this before allocation. */
+  density: z.number().finite().optional(),
 });
 
 export const mathRenderOutput = z.discriminatedUnion("ok", [
   z.object({
     ok: z.literal(true),
     png: z.string().max(MAX_IMAGE_BASE64),
-    /** Logical size at a 16px em; PNG pixels are 2x. */
+    /** Logical size at a 16px em, independent of PNG pixel density. */
     width: z.number().positive().max(2048),
     height: z.number().positive().max(1024),
     /** Distance from the top edge to the text baseline, logical pixels. */
     baseline: z.number().nonnegative().max(1024),
+    /** Actual pixel density after resource-limit fallback; absent on older hosts (2x). */
+    density: z.number().finite().min(1).max(8).optional(),
   }),
   z.object({
     ok: z.literal(false),

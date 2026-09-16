@@ -3,7 +3,7 @@
 // Changes: shared limits and RPC types, a clearable bounded cache, and a
 // status accessor for the settings screen.
 
-import { initWasm, Resvg } from "@resvg/resvg-wasm";
+import { initWasm, Resvg, type ResvgRenderOptions } from "@resvg/resvg-wasm";
 import { mathjax } from "mathjax-full/js/mathjax.js";
 import { TeX } from "mathjax-full/js/input/tex.js";
 import { SVG } from "mathjax-full/js/output/svg.js";
@@ -19,6 +19,8 @@ import "mathjax-full/js/input/tex/configmacros/ConfigMacrosConfiguration.js";
 import "mathjax-full/js/input/tex/verb/VerbConfiguration.js";
 import "mathjax-full/js/input/tex/color/ColorConfiguration.js";
 import "mathjax-full/js/input/tex/textmacros/TextMacrosConfiguration.js";
+import "mathjax-full/js/input/tex/mathtools/MathtoolsConfiguration.js";
+import "mathjax-full/js/input/tex/cancel/CancelConfiguration.js";
 import type { MathRenderInput, MathRenderOutput } from "../../shared/rpc.js";
 import { compactEquationTags, normalizeTex } from "../../shared/tex.js";
 import {
@@ -29,10 +31,14 @@ import {
 } from "../../shared/limits.js";
 import { BoundedCache } from "../cache.js";
 import { loadTextFont, missingFontMessage } from "./fonts.js";
+import { mathDensityCandidates, resolveMathDensity } from "./density.js";
 import { wasmBase64 } from "../generated/wasm.js";
 
 const EM = 16;
-const DENSITY = 2;
+// Keep the v0.1.3 half-pixel geometry grid regardless of requested raster detail.
+const GEOMETRY_GRID = 2;
+const TYPESETTING_PROFILE = "mathjax-3.2.2/core-mathtools-cancel-v1";
+const MAX_PENDING_RENDERS = 128;
 const MAX_WIDTH = 2048;
 const MAX_HEIGHT = 1024;
 const MAX_PNG_BASE64 = MAX_IMAGE_BASE64;
@@ -167,6 +173,7 @@ function typeset(input: MathRenderInput): {
   baseline: number;
   text: string;
   needsBold: boolean;
+  viewBox: [number, number, number, number];
 } {
   const color = themeColor(input.color);
   // TeX configuration creates fresh newcommand/configmacros maps. Conversion is
@@ -181,6 +188,8 @@ function typeset(input: MathRenderInput): {
       "verb",
       "color",
       "textmacros",
+      "mathtools",
+      "cancel",
     ],
     maxMacros: 512,
     maxBuffer: 16_384,
@@ -229,11 +238,11 @@ function typeset(input: MathRenderInput): {
       .map(Number);
     if (viewBox.length !== 4 || !viewBox.every(Number.isFinite)) throw new RenderFailure("invalid");
     const [x, y, unitsWidth, unitsHeight] = viewBox as [number, number, number, number];
-    if (unitsWidth <= 0 || unitsHeight <= 0) throw new RenderFailure("invalid");
+    if (unitsWidth < 0 || unitsHeight <= 0) throw new RenderFailure("invalid");
     // MathJax's viewBox is in 1000 units/em. One logical pixel of padding
-    // protects edge antialiasing; round outward to whole 2x raster pixels.
-    const width = Math.ceil(((unitsWidth * EM) / 1000 + 2) * DENSITY) / DENSITY;
-    const height = Math.ceil(((unitsHeight * EM) / 1000 + 2) * DENSITY) / DENSITY;
+    // protects edge antialiasing; round on the fixed legacy grid so sharper images never change layout.
+    const width = Math.ceil(((unitsWidth * EM) / 1000 + 2) * GEOMETRY_GRID) / GEOMETRY_GRID;
+    const height = Math.ceil(((unitsHeight * EM) / 1000 + 2) * GEOMETRY_GRID) / GEOMETRY_GRID;
     if (width > MAX_WIDTH || height > MAX_HEIGHT) throw new RenderFailure("too-large");
     const baseline = Math.max(0, Math.min(height, (-y * EM) / 1000 + 1));
     const { text, needsBold } = sanitize(svg);
@@ -242,15 +251,67 @@ function typeset(input: MathRenderInput): {
       "viewBox",
       `${x - 1000 / EM} ${y - 1000 / EM} ${(width * 1000) / EM} ${(height * 1000) / EM}`,
     );
-    adaptor.setAttribute(svg, "width", width * DENSITY);
-    adaptor.setAttribute(svg, "height", height * DENSITY);
+    adaptor.setAttribute(svg, "width", width);
+    adaptor.setAttribute(svg, "height", height);
     adaptor.setAttribute(svg, "color", color.rgb);
     adaptor.setAttribute(svg, "opacity", color.alpha);
     const serialized = adaptor.outerHTML(svg);
     if (serialized.length > MAX_SVG) throw new RenderFailure("too-large");
-    return { svg: serialized, width, height, baseline, text, needsBold };
+    return {
+      svg: serialized,
+      width,
+      height,
+      baseline,
+      text,
+      needsBold,
+      viewBox: [x - 1000 / EM, y - 1000 / EM, (width * 1000) / EM, (height * 1000) / EM],
+    };
   } finally {
     document.clear();
+  }
+}
+
+/** MathJax layout boxes can exclude ink from \mathclap and other zero-width constructs.
+ * Measure the vector geometry before rasterization so annotations never lose symbols.
+ * The measurement uses logical coordinates, not the requested raster density.
+ */
+function includeOverhangingInk(
+  formula: ReturnType<typeof typeset>,
+  font: ResvgRenderOptions["font"],
+): { svg: string; width: number; height: number; baseline: number } {
+  const probe = new Resvg(formula.svg, { font });
+  try {
+    const box = probe.getBBox();
+    if (!box) return formula;
+    try {
+      const [x, y, unitsWidth, unitsHeight] = formula.viewBox;
+      const padding = 1000 / EM;
+      const left = Math.min(x, box.x - padding);
+      const top = Math.min(y, box.y - padding);
+      const right = Math.max(x + unitsWidth, box.x + box.width + padding);
+      const bottom = Math.max(y + unitsHeight, box.y + box.height + padding);
+      if (![left, top, right, bottom].every(Number.isFinite)) throw new RenderFailure("invalid");
+      if (left === x && top === y && right === x + unitsWidth && bottom === y + unitsHeight) {
+        return formula;
+      }
+      const width = Math.ceil((((right - left) * EM) / 1000) * GEOMETRY_GRID) / GEOMETRY_GRID;
+      const height = Math.ceil((((bottom - top) * EM) / 1000) * GEOMETRY_GRID) / GEOMETRY_GRID;
+      if (width > MAX_WIDTH || height > MAX_HEIGHT) throw new RenderFailure("too-large");
+      const baseline = formula.baseline + ((y - top) * EM) / 1000;
+      // Only these generated root attributes change; the SVG body was sanitized above.
+      const svg = formula.svg
+        .replace(
+          /viewBox="[^"]*"/,
+          `viewBox="${left} ${top} ${(width * 1000) / EM} ${(height * 1000) / EM}"`,
+        )
+        .replace(/width="[^"]*"/, `width="${width}"`)
+        .replace(/height="[^"]*"/, `height="${height}"`);
+      return { svg, width, height, baseline };
+    } finally {
+      box.free();
+    }
+  } finally {
+    probe.free();
   }
 }
 
@@ -270,7 +331,10 @@ export function clearMathCache(): void {
   cache.clear();
 }
 
-/** Logical 16px-em dimensions; PNG pixels are 2x; baseline is measured from the top. */
+const pending = new Map<string, Promise<MathRenderOutput>>();
+let renderTail: Promise<unknown> = Promise.resolve();
+
+/** Logical 16px-em dimensions and baseline remain stable across detail requests. */
 export async function renderFormula(input: MathRenderInput): Promise<MathRenderOutput> {
   if (
     typeof input.expression !== "string" ||
@@ -282,55 +346,94 @@ export async function renderFormula(input: MathRenderInput): Promise<MathRenderO
   }
   if (input.expression.length > MAX_MATH_EXPRESSION) return { ok: false, reason: "too-large" };
   if (input.color.length > 9) return { ok: false, reason: "invalid" };
-  const key = JSON.stringify([input.expression, input.display, input.color.toLowerCase()]);
+  const density = resolveMathDensity(input.density);
+  if (density === undefined) return { ok: false, reason: "invalid" };
+  const key = JSON.stringify([
+    TYPESETTING_PROFILE,
+    input.expression,
+    input.display,
+    input.color.toLowerCase(),
+    density,
+  ]);
   const cached = cache.get(key);
   if (cached) return cached;
+  const inFlight = pending.get(key);
+  if (inFlight) return inFlight;
+  // Keep queued work as inputs only. Font I/O can yield after typesetting, so
+  // serialize the whole job to retain one SVG/font variant at a time; duplicate
+  // requests share the job and the queue remains bounded.
+  if (pending.size >= MAX_PENDING_RENDERS) {
+    return { ok: false, reason: "failed", message: "Math renderer is busy; retry shortly." };
+  }
+  const work = renderTail.then(() => renderUncached(input, density, key));
+  renderTail = work.catch(() => undefined);
+  pending.set(key, work);
+  try {
+    return await work;
+  } finally {
+    pending.delete(key);
+  }
+}
+
+async function renderUncached(
+  input: MathRenderInput,
+  requestedDensity: number,
+  key: string,
+): Promise<MathRenderOutput> {
   // Await before allocating TeX trees so a burst during WASM startup retains
-  // inputs only. After this await rendering is synchronous and serialized.
+  // inputs only. Rasterization itself is synchronous and serialized.
   try {
     wasmReady ??= initWasm(Buffer.from(wasmBase64, "base64")).catch((error) => {
       wasmReady = undefined;
       throw error;
     });
     await wasmReady;
-    const readyCached = cache.get(key);
-    if (readyCached) return readyCached;
-    const { svg, width, height, baseline, text, needsBold } = typeset(input);
+    const formula = typeset(input);
+    const { text, needsBold } = formula;
     // Fonts are read only for formulas that need glyph fallback, and a missing
     // font is an environment problem, so it is reported rather than cached.
     const font = text ? await loadTextFont(text, process.env, process.platform, needsBold) : null;
     if (text && !font) {
       return { ok: false, reason: "unavailable", message: missingFontMessage() };
     }
-    const renderer = new Resvg(svg, {
-      font: {
-        fontBuffers: font?.buffers ?? [],
-        ...(font
-          ? {
-              defaultFontFamily: font.family,
-              serifFamily: font.family,
-              sansSerifFamily: font.family,
-              monospaceFamily: font.family,
-            }
-          : {}),
-      },
-    });
-    try {
-      const image = renderer.render();
+    const fontOptions: ResvgRenderOptions["font"] = {
+      fontBuffers: font?.buffers ?? [],
+      ...(font
+        ? {
+            defaultFontFamily: font.family,
+            serifFamily: font.family,
+            sansSerifFamily: font.family,
+            monospaceFamily: font.family,
+          }
+        : {}),
+    };
+    const { svg, width, height, baseline } = includeOverhangingInk(formula, fontOptions);
+    for (const density of mathDensityCandidates(width, height, requestedDensity)) {
+      const renderer = new Resvg(svg, {
+        fitTo: { mode: "zoom", value: density },
+        font: fontOptions,
+      });
       try {
-        const pngBytes = image.asPng();
-        if (Math.ceil(pngBytes.length / 3) * 4 > MAX_PNG_BASE64)
-          throw new RenderFailure("too-large");
-        const png = Buffer.from(pngBytes.buffer, pngBytes.byteOffset, pngBytes.byteLength).toString(
-          "base64",
-        );
-        return remember(key, { ok: true, png, width, height, baseline });
+        const image = renderer.render();
+        try {
+          const pngBytes = image.asPng();
+          // A dense but unusually incompressible image may fit the allocation
+          // budget and still exceed RPC payload limits. Try a lower bucket.
+          if (Math.ceil(pngBytes.length / 3) * 4 > MAX_PNG_BASE64) continue;
+          const png = Buffer.from(
+            pngBytes.buffer,
+            pngBytes.byteOffset,
+            pngBytes.byteLength,
+          ).toString("base64");
+          return remember(key, { ok: true, png, width, height, baseline, density });
+        } finally {
+          image.free();
+        }
       } finally {
-        image.free();
+        renderer.free();
       }
-    } finally {
-      renderer.free();
     }
+    throw new RenderFailure("too-large");
   } catch (error) {
     if (!(error instanceof RenderFailure)) {
       // Never report an environment or renderer fault as bad TeX, and leave a

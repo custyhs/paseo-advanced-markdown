@@ -1,0 +1,71 @@
+{
+  "sourceRoot": "/Users/cyouwa/projects/paseo-advanced-markdown/.paseo-source",
+  "evidence": [
+    {
+      "name": "bareDisplay",
+      "source": "$$\na^2\n\n+b^2=c^2\n$$",
+      "blocks": ["$$\na^2", "+b^2=c^2\n$$"],
+      "detected": {
+        "math": true,
+        "mermaid": false,
+        "unsupported": false
+      },
+      "takeover": true
+    },
+    {
+      "name": "fencedDisplay",
+      "source": "```math\na^2\n\n+b^2=c^2\n```",
+      "blocks": ["```math\na^2\n\n+b^2=c^2\n```"],
+      "detected": {
+        "math": true,
+        "mermaid": false,
+        "unsupported": false
+      },
+      "takeover": true
+    },
+    {
+      "name": "image",
+      "source": "Formula $x$ ![plot](https://example.org/plot.png)",
+      "blocks": ["Formula $x$ ![plot](https://example.org/plot.png)"],
+      "detected": {
+        "math": true,
+        "mermaid": false,
+        "unsupported": true
+      },
+      "takeover": false
+    },
+    {
+      "name": "fileLink",
+      "source": "Formula $x$ [file](src/main.ts)",
+      "blocks": ["Formula $x$ [file](src/main.ts)"],
+      "detected": {
+        "math": true,
+        "mermaid": false,
+        "unsupported": true
+      },
+      "takeover": false
+    },
+    {
+      "name": "ordinaryLink",
+      "source": "Formula $x$ [web](https://example.org/)",
+      "blocks": ["Formula $x$ [web](https://example.org/)"],
+      "detected": {
+        "math": true,
+        "mermaid": false,
+        "unsupported": false
+      },
+      "takeover": true
+    },
+    {
+      "name": "twoParagraphs",
+      "source": "First $x$.\n\nSecond $y$.",
+      "blocks": ["First $x$.", "Second $y$."],
+      "detected": {
+        "math": true,
+        "mermaid": false,
+        "unsupported": false
+      },
+      "takeover": true
+    }
+  ]
+}

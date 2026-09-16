@@ -1,0 +1,70 @@
+{
+  "measuredAt": "2026-09-16T07:50:08.399Z",
+  "corpus": "math-reading-v1",
+  "fixtureCount": 50,
+  "transcriptSha256": "00c0accf4efb7a95419b9ef66826da4c5c6c7cf6237cc7cd2b495ee741a6f45c",
+  "rendererSha256": "ca42ae086d10baf2bf1b60b50be886a56f6f403cd5b139bd8bd0a5361afaf812",
+  "root": "/Users/cyouwa/projects/paseo-advanced-markdown",
+  "commit": "839c81bb8b9af9bc5e8336c19fbeb2f682034aa3",
+  "version": "0.1.3",
+  "node": "v24.15.0",
+  "os": "Darwin 25.6.0 arm64",
+  "hardware": "Apple M4",
+  "ramBytes": 17179869184,
+  "density": 2,
+  "logicalEm": 16,
+  "textSize": 16,
+  "formulaSize": 1,
+  "color": "#dedede",
+  "scope": "direct host render; no daemon transport, browser, interaction, or native measurements",
+  "memoryBefore": {
+    "rss": 154714112,
+    "heapTotal": 65978368,
+    "heapUsed": 44261888,
+    "external": 15924853,
+    "arrayBuffers": 4997980
+  },
+  "results": [
+    {
+      "mode": "cold",
+      "totalMs": 211.00204099999996,
+      "p50Ms": 2.891625000000033,
+      "p95Ms": 10.411375000000021,
+      "maxMs": 42.12337500000001,
+      "imageBytes": 181316,
+      "payloadBytes": 245041,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 357236736,
+      "memoryAfter": {
+        "rss": 357285888,
+        "heapTotal": 122994688,
+        "heapUsed": 74828512,
+        "external": 83269179,
+        "arrayBuffers": 48502919
+      },
+      "failures": []
+    },
+    {
+      "mode": "warm",
+      "totalMs": 0.2626250000000141,
+      "p50Ms": 0.0007909999999924366,
+      "p95Ms": 0.00254199999994853,
+      "maxMs": 0.006874999999979536,
+      "imageBytes": 181316,
+      "payloadBytes": 245041,
+      "maxImageBytes": 7205,
+      "cacheEntries": 50,
+      "peakSampledRss": 357646336,
+      "memoryAfter": {
+        "rss": 357695488,
+        "heapTotal": 122994688,
+        "heapUsed": 75159904,
+        "external": 83269179,
+        "arrayBuffers": 48502919
+      },
+      "failures": []
+    }
+  ],
+  "processMaxRssKiB": 375392
+}
