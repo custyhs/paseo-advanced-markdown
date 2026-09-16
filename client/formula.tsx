@@ -199,6 +199,7 @@ export const Formula = memo(function Formula(props: FormulaProps) {
     );
     body = asBlock ? (
       <FormulaFrame
+        key={`${hostId}:${formulaId}:${source}`}
         compact={compact}
         actions={
           <ActionBar
@@ -236,16 +237,29 @@ export const Formula = memo(function Formula(props: FormulaProps) {
           />
         }
       >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator
-          nestedScrollEnabled
-          style={{ maxWidth: "100%" }}
-        >
-          <Pressable accessibilityRole="button" accessibilityLabel="Inspect formula" onPress={open}>
-            {image}
-          </Pressable>
-        </ScrollView>
+        {({ tapToReveal, expanded, toggle }) => (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator
+            nestedScrollEnabled
+            style={{ maxWidth: "100%" }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                tapToReveal
+                  ? expanded
+                    ? "Hide formula actions"
+                    : "Show formula actions"
+                  : "Inspect formula"
+              }
+              aria-expanded={tapToReveal ? expanded : undefined}
+              onPress={tapToReveal ? toggle : open}
+            >
+              {image}
+            </Pressable>
+          </ScrollView>
+        )}
       </FormulaFrame>
     ) : (
       <Text

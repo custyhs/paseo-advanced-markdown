@@ -1,25 +1,45 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { View } from "react-native";
-import { useFormulaActionStyles, formulaFrameMarker, formulaActionsMarker } from "./web.js";
+import {
+  useFormulaActionStyles,
+  useFormulaTapActions,
+  formulaFrameMarker,
+  formulaActionsMarker,
+} from "./web.js";
 
-/** Controls share the formula's hover/focus area and keep their layout slot. */
+type Disclosure = {
+  tapToReveal: boolean;
+  expanded: boolean;
+  toggle: (event: { stopPropagation(): void }) => void;
+};
+
+/** Hover keeps its layout slot; an explicit tap can expand the compact action row. */
 export function FormulaFrame({
   children,
   actions,
   compact,
 }: {
-  children: ReactNode;
+  children: (disclosure: Disclosure) => ReactNode;
   actions: ReactNode;
   compact: boolean;
 }) {
   useFormulaActionStyles();
+  const tapToReveal = useFormulaTapActions(compact);
+  const [expanded, setExpanded] = useState(false);
   return (
     <View
-      {...formulaFrameMarker(compact)}
+      {...formulaFrameMarker(tapToReveal)}
       style={{ minWidth: 0, width: "100%", marginVertical: 4 }}
     >
-      {children}
-      <View {...formulaActionsMarker()}>{actions}</View>
+      {children({
+        tapToReveal,
+        expanded,
+        toggle: (event) => {
+          event.stopPropagation();
+          setExpanded((value) => !value);
+        },
+      })}
+      {(!tapToReveal || expanded) && <View {...formulaActionsMarker()}>{actions}</View>}
     </View>
   );
 }

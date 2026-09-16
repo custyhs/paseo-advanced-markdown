@@ -82,7 +82,7 @@ try {
     assert.equal(current.overflow, false);
     assert.ok(current.images.length >= 9, `images at ${width}: ${current.images.length}`);
     await page.screenshot({ path: `${out}/width-${width}.png` });
-    const promoted = await page.$('[role="button"][aria-label="Inspect formula"]');
+    const promoted = await page.$('[data-pam-formula-frame] [role="button"]');
     await promoted?.scrollIntoView();
     await page.screenshot({ path: `${out}/nested-${width}.png` });
     report.views.push({ width, ...current });
@@ -133,6 +133,7 @@ try {
   ));
   // Inspect a wide promoted inline formula at the saved 200% reading size.
   await wait(800);
+  await click("Show formula actions");
   await click("Expand");
   await page.waitForFunction(() => document.body.innerText.includes("Fit (selected)"), {
     timeout: 5000,

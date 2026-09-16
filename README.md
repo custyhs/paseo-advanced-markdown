@@ -112,10 +112,12 @@ position. Short formulas do not stretch to fill the available width.
 
 On non-compact mouse/trackpad browsers, the formula toolbar appears on hover or
 keyboard focus. Its space stays reserved so the conversation does not move.
-Compact, native, and non-hover touch clients keep the buttons visible. Inspector,
-source-mode and retry controls remain visible.
+On phones, compact layouts, and non-hover touch clients, tap a block formula to
+show its buttons; tap it again to hide them. Tap **Expand** to inspect it.
+The collapsed row takes no space. Source-mode, retry, and inspector controls
+remain visible. Inline formulas still open the inspector directly.
 
-Tap a formula or use its keyboard-accessible entry to inspect it. **Fit** starts
+On desktop, click a formula or use its keyboard-accessible entry to inspect it. **Fit** starts
 with the complete image inside the available width and height. **Reading size**
 restores the saved size; 1.5×/2×/3× provide temporary zoom with scrolling.
 These controls do not change the saved formula-size setting. **Show source**,

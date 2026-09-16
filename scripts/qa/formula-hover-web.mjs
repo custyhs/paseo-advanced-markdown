@@ -74,12 +74,103 @@ try {
   assert.equal(await opacity(frame), "0");
   await page.setViewport({ width: 390, height: 900, deviceScaleFactor: 2 });
   await wait(300);
-  const compact = await page.$('[data-pam-formula-frame="always"]');
-  assert.ok(compact);
-  await compact.scrollIntoView();
-  report.compact = await opacity(compact);
-  assert.equal(report.compact, "1");
-  await page.screenshot({ path: `${out}/compact.png` });
+  async function verifyTapMode(name, useTouch) {
+    const frame = await page.$('[data-pam-formula-frame="tap"]');
+    assert.ok(frame);
+    await frame.scrollIntoView();
+    const trigger = await frame.$('[aria-label="Show formula actions"]');
+    assert.ok(trigger);
+    assert.equal(await trigger.evaluate((node) => node.getAttribute("aria-expanded")), "false");
+    assert.equal(await frame.$("[data-pam-formula-actions]"), null);
+    await page.screenshot({ path: `${out}/${name}-collapsed.png` });
+    if (name === "phone-touch") {
+      const scroller = await trigger.evaluateHandle((node) => {
+        for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+          if (
+            parent.scrollWidth > parent.clientWidth + 30 &&
+            ["auto", "scroll"].includes(getComputedStyle(parent).overflowX)
+          )
+            return parent;
+        }
+        return null;
+      });
+      assert.ok(await scroller.evaluate((node) => !!node), "wide formula has horizontal scroll");
+      const bounds = await scroller.boundingBox();
+      const x = Math.min(360, bounds.x + bounds.width - 20);
+      const y = bounds.y + bounds.height / 2;
+      const session = await page.createCDPSession();
+      try {
+        await session.send("Input.dispatchTouchEvent", {
+          type: "touchStart",
+          touchPoints: [{ x, y }],
+        });
+        for (let step = 1; step <= 8; step++) {
+          await session.send("Input.dispatchTouchEvent", {
+            type: "touchMove",
+            touchPoints: [{ x: x - step * 20, y }],
+          });
+          await wait(20);
+        }
+        await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        await wait(200);
+        report.horizontalScroll = await scroller.evaluate((node) => node.scrollLeft);
+        assert.ok(report.horizontalScroll > 20);
+        assert.equal(
+          await frame.$("[data-pam-formula-actions]"),
+          null,
+          "scroll must not disclose controls",
+        );
+      } finally {
+        await session.detach();
+      }
+    }
+    const press = async (node) => (useTouch ? node.tap() : node.click());
+    await press(trigger);
+    await frame.waitForSelector('[aria-label="Hide formula actions"]');
+    assert.equal(await trigger.evaluate((node) => node.getAttribute("aria-expanded")), "true");
+    assert.equal(await opacity(frame), "1");
+    assert.equal(await page.$('[aria-label="Close formula"]'), null);
+    await page.screenshot({ path: `${out}/${name}-expanded.png` });
+    const copy = await frame.$('[aria-label="Copy TeX"]');
+    await press(copy);
+    assert.ok((await page.evaluate(() => navigator.clipboard.readText())).includes("\\Delta"));
+    assert.ok(await frame.$('[aria-label="Hide formula actions"]'));
+    await press(await frame.$('[aria-label="Expand"]'));
+    await page.waitForSelector('[aria-label="Close formula"]', { visible: true });
+    // The compact host modal slides in; presence precedes its final hit target.
+    await wait(500);
+    await press(await page.$('[aria-label="Close formula"]'));
+    await page.waitForSelector('[aria-label="Close formula"]', { hidden: true });
+    assert.ok(await frame.$('[aria-label="Hide formula actions"]'));
+    await press(trigger);
+    await frame.waitForSelector('[aria-label="Show formula actions"]');
+    assert.equal(await frame.$("[data-pam-formula-actions]"), null);
+    // Keyboard users can disclose the same compact control without a mouse.
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await frame.waitForSelector('[aria-label="Hide formula actions"]');
+    await page.keyboard.press("Enter");
+    await frame.waitForSelector('[aria-label="Show formula actions"]');
+    report[name] = {
+      collapsed: true,
+      tapToggle: true,
+      copy: true,
+      inspector: true,
+      keyboard: true,
+    };
+    return frame;
+  }
+  await verifyTapMode("compact", false);
+  await page.setViewport({
+    width: 390,
+    height: 900,
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  await page.goto(url, { waitUntil: "networkidle2" });
+  await page.waitForSelector('[data-pam-formula-frame="tap"]');
+  await verifyTapMode("phone-touch", true);
   await page.setViewport({
     width: 1280,
     height: 900,
@@ -88,16 +179,17 @@ try {
     hasTouch: true,
   });
   await page.goto(url, { waitUntil: "networkidle2" });
-  await page.waitForSelector("[data-pam-formula-frame]");
+  await page.waitForSelector('[data-pam-formula-frame="tap"]');
   report.touchMedia = await page.evaluate(() => ({
     hover: matchMedia("(hover: hover)").matches,
     fine: matchMedia("(pointer: fine)").matches,
   }));
-  const touch = await page.$("[data-pam-formula-frame]");
-  report.touch = await opacity(touch);
-  assert.equal(report.touch, "1");
+  await verifyTapMode("wide-touch", true);
   assert.equal(report.touchMedia.hover, false);
   assert.deepEqual(report.errors, []);
+} catch (error) {
+  await page.screenshot({ path: `${out}/failure.png` });
+  throw error;
 } finally {
   await writeFile(`${out}/report.json`, JSON.stringify(report, null, 2));
   await browser.close();
