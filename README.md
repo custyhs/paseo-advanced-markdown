@@ -14,9 +14,9 @@ patch: the official app, daemon, and plugin SDK are the only dependencies.
 - Copy TeX and original source, formula/diagram inspection, light and dark themes,
   and per-host size/module settings.
 
-The mathematical reading controls below are implemented in the **unreleased
-0.2 candidate**. The published installation command still selects v0.1.3. New
-native iPhone/Electron interaction verification is pending; see the
+The mathematical reading controls below are implemented in the **0.2 candidate**
+and are shipped in the current tagged build. New native iPhone/Electron
+interaction verification is pending; see the
 [candidate evidence](docs/qa/math-reading-candidate.md).
 
 ## Requirements
@@ -37,7 +37,7 @@ in `config.json`).
 From Git, pinned to a tag (recommended):
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.3
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.4
 paseo plugin ls
 ```
 
@@ -68,11 +68,11 @@ codebase: its server side runs unsandboxed on the daemon host.
 ```bash
 paseo plugin update advanced-markdown        # tracks the ref you installed
 paseo plugin remove advanced-markdown
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.2   # roll back
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.3   # roll back
 ```
 
-A fixed tag does not advance to the next release. To switch from `v0.1.2` to
-`v0.1.3`, remove the plugin and add it with `--ref v0.1.3`.
+A fixed tag does not advance to the next release. To switch from `v0.1.3` to
+`v0.1.4`, remove the plugin and add it with `--ref v0.1.4`.
 
 A failed preparation during `plugin update` keeps the installed version running. Updates never touch
 chat history, Drafts, or other plugins.
