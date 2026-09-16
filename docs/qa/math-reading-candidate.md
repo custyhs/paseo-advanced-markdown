@@ -96,6 +96,9 @@ device rows only after recording the relevant build and actual source.
 | 5.3 | Fixed local Git SHA installed, rolled back to v0.1.3, then reinstalled on 6790 | Cached-client/reconnect compatibility still needs explicit validation |
 | 5.4 | Candidate/baseline/gap/experiment documents separate actual evidence and unobserved rows | Root release review owns final tag/install command; not released or deployed here |
 
+The subsequent [formula toolbar hover check](formula-toolbar-hover.md) records
+the desktop reveal behavior and touch/keyboard fallback added to this candidate.
+
 ## Official browser execution
 
 The official 0.8.0 web UI on isolated daemon `127.0.0.1:6790` loaded the candidate

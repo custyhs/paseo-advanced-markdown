@@ -14,6 +14,7 @@ import {
   type TextStyle,
 } from "react-native";
 import { isRetryableMathResult, type MathRenderOutput } from "../shared/rpc.js";
+import { FormulaFrame } from "./formula-frame.js";
 import { ActionBar } from "./action-bar.js";
 import { CodeBlock } from "./code-block.js";
 import { preferredFormulaScale } from "./formula-scale.js";
@@ -197,7 +198,44 @@ export const Formula = memo(function Formula(props: FormulaProps) {
       />
     );
     body = asBlock ? (
-      <View style={{ minWidth: 0, width: "100%", marginVertical: 4 }}>
+      <FormulaFrame
+        compact={compact}
+        actions={
+          <ActionBar
+            theme={theme}
+            compact={compact}
+            hint={fit.overflow ? "Scroll to read · Expand for details" : undefined}
+            actions={[
+              { key: "expand", icon: "Maximize2", label: "Expand", onPress: open },
+              {
+                key: "tex",
+                icon: "Copy",
+                label: "Copy TeX",
+                onPress: () => {
+                  void copy(texSource ?? expression, "TeX");
+                },
+              },
+              {
+                key: "source",
+                icon: "Copy",
+                label: "Copy source",
+                onPress: () => {
+                  void copy(source, "Formula source");
+                },
+              },
+              {
+                key: "show",
+                icon: "Code",
+                label: "Show source",
+                onPress: () => setShowSource(true),
+              },
+              ...(onOpenLink
+                ? [{ key: "link", icon: "ExternalLink", label: "Open link", onPress: onOpenLink }]
+                : []),
+            ]}
+          />
+        }
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator
@@ -208,35 +246,7 @@ export const Formula = memo(function Formula(props: FormulaProps) {
             {image}
           </Pressable>
         </ScrollView>
-        <ActionBar
-          theme={theme}
-          compact={compact}
-          hint={fit.overflow ? "Scroll to read · Expand for details" : undefined}
-          actions={[
-            { key: "expand", icon: "Maximize2", label: "Expand", onPress: open },
-            {
-              key: "tex",
-              icon: "Copy",
-              label: "Copy TeX",
-              onPress: () => {
-                void copy(texSource ?? expression, "TeX");
-              },
-            },
-            {
-              key: "source",
-              icon: "Copy",
-              label: "Copy source",
-              onPress: () => {
-                void copy(source, "Formula source");
-              },
-            },
-            { key: "show", icon: "Code", label: "Show source", onPress: () => setShowSource(true) },
-            ...(onOpenLink
-              ? [{ key: "link", icon: "ExternalLink", label: "Open link", onPress: onOpenLink }]
-              : []),
-          ]}
-        />
-      </View>
+      </FormulaFrame>
     ) : (
       <Text
         accessible

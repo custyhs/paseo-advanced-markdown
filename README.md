@@ -110,6 +110,11 @@ up to 15% to fit; longer formulas keep their reading size and scroll horizontall
 An oversized inline formula moves into a scrollable block at the same source
 position. Short formulas do not stretch to fill the available width.
 
+On non-compact mouse/trackpad browsers, the formula toolbar appears on hover or
+keyboard focus. Its space stays reserved so the conversation does not move.
+Compact, native, and non-hover touch clients keep the buttons visible. Inspector,
+source-mode and retry controls remain visible.
+
 Tap a formula or use its keyboard-accessible entry to inspect it. **Fit** starts
 with the complete image inside the available width and height. **Reading size**
 restores the saved size; 1.5×/2×/3× provide temporary zoom with scrolling.

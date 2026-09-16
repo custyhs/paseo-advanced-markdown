@@ -1,0 +1,29 @@
+{
+  "errors": [],
+  "hidden": "0",
+  "hover": "1",
+  "buttonHover": "1",
+  "geometry": {
+    "before": {
+      "x": 398,
+      "y": 427.796875,
+      "height": 98,
+      "width": 760
+    },
+    "after": {
+      "x": 398,
+      "y": 427.796875,
+      "height": 98,
+      "width": 760
+    }
+  },
+  "clipboard": "\n   \\Delta(S)=\n   \\log\\frac{P(S)}{\\widehat P(S)}\n   +\\underbrace{\\log\\!\\left(1-\\epsilon_0+\\frac{\\epsilon_0}{P(S)}\\right)}_{\\text{随集合变化，不能被共同 offset 吸收}}\n   +\\underbrace{\\widehat b_q-\\log\\bar P(\\varnothing)}_{\\text{共同 offset}},\n   ",
+  "focus": "1",
+  "inspector": true,
+  "compact": "1",
+  "touchMedia": {
+    "hover": false,
+    "fine": false
+  },
+  "touch": "1"
+}
