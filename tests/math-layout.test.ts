@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { formulaScale, preferredFormulaScale } from "../client/formula-scale.js";
-import { chooseMathDensity, fitFormula, inspectorScale } from "../client/math-layout.js";
+import {
+  chooseMathDensity,
+  fitFormula,
+  inlineFormulaLayout,
+  inspectorScale,
+} from "../client/math-layout.js";
 import { MATH_SCALES } from "../shared/settings.js";
 
 describe("formula reading size", () => {
@@ -62,7 +67,22 @@ describe("formula reading size", () => {
 });
 
 describe("formula inspection", () => {
-  it("fits both dimensions without stretching and keeps manual zoom when the viewport changes", () => {
+  it("fits diagrams independently of the scaled reading size and keeps 100% tied to reading", () => {
+    const diagram = {
+      width: 1000,
+      height: 500,
+      preferredScale: 0.4,
+      viewportWidth: 800,
+      viewportHeight: 600,
+      fitCeiling: 1,
+    };
+    expect(inspectorScale({ ...diagram, zoom: "fit" })).toBe(0.8);
+    expect(inspectorScale({ ...diagram, zoom: 1 })).toBe(0.4);
+    expect(
+      inspectorScale({ ...diagram, viewportWidth: 2000, viewportHeight: 2000, zoom: "fit" }),
+    ).toBe(1);
+  });
+  it("fits both dimensions with bounded enlargement and keeps manual zoom when the viewport changes", () => {
     const formula = { width: 400, height: 300, preferredScale: 1.5 };
     const viewport = { viewportWidth: 500, viewportHeight: 300 };
     expect(inspectorScale({ ...formula, ...viewport, zoom: "fit" })).toBe(1);
@@ -71,7 +91,7 @@ describe("formula inspection", () => {
     );
     expect(
       inspectorScale({ ...formula, viewportWidth: 2000, viewportHeight: 2000, zoom: "fit" }),
-    ).toBe(1.5);
+    ).toBe(2.25);
     expect(inspectorScale({ ...formula, ...viewport, zoom: 2 })).toBe(3);
     expect(inspectorScale({ ...formula, viewportWidth: 200, viewportHeight: 100, zoom: 2 })).toBe(
       3,
@@ -177,4 +197,161 @@ describe("formula container fitting", () => {
       }
     }
   });
+});
+
+describe("native inline formula height", () => {
+  const tall = {
+    height: 57.5,
+    baseline: 26.490208984375,
+    scale: 1,
+    lineHeight: 24,
+    fontScale: 1,
+    platform: "ios",
+  };
+
+  it.each(["ios", "android"])(
+    "promotes the reported tall fraction at both reading sizes on %s",
+    (platform) => {
+      for (const [scale, lineHeight] of [
+        [1, 89],
+        [1.5, 133],
+      ]) {
+        expect(inlineFormulaLayout({ ...tall, platform, scale })).toEqual({
+          lineHeight,
+          promote: true,
+        });
+      }
+    },
+  );
+
+  it.each(["ios", "android"])(
+    "keeps ordinary up/down arrows, fractions, and sums inline at 150%% on %s",
+    (platform) => {
+      const examples = [
+        { label: "up/down arrows", height: 24, baseline: 17.9712, lineHeight: 46 },
+        { label: "fraction", height: 23, baseline: 15.2192, lineHeight: 47 },
+        { label: "sum", height: 21, baseline: 13.637408203124998, lineHeight: 43 },
+      ];
+      for (const { label, height, baseline, lineHeight } of examples) {
+        expect(
+          inlineFormulaLayout({ ...tall, platform, height, baseline, scale: 1.5 }),
+          label,
+        ).toEqual({ lineHeight, promote: false });
+      }
+    },
+  );
+
+  it.each(["ios", "android"])("keeps a short x_i inline at 150%% on %s", (platform) => {
+    expect(
+      inlineFormulaLayout({
+        ...tall,
+        platform,
+        height: 12,
+        baseline: 8.072,
+        scale: 1.5,
+      }),
+    ).toEqual({ lineHeight: 24, promote: false });
+  });
+
+  it("keeps normalized line height and promotion stable under system text scaling", () => {
+    const examples = [
+      { height: 12, baseline: 8.072, lineHeight: 24, promote: false },
+      { height: 24, baseline: 17.9712, lineHeight: 46, promote: false },
+      { height: 23, baseline: 15.2192, lineHeight: 47, promote: false },
+      { height: 21, baseline: 13.637408203124998, lineHeight: 43, promote: false },
+      { height: 57.5, baseline: 26.490208984375, lineHeight: 133, promote: true },
+    ];
+    for (const fontScale of [1, 1.25, 1.5, 2]) {
+      for (const { height, baseline, lineHeight, promote } of examples) {
+        expect(
+          inlineFormulaLayout({
+            ...tall,
+            height,
+            baseline,
+            scale: 1.5 * fontScale,
+            fontScale,
+          }),
+        ).toEqual({ lineHeight, promote });
+      }
+    }
+  });
+
+  it("includes the image's downward baseline translation in its vertical extent", () => {
+    const image = { ...tall, height: 20, baseline: 20 };
+    expect(inlineFormulaLayout(image)).toEqual({ lineHeight: 24, promote: false });
+    expect(inlineFormulaLayout({ ...image, baseline: 10 })).toEqual({
+      lineHeight: 30,
+      promote: false,
+    });
+    expect(inlineFormulaLayout({ ...image, height: 25, baseline: 0 })).toEqual({
+      lineHeight: 50,
+      promote: true,
+    });
+    expect(inlineFormulaLayout({ ...image, baseline: 30 })).toEqual({
+      lineHeight: 24,
+      promote: false,
+    });
+  });
+
+  it("keeps exactly twice the base line height inline and promotes only beyond it", () => {
+    const exact = { ...tall, height: 32, baseline: 16 };
+    expect(inlineFormulaLayout(exact)).toEqual({ lineHeight: 48, promote: false });
+    expect(inlineFormulaLayout({ ...exact, scale: 1.0001 })).toEqual({
+      lineHeight: 49,
+      promote: true,
+    });
+    expect(inlineFormulaLayout({ ...exact, scale: 2, fontScale: 2 })).toEqual({
+      lineHeight: 48,
+      promote: false,
+    });
+  });
+
+  it("rounds layout height up without using that rounding to decide promotion", () => {
+    const image = { ...tall, height: 32, lineHeight: 24.25 };
+    expect(inlineFormulaLayout({ ...image, baseline: 15.625 })).toEqual({
+      lineHeight: 49,
+      promote: false,
+    });
+    expect(inlineFormulaLayout({ ...image, baseline: 15.375 })).toEqual({
+      lineHeight: 49,
+      promote: true,
+    });
+  });
+
+  it("preserves web inline layout even for the reported tall fraction", () => {
+    expect(inlineFormulaLayout({ ...tall, platform: "web", scale: 1.5 })).toEqual({
+      lineHeight: 24,
+      promote: false,
+    });
+    expect(inlineFormulaLayout({ ...tall, platform: "web", lineHeight: 30.5 })).toEqual({
+      lineHeight: 30.5,
+      promote: false,
+    });
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "waits for valid positive geometry and text metrics instead of promoting input %s",
+    (value) => {
+      for (const field of ["height", "scale", "lineHeight", "fontScale"] as const) {
+        expect(inlineFormulaLayout({ ...tall, lineHeight: 30, [field]: value }), field).toEqual({
+          lineHeight: field === "lineHeight" ? 24 : 30,
+          promote: false,
+        });
+      }
+      expect(inlineFormulaLayout({ ...tall, platform: "web", lineHeight: value })).toEqual({
+        lineHeight: 24,
+        promote: false,
+      });
+    },
+  );
+
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "does not promote before a valid nonnegative baseline is available: %s",
+    (baseline) => {
+      expect(inlineFormulaLayout({ ...tall, baseline, lineHeight: 30 })).toEqual({
+        lineHeight: 30,
+        promote: false,
+      });
+    },
+  );
 });

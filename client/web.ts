@@ -1,77 +1,143 @@
-import { useLayoutEffect, useSyncExternalStore } from "react";
 import { Platform } from "react-native";
 
-// Browser APIs are confined to this guarded module per the public plugin SDK.
-type StyleNode = { textContent: string | null; remove(): void };
-declare const document: {
-  createElement(tag: "style"): StyleNode;
-  head: { appendChild(node: StyleNode): void };
+// Browser-only APIs stay in this guarded module per the public plugin SDK.
+declare const document: { getSelection(): { isCollapsed: boolean } | null };
+
+export function hasTextSelection(): boolean {
+  return Platform.OS === "web" && document.getSelection()?.isCollapsed === false;
+}
+
+type MouseInput = {
+  button: number;
+  clientX: number;
+  detail: number;
+  preventDefault(): void;
+  stopPropagation(): void;
+  stopImmediatePropagation(): void;
 };
-type HoverQuery = {
-  readonly matches: boolean;
-  addEventListener(type: "change", listener: () => void): void;
-  removeEventListener(type: "change", listener: () => void): void;
+type MouseTarget = {
+  addEventListener(type: string, listener: (event: MouseInput) => void, capture?: boolean): void;
+  removeEventListener(type: string, listener: (event: MouseInput) => void, capture?: boolean): void;
 };
-declare const window: { matchMedia(query: string): HoverQuery };
-let hoverQuery: HoverQuery | undefined;
-function getHoverQuery(): HoverQuery | undefined {
-  if (Platform.OS !== "web") return;
-  hoverQuery ??= window.matchMedia("(hover: hover) and (pointer: fine)");
-  return hoverQuery;
-}
-function subscribeHover(listener: () => void): () => void {
-  const query = getHoverQuery();
-  query?.addEventListener("change", listener);
-  return () => query?.removeEventListener("change", listener);
-}
-const hoverSnapshot = () => getHoverQuery()?.matches ?? false;
-const nativeSnapshot = () => false;
+type HorizontalScrollNode = MouseTarget & {
+  scrollLeft: number;
+  scrollWidth: number;
+  clientWidth: number;
+  style: { userSelect: string; cursor: string };
+  ownerDocument: MouseTarget & { defaultView: MouseTarget | null };
+};
 
-export function useFormulaTapActions(compact: boolean): boolean {
-  const canHover = useSyncExternalStore(subscribeHover, hoverSnapshot, nativeSnapshot);
-  return compact || !canHover;
-}
-
-const FORMULA_ACTION_STYLES = `
-@media (hover: hover) and (pointer: fine) {
-  [data-pam-formula-frame="hover"] > [data-pam-formula-actions] {
-    opacity: 0;
-    pointer-events: none;
-  }
-  [data-pam-formula-frame="hover"]:hover > [data-pam-formula-actions],
-  [data-pam-formula-frame="hover"]:focus-within > [data-pam-formula-actions] {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}`;
-
-// Each host bundle owns its style node; unloading one cannot remove another's styles.
-let users = 0;
-let style: StyleNode | undefined;
-export function useFormulaActionStyles(): void {
-  useLayoutEffect(() => {
-    if (Platform.OS !== "web") return;
-    if (!style) {
-      style = document.createElement("style");
-      style.textContent = FORMULA_ACTION_STYLES;
-      document.head.appendChild(style);
+/** Install only on non-selectable content; clean up before enabling text selection. */
+export function enableHorizontalDrag(scrollView: { getScrollableNode(): unknown } | null) {
+  if (Platform.OS !== "web" || !scrollView) return;
+  const node = scrollView.getScrollableNode() as HorizontalScrollNode;
+  const owner = node.ownerDocument;
+  let origin: { x: number; scrollLeft: number } | undefined;
+  let suppressClick = false;
+  let dragging = false;
+  let previousUserSelect = "";
+  let previousCursor = "";
+  const end = () => {
+    if (!origin) return;
+    origin = undefined;
+    node.style.userSelect = previousUserSelect;
+    node.style.cursor = previousCursor;
+    owner.removeEventListener("mousemove", move);
+    owner.removeEventListener("mouseup", end);
+    owner.defaultView?.removeEventListener("blur", end);
+  };
+  const move = (event: MouseInput) => {
+    if (!origin) return;
+    const distance = event.clientX - origin.x;
+    if (!dragging && Math.abs(distance) <= 6) return;
+    dragging = true;
+    suppressClick = true;
+    event.preventDefault();
+    node.style.userSelect = "none";
+    node.style.cursor = "grabbing";
+    node.scrollLeft = Math.max(
+      0,
+      Math.min(node.scrollWidth - node.clientWidth, origin.scrollLeft - distance),
+    );
+  };
+  const start = (event: MouseInput) => {
+    if (event.button !== 0) return;
+    end();
+    suppressClick = false;
+    dragging = false;
+    if (node.scrollWidth <= node.clientWidth + 1) return;
+    origin = { x: event.clientX, scrollLeft: node.scrollLeft };
+    previousUserSelect = node.style.userSelect;
+    previousCursor = node.style.cursor;
+    owner.addEventListener("mousemove", move);
+    owner.addEventListener("mouseup", end);
+    owner.defaultView?.addEventListener("blur", end);
+  };
+  const click = (event: MouseInput) => {
+    // Keyboard/assistive clicks have detail 0 and must remain available after a drag.
+    if (suppressClick && event.detail !== 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
     }
-    users++;
-    return () => {
-      if (--users === 0) {
-        style?.remove();
-        style = undefined;
-      }
-    };
-  }, []);
+    suppressClick = false;
+  };
+  const preventImageDrag = (event: MouseInput) => {
+    if (origin) event.preventDefault();
+  };
+  node.addEventListener("mousedown", start);
+  node.addEventListener("click", click, true);
+  node.addEventListener("dragstart", preventImageDrag);
+  return () => {
+    end();
+    node.removeEventListener("mousedown", start);
+    node.removeEventListener("click", click, true);
+    node.removeEventListener("dragstart", preventImageDrag);
+  };
 }
 
-export function formulaFrameMarker(tapToReveal: boolean) {
+export function viewerKeyboardEntry(open: () => void, resetGesture: () => void) {
   if (Platform.OS !== "web") return {};
-  return { dataSet: { pamFormulaFrame: tapToReveal ? "tap" : "hover" } };
+  return {
+    tabIndex: 0 as const,
+    onKeyDownCapture(event: {
+      key: string;
+      repeat: boolean;
+      preventDefault(): void;
+      stopPropagation(): void;
+    }) {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      resetGesture();
+      // Own activation before Pressable or the native button can synthesize a second click.
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.key === "Enter" && !event.repeat) open();
+    },
+    onKeyUpCapture(event: { key: string; preventDefault(): void; stopPropagation(): void }) {
+      if (event.key !== " ") return;
+      event.preventDefault();
+      event.stopPropagation();
+      // Open on release so Space cannot also activate the newly focused modal close button.
+      open();
+    },
+  };
 }
 
-export function formulaActionsMarker() {
+export function viewerMouseEntry(
+  start: (point: { pageX: number; pageY: number }) => void,
+  move: (point: { pageX: number; pageY: number }) => void,
+) {
   if (Platform.OS !== "web") return {};
-  return { dataSet: { pamFormulaActions: "" } };
+  return {
+    onMouseDown(event: { nativeEvent: { pageX: number; pageY: number } }) {
+      start(event.nativeEvent);
+    },
+    onMouseMove(event: { nativeEvent: { pageX: number; pageY: number } }) {
+      move(event.nativeEvent);
+    },
+    // Leaving and returning is still a drag, even if the final coordinates match.
+    onMouseLeave() {
+      move({ pageX: Number.POSITIVE_INFINITY, pageY: Number.POSITIVE_INFINITY });
+    },
+  };
 }

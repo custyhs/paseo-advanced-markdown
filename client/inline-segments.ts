@@ -2,7 +2,72 @@ import { Children, cloneElement, isValidElement, type ReactElement, type ReactNo
 
 export type InlineSegment =
   | { kind: "inline"; nodes: ReactNode[] }
-  | { kind: "block"; node: ReactNode };
+  | { kind: "block"; node: ReactNode; trailing?: ReactNode[] };
+
+const FOLLOWING_PUNCTUATION = /^[，。；：！？、）】》」』,.;:!?)\]]+/;
+
+function takePunctuationPrefix(children: ReactNode): {
+  punctuation: ReactNode[];
+  remaining: ReactNode[];
+} {
+  const punctuation: ReactNode[] = [];
+  const remaining: ReactNode[] = [];
+  let stopped = false;
+  Children.forEach(children, (child) => {
+    if (child == null) return;
+    if (stopped) {
+      remaining.push(child);
+      return;
+    }
+    if (typeof child === "string") {
+      const prefix = child.match(FOLLOWING_PUNCTUATION)?.[0] ?? "";
+      if (prefix) punctuation.push(prefix);
+      const rest = child.slice(prefix.length);
+      if (rest) {
+        remaining.push(rest);
+        stopped = true;
+      }
+    } else if (isValidElement<{ children?: ReactNode }>(child) && child.props.children != null) {
+      const inner = takePunctuationPrefix(child.props.children);
+      if (inner.punctuation.length) {
+        punctuation.push(
+          inner.remaining.length ? cloneElement(child, undefined, inner.punctuation) : child,
+        );
+      }
+      if (inner.remaining.length) {
+        remaining.push(
+          inner.punctuation.length ? cloneElement(child, undefined, inner.remaining) : child,
+        );
+        stopped = true;
+      }
+    } else {
+      remaining.push(child);
+      stopped = true;
+    }
+  });
+  return { punctuation, remaining };
+}
+
+/** Keep adjacent closing punctuation with promoted math without rewriting its source. */
+export function attachFollowingPunctuation(segments: InlineSegment[]): InlineSegment[] {
+  const result: InlineSegment[] = [];
+  for (const segment of segments) {
+    const previous = result.at(-1);
+    if (segment.kind === "inline" && previous?.kind === "block") {
+      const { punctuation, remaining } = takePunctuationPrefix(segment.nodes);
+      if (punctuation.length) {
+        result[result.length - 1] = {
+          ...previous,
+          trailing: [...(previous.trailing ?? []), ...punctuation],
+        };
+        if (remaining.length) result.push({ kind: "inline", nodes: remaining });
+        continue;
+      }
+    }
+    if (segment.kind !== "inline" || segment.nodes.length) result.push(segment);
+  }
+  return result;
+}
 
 /** Split at complete math nodes, reopening surrounding emphasis/link wrappers. */
 export function splitInlineTree(

@@ -1,31 +1,30 @@
 // Adapted from paseo-math (Apache-2.0); see NOTICE.
-import { copyText, useToast } from "@getpaseo/plugin/client/react-native";
 import type { PluginTheme } from "@getpaseo/plugin";
-import { memo, useContext, useEffect, useState, type ReactNode } from "react";
+import { memo, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Image,
   PixelRatio,
   Platform,
   Pressable,
-  ScrollView,
   Text,
   View,
   useWindowDimensions,
   type TextStyle,
 } from "react-native";
 import { isRetryableMathResult, type MathRenderOutput } from "../shared/rpc.js";
-import { FormulaFrame } from "./formula-frame.js";
-import { ActionBar } from "./action-bar.js";
-import { CodeBlock } from "./code-block.js";
+import { ContentPlaceholder } from "./content-placeholder.js";
+import { ImageScrollView } from "./image-scroll-view.js";
 import { preferredFormulaScale } from "./formula-scale.js";
-import { MathLayoutContext } from "./math-context.js";
-import { useMathInspector } from "./math-inspector.js";
-import { chooseMathDensity, fitFormula } from "./math-layout.js";
+import { MathInlineLineHeightContext, MathLayoutContext } from "./math-context.js";
+import { chooseMathDensity, fitFormula, inlineFormulaLayout } from "./math-layout.js";
 import type { CachedRender } from "./render-cache.js";
 import { useMathImage } from "./use-math-image.js";
+import { useContentViewer, type ViewerSelection } from "./viewer-context.js";
+import { useViewerEntry } from "./viewer-entry.js";
 
 export type FormulaProps = {
   formulaId: string;
+  viewerId: string;
   expression: string;
   /** Original expression body before entity decoding or normalization. */
   texSource?: string;
@@ -34,6 +33,7 @@ export type FormulaProps = {
   display: boolean;
   block: boolean;
   promoted?: boolean;
+  trailingPunctuation?: ReactNode[];
   onOpenLink?: () => void;
   mathScale?: number;
   color: string;
@@ -66,24 +66,24 @@ export const Formula = memo(function Formula(props: FormulaProps) {
     display,
     block,
     promoted,
+    trailingPunctuation,
     color,
     hostId,
     theme,
-    compact,
     enabled,
     textStyle,
     maxInlineWidth,
     formulaId,
+    viewerId,
     mathScale,
     onOpenLink,
   } = props;
   const layout = useContext(MathLayoutContext);
-  const inspect = useMathInspector();
-  const toast = useToast();
+  const allocatedLineHeight = useContext(MathInlineLineHeightContext);
+  const viewer = useContentViewer();
   const { fontScale } = useWindowDimensions();
   const [blockWidth, setBlockWidth] = useState(0);
   const [failedImage, setFailedImage] = useState<string>();
-  const [showSource, setShowSource] = useState(false);
   const fontSize = textStyle.fontSize ?? 16;
   const preferredScale = preferredFormulaScale({
     fontSize,
@@ -103,92 +103,142 @@ export const Formula = memo(function Formula(props: FormulaProps) {
     enabled,
     density: chooseMathDensity(PixelRatio.get(), preferredScale),
   });
-  const { result, eligible, key } = detail;
+  const { result, eligible, key, retry: retryRender } = detail;
   const availableWidth = block ? blockWidth : (layout?.width ?? maxInlineWidth);
   const fit = fitFormula({ width: result?.ok ? result.width : 0, preferredScale, availableWidth });
-  const reportOverflow = layout?.reportOverflow;
+  const inlineLayout = inlineFormulaLayout({
+    height: result?.ok ? result.height : 0,
+    baseline: result?.ok ? result.baseline : 0,
+    scale: fit.scale,
+    lineHeight: textStyle.lineHeight ?? fontSize * 1.5,
+    fontScale,
+    platform: Platform.OS,
+  });
+  const needsPromotion = fit.overflow || inlineLayout.promote;
+  const reportLayout = layout?.reportLayout;
   useEffect(() => {
     if (!block)
-      reportOverflow?.(formulaId, !!(enabled && eligible && fit.measured && fit.overflow));
-  }, [block, enabled, eligible, fit.measured, fit.overflow, formulaId, reportOverflow]);
+      reportLayout?.(
+        formulaId,
+        enabled && eligible && fit.measured
+          ? { promote: needsPromotion, lineHeight: inlineLayout.lineHeight }
+          : undefined,
+      );
+  }, [
+    block,
+    enabled,
+    eligible,
+    fit.measured,
+    needsPromotion,
+    inlineLayout.lineHeight,
+    formulaId,
+    reportLayout,
+  ]);
   const asBlock = block || promoted;
-  const usable = eligible && result?.ok && failedImage !== key && fit.measured;
-  const retry = () => {
+  const rendered = eligible && result?.ok && failedImage !== key ? result : undefined;
+  const retry = useCallback(() => {
     setFailedImage(undefined);
-    detail.retry();
-  };
-  const copy = async (text: string, label: string) => {
-    try {
-      await copyText(text);
-      toast.show(`${label} copied`, { variant: "success" });
-    } catch {
-      toast.error("Unable to copy the formula.");
-    }
-  };
-  const sourceText = (
-    <Text selectable style={textStyle} accessibilityLabel={source}>
-      {source}
-    </Text>
+    retryRender();
+  }, [retryRender]);
+  const status = !enabled
+    ? "Math module is off; showing source"
+    : failedImage === key
+      ? "Formula image unavailable; showing source"
+      : statusFor(result, eligible);
+  const retryable =
+    enabled &&
+    (result === null ||
+      failedImage === key ||
+      (result !== undefined && isRetryableMathResult(result)));
+  const selection = useMemo<ViewerSelection>(
+    () => ({
+      id: viewerId,
+      kind: "formula",
+      source,
+      body: texSource ?? expression,
+      image: rendered
+        ? {
+            uri: `data:image/png;base64,${rendered.png}`,
+            width: rendered.width,
+            height: rendered.height,
+          }
+        : undefined,
+      status: status || undefined,
+      retry: eligible ? retry : undefined,
+      canRetry: !!retryable,
+      math: {
+        expression,
+        display,
+        color,
+        hostId,
+        enabled,
+        preferredScale,
+        seed: rendered,
+      },
+      onOpenLink,
+    }),
+    [
+      viewerId,
+      source,
+      texSource,
+      expression,
+      rendered,
+      status,
+      retryable,
+      eligible,
+      retry,
+      display,
+      color,
+      hostId,
+      enabled,
+      preferredScale,
+      onOpenLink,
+    ],
   );
+  const updateViewer = viewer?.update;
+  useEffect(() => {
+    updateViewer?.(selection);
+  }, [selection, updateViewer]);
+  const entry = useViewerEntry(() => viewer?.open(selection));
+  const native = Platform.OS === "ios" || Platform.OS === "android";
+  const waitingForLineHeight = native && (allocatedLineHeight ?? 0) < inlineLayout.lineHeight;
+  const inlineTextStyle = native ? [textStyle, { lineHeight: allocatedLineHeight }] : textStyle;
   let body: ReactNode;
-  if (!usable || showSource || (!asBlock && fit.overflow)) {
-    const status = enabled ? statusFor(result, eligible) : "Math module is off; showing source";
-    const retryable =
-      enabled &&
-      (result === null ||
-        failedImage === key ||
-        (result !== undefined && isRetryableMathResult(result)));
+  if (!rendered || !fit.measured || (!asBlock && (needsPromotion || waitingForLineHeight))) {
     body = asBlock ? (
-      <CodeBlock
-        source={source}
-        label="math"
-        theme={theme}
-        compact={compact}
-        textStyle={textStyle}
-        status={showSource && usable ? undefined : status}
-        actions={[
-          ...(usable
-            ? [
-                {
-                  key: "render",
-                  icon: "Sigma",
-                  label: "Show formula",
-                  onPress: () => setShowSource(false),
-                },
-              ]
-            : []),
-          ...(retryable
-            ? [{ key: "retry", icon: "RefreshCw", label: "Retry", onPress: retry }]
-            : []),
-        ]}
-      />
-    ) : retryable ? (
-      <Text style={textStyle}>
-        {sourceText}{" "}
-        <Text
-          accessibilityRole="button"
-          accessibilityLabel={`Retry formula: ${status}`}
-          onPress={retry}
-          style={{ color: theme.colors.accent }}
-        >
-          Retry
-        </Text>
-      </Text>
+      <View>
+        <ContentPlaceholder
+          source={source}
+          theme={theme}
+          textStyle={textStyle}
+          status={status || undefined}
+          onPress={() => viewer?.open(selection)}
+        />
+        {trailingPunctuation?.length ? (
+          <Text selectable style={textStyle}>
+            {trailingPunctuation}
+          </Text>
+        ) : null}
+      </View>
     ) : (
-      sourceText
+      <Text
+        {...entry}
+        selectable
+        accessibilityRole="button"
+        accessibilityLabel={`Inspect formula: ${source}`}
+        style={inlineTextStyle}
+      >
+        {source}
+      </Text>
     );
   } else {
-    const width = result.width * fit.scale;
-    const height = result.height * fit.scale;
-    const descent = Math.max(0, result.height - result.baseline) * fit.scale;
-    const open = (event?: { stopPropagation(): void }) => {
-      event?.stopPropagation();
-      inspect({ ...props, preferredScale, image: result });
-    };
+    const width = rendered.width * fit.scale;
+    const height = rendered.height * fit.scale;
+    const descent = Math.max(0, rendered.height - rendered.baseline) * fit.scale;
     const image = (
       <Image
         key={key}
-        source={{ uri: `data:image/png;base64,${result.png}` }}
+        source={{ uri: `data:image/png;base64,${rendered.png}` }}
         accessible
         accessibilityLabel={source}
         resizeMode="contain"
@@ -198,85 +248,38 @@ export const Formula = memo(function Formula(props: FormulaProps) {
       />
     );
     body = asBlock ? (
-      <FormulaFrame
-        key={`${hostId}:${formulaId}:${source}`}
-        compact={compact}
-        actions={
-          <ActionBar
-            theme={theme}
-            compact={compact}
-            hint={fit.overflow ? "Scroll to read · Expand for details" : undefined}
-            actions={[
-              { key: "expand", icon: "Maximize2", label: "Expand", onPress: open },
-              {
-                key: "tex",
-                icon: "Copy",
-                label: "Copy TeX",
-                onPress: () => {
-                  void copy(texSource ?? expression, "TeX");
-                },
-              },
-              {
-                key: "source",
-                icon: "Copy",
-                label: "Copy source",
-                onPress: () => {
-                  void copy(source, "Formula source");
-                },
-              },
-              {
-                key: "show",
-                icon: "Code",
-                label: "Show source",
-                onPress: () => setShowSource(true),
-              },
-              ...(onOpenLink
-                ? [{ key: "link", icon: "ExternalLink", label: "Open link", onPress: onOpenLink }]
-                : []),
-            ]}
-          />
-        }
+      <ImageScrollView
+        showsHorizontalScrollIndicator
+        nestedScrollEnabled
+        style={{ maxWidth: "100%", marginVertical: promoted ? 4 : 0 }}
+        contentContainerStyle={{ alignItems: "flex-end" }}
       >
-        {({ tapToReveal, expanded, toggle }) => (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator
-            nestedScrollEnabled
-            style={{ maxWidth: "100%" }}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                tapToReveal
-                  ? expanded
-                    ? "Hide formula actions"
-                    : "Show formula actions"
-                  : "Inspect formula"
-              }
-              aria-expanded={tapToReveal ? expanded : undefined}
-              onPress={tapToReveal ? toggle : open}
-            >
-              {image}
-            </Pressable>
-          </ScrollView>
-        )}
-      </FormulaFrame>
+        <Pressable {...entry} accessibilityRole="button" accessibilityLabel="Inspect formula">
+          {image}
+        </Pressable>
+        {trailingPunctuation?.length ? (
+          <Text selectable style={[textStyle, { paddingBottom: descent }]}>
+            {trailingPunctuation}
+          </Text>
+        ) : null}
+      </ImageScrollView>
     ) : (
       <Text
+        {...entry}
         accessible
         accessibilityRole="button"
         accessibilityLabel={`Inspect formula: ${source}`}
-        onPress={open}
         style={[
           textStyle,
           {
-            lineHeight: Math.max(
-              textStyle.lineHeight ?? fontSize * 1.5,
-              (height + descent) / fontScale,
-            ),
+            lineHeight: native
+              ? allocatedLineHeight
+              : Math.max(textStyle.lineHeight ?? fontSize * 1.5, (height + descent) / fontScale),
           },
         ]}
       >
+        {/* Native attachments drop text attributes; this fragment carries the run's paragraph style. */}
+        {native ? "\u200b" : null}
         {image}
       </Text>
     );

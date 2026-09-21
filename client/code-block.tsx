@@ -1,8 +1,15 @@
-import { copyText, useToast } from "@getpaseo/plugin/client/react-native";
+import { ScrollView, copyText, useToast } from "@getpaseo/plugin/client/react-native";
 import type { PluginTheme } from "@getpaseo/plugin";
-import { useCallback } from "react";
-import { Platform, ScrollView, Text, View, type TextStyle } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Platform,
+  Text,
+  View,
+  type ScrollView as NativeScrollView,
+  type TextStyle,
+} from "react-native";
 import { ActionBar } from "./action-bar.js";
+import { enableHorizontalDrag } from "./web.js";
 
 export const monospace =
   Platform.OS === "ios"
@@ -13,7 +20,7 @@ export const monospace =
 
 /**
  * Plain, copyable source display used for ordinary fences, unclosed or
- * disabled extension blocks, and the source view behind rendered images.
+ * disabled extension blocks.
  */
 export function CodeBlock({
   source,
@@ -38,6 +45,16 @@ export function CodeBlock({
 }) {
   const colors = theme.colors;
   const toast = useToast();
+  const scrollRef = useRef<NativeScrollView>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [contentWidth, setContentWidth] = useState(0);
+  const [selectText, setSelectText] = useState(false);
+  const canDrag =
+    Platform.OS === "web" && !compact && viewportWidth > 0 && contentWidth > viewportWidth + 1;
+  const dragEnabled = canDrag && !selectText;
+  useEffect(() => {
+    if (dragEnabled) return enableHorizontalDrag(scrollRef.current);
+  }, [dragEnabled]);
   const onCopy = useCallback(async () => {
     try {
       await copyText(copySource ?? source);
@@ -65,9 +82,21 @@ export function CodeBlock({
           {label}
         </Text>
       ) : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator style={{ width: "100%", flexGrow: 0 }}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator
+        onLayout={(event) => {
+          const width = event.nativeEvent.layout.width;
+          if (width > 0) setViewportWidth(width);
+        }}
+        onContentSizeChange={(width) => {
+          if (width > 0) setContentWidth(width);
+        }}
+        style={{ width: "100%", flexGrow: 0 }}
+      >
         <Text
-          selectable
+          selectable={!dragEnabled}
           accessibilityLabel={label ? `${label}: ${source}` : source}
           style={[
             textStyle,
@@ -88,6 +117,16 @@ export function CodeBlock({
         hint={status}
         actions={[
           { key: "copy", icon: "Copy", label: "Copy source", onPress: () => void onCopy() },
+          ...(canDrag
+            ? [
+                {
+                  key: "interaction",
+                  icon: selectText ? "MoveHorizontal" : "TextCursor",
+                  label: selectText ? "Drag to scroll" : "Select text",
+                  onPress: () => setSelectText((selected) => !selected),
+                },
+              ]
+            : []),
           ...(actions ?? []),
         ]}
       />

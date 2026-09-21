@@ -436,6 +436,24 @@ describe("context-limited text percent repair", () => {
 });
 
 describe("host-owned file navigation", () => {
+  it("keeps footnotes readable without treating their prose as a file destination", () => {
+    const source = [
+      "Formula $E=mc^2$ with a note[^render-note].",
+      "",
+      "[^render-note]: 这是脚注内容，用于观察编号、跳转和返回链接。",
+      "[^math-note]: 脚注也包含公式 $a+b=c$ 和 `inline code`。",
+      "",
+      "```mermaid",
+      "flowchart LR\n A --> B",
+      "```",
+    ].join("\n");
+    expect(detectExtensions(source)).toEqual({ math: true, mermaid: true, unsupported: false });
+    expect(shouldTakeOver(detectExtensions(source), { math: true, mermaid: true })).toBe(true);
+    expect(expressions(source)).toEqual(["E=mc^2", "a+b=c"]);
+    expect(text(source)).toContain("[^render-note]: 这是脚注内容，用于观察编号、跳转和返回链接。");
+    expect(parse(source).filter((token) => token.type === "link_open")).toHaveLength(0);
+  });
+
   it("declines relative and file links beside extensions but preserves supported web links", () => {
     for (const link of [
       "src/main.ts",
@@ -458,5 +476,27 @@ describe("host-owned file navigation", () => {
     expect(
       shouldTakeOver(detectExtensions("$x$ `src/main.ts`"), { math: true, mermaid: true }),
     ).toBe(true);
+  });
+
+  it("keeps reference links immediately after footnotes owned by the host", () => {
+    for (const prefix of ["", "> ", "  "]) {
+      const source = [
+        prefix === "  " ? "- Formula $x$ [source]." : `${prefix}Formula $x$ [source].`,
+        prefix,
+        `${prefix}[^note]: 中文脚注`,
+        `${prefix}[source]: src/main.ts`,
+      ].join("\n");
+      expect(detectExtensions(source), source).toEqual({
+        math: true,
+        mermaid: false,
+        unsupported: true,
+      });
+      expect(shouldTakeOver(detectExtensions(source), { math: true, mermaid: true })).toBe(false);
+      expect(
+        parse(source)
+          .filter((token) => token.type === "link_open")
+          .map((token) => token.attrGet("href")),
+      ).toEqual(["src/main.ts"]);
+    }
   });
 });

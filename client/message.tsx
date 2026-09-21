@@ -4,9 +4,9 @@
 // copyable code blocks, and item-level copy labelled by its actual scope.
 import type { PluginTimelineItemProps } from "@getpaseo/plugin/client";
 import { useSettings } from "@getpaseo/plugin/client";
-import { copyText, Icon, useToast } from "@getpaseo/plugin/client/react-native";
+import { useToast } from "@getpaseo/plugin/client/react-native";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { Linking, Pressable, Text, View, type TextStyle } from "react-native";
+import { Linking, Text, View, type TextStyle } from "react-native";
 import type { MessageData } from "../shared/message.js";
 import { fontScaleToBaseSize, moduleSettings, type ModuleSettings } from "../shared/settings.js";
 import Markdown, {
@@ -23,9 +23,10 @@ import { CodeBlock, monospace } from "./code-block.js";
 import { Diagram } from "./diagram.js";
 import { Formula } from "./formula.js";
 import { MathTextGroup } from "./math-text-group.js";
-import { MathInspectorProvider } from "./math-inspector.js";
+import { ContentViewerProvider } from "./content-viewer.js";
 import { moduleState } from "./module-state.js";
 import { colorHex, mermaidThemeFor } from "./theme.js";
+import { viewerIdentity } from "./viewer-identity.js";
 
 const markdown = new MarkdownIt({
   html: false,
@@ -130,7 +131,7 @@ const MemoizedMessage = memo(
       const mathRule: RenderFunction = (
         node: ExtensionNode,
         _children,
-        _parents,
+        parents,
         _styles,
         inherited: TextStyle = {},
       ) => {
@@ -142,6 +143,7 @@ const MemoizedMessage = memo(
           <Formula
             key={node.key}
             formulaId={`${node.key}:${node.content}`}
+            viewerId={viewerIdentity("formula", node, parents, source)}
             expression={node.content}
             texSource={metaString(meta, "texSource")}
             mathScale={modules.mathScale}
@@ -154,19 +156,25 @@ const MemoizedMessage = memo(
             compact={layout.compact}
             enabled={modules.math}
             textStyle={inherited}
-            maxInlineWidth={Math.max(1, width - 48)}
+            maxInlineWidth={Math.max(1, width)}
           />
         );
       };
       const mermaidRule: RenderFunction = (
         node: ExtensionNode,
         _children,
-        _parents,
+        parents,
         _styles,
         inherited: TextStyle = {},
       ) => (
         <Diagram
           key={node.key}
+          viewerId={viewerIdentity(
+            "diagram",
+            node,
+            parents,
+            metaString(node.sourceMeta, "source") ?? node.content,
+          )}
           definition={node.content}
           source={metaString(node.sourceMeta, "source") ?? node.content}
           hostId={host.id}
@@ -175,7 +183,7 @@ const MemoizedMessage = memo(
           compact={layout.compact}
           enabled={modules.mermaid}
           textStyle={inherited}
-          containerWidth={Math.max(64, width - 48)}
+          containerWidth={Math.max(64, width)}
         />
       );
       const codeRule: RenderFunction = (
@@ -242,45 +250,21 @@ const MemoizedMessage = memo(
       [toast],
     );
 
-    const copySource = useCallback(async () => {
-      try {
-        await copyText(text);
-        toast.show("Message source copied", { variant: "success" });
-      } catch {
-        toast.error("Unable to copy the source.");
-      }
-    }, [text, toast]);
-
     return (
       <View
-        style={{ minWidth: 0, width: "100%", paddingRight: 44, minHeight: 44 }}
+        style={{ minWidth: 0, width: "100%" }}
         onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       >
-        <MathInspectorProvider
+        <ContentViewerProvider
           source={text}
-          resetKey={`${host.id}:${colors.foreground}:${modules.mathScale}:${fontSize}:${modules.math}`}
+          theme={theme}
+          compact={layout.compact}
+          resetKey={`${host.id}:${colors.foreground}:${colors.surface0}:${modules.mathScale}:${fontSize}:${modules.math}:${modules.mermaid}`}
         >
           <Markdown markdownit={markdown} style={styles} rules={rules} onLinkPress={onLinkPress}>
             {text}
           </Markdown>
-        </MathInspectorProvider>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Copy this message's source"
-          onPress={copySource}
-          style={({ pressed }) => ({
-            position: "absolute",
-            top: 0,
-            right: 0,
-            width: 44,
-            height: 44,
-            alignItems: "center",
-            justifyContent: "center",
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <Icon name="Copy" size={14} color={colors.foregroundMuted} />
-        </Pressable>
+        </ContentViewerProvider>
       </View>
     );
   },

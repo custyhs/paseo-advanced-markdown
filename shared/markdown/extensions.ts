@@ -331,6 +331,31 @@ export function markdownExtensions(md: MarkdownParser): void {
   const balancePairs = md.inline.ruler2.__rules__.find((rule) => rule.name === "balance_pairs")?.fn;
   const fence = md.block.ruler.__rules__.find((rule) => rule.name === "fence")?.fn;
   if (!balancePairs || !fence) throw new Error("Required Markdown rules are unavailable");
+  // Footnotes remain readable text until the renderer supports their navigation.
+  // CommonMark otherwise consumes their definitions as link references, turning
+  // prose into a relative URL and making the detector decline the whole message.
+  md.block.ruler.before(
+    "reference",
+    "literal_footnote",
+    (state, startLine, endLine, silent) => {
+      if (startLine >= endLine || state.sCount[startLine] - state.blkIndent >= 4) return false;
+      const start = state.bMarks[startLine] + state.tShift[startLine];
+      const content = state.src.slice(start, state.eMarks[startLine]);
+      if (!/^\[\^[^\]\s]+\]:/.test(content)) return false;
+      if (silent) return true;
+      // Consume only this line so a following ordinary link definition still
+      // reaches the reference rule, including inside lists and blockquotes.
+      state.push("paragraph_open", "p", 1).map = [startLine, startLine + 1];
+      const inline = state.push("inline", "", 0);
+      inline.content = content;
+      inline.map = [startLine, startLine + 1];
+      inline.children = [];
+      state.push("paragraph_close", "p", -1);
+      state.line = startLine + 1;
+      return true;
+    },
+    { alt: ["paragraph", "reference", "blockquote"] },
+  );
   const probing = { depth: 0 };
   const cache = new WeakMap<StateInline, Map<number, Candidate>>();
   md.inline.ruler.before("escape", MATH_INLINE, (state, silent) => {

@@ -34,7 +34,42 @@ export function fitFormula({
   return { scale, overflow: true, measured: true };
 }
 
-/** Fit is a temporary overview; numeric zoom is relative to the saved reading size. */
+export interface InlineFormulaLayout {
+  lineHeight: number;
+  promote: boolean;
+}
+
+export function inlineFormulaLayout({
+  height,
+  baseline,
+  scale,
+  lineHeight,
+  fontScale,
+  platform,
+}: {
+  height: number;
+  baseline: number;
+  scale: number;
+  lineHeight: number;
+  fontScale: number;
+  platform: string;
+}): InlineFormulaLayout {
+  const base = positive(lineHeight) ? lineHeight : 24;
+  const unchanged = { lineHeight: base, promote: false };
+  if (platform !== "ios" && platform !== "android") return unchanged;
+  if (![height, scale, lineHeight, fontScale].every(positive)) return unchanged;
+  if (!Number.isFinite(baseline) || baseline < 0) return unchanged;
+  // Reserve descent in the text run as well as the image's logical height.
+  const occupiedHeight = ((height + Math.max(0, height - baseline)) * scale) / fontScale;
+  return {
+    lineHeight: Math.max(base, Math.ceil(occupiedHeight)),
+    // Ordinary fractions and scripts can expand the run. Taller expressions
+    // become blocks so one image does not make the entire paragraph sparse.
+    promote: occupiedHeight > base * 2,
+  };
+}
+
+/** Fit permits modest enlargement; numeric zoom is relative to the saved reading size. */
 export function inspectorScale({
   width,
   height,
@@ -42,6 +77,7 @@ export function inspectorScale({
   viewportWidth,
   viewportHeight,
   zoom,
+  fitCeiling,
 }: {
   width: number;
   height: number;
@@ -49,6 +85,8 @@ export function inspectorScale({
   viewportWidth: number;
   viewportHeight: number;
   zoom: "fit" | number;
+  /** Absolute scale cap for content such as raster diagrams. */
+  fitCeiling?: number;
 }): number {
   const reading = positive(preferredScale) ? preferredScale : 1;
   if (zoom !== "fit") {
@@ -56,6 +94,7 @@ export function inspectorScale({
     return positive(scale) ? scale : reading;
   }
   if (![width, height, viewportWidth, viewportHeight].every(positive)) return reading;
-  const fit = Math.min(reading, viewportWidth / width, viewportHeight / height);
+  const ceiling = fitCeiling !== undefined && positive(fitCeiling) ? fitCeiling : reading * 1.5;
+  const fit = Math.min(ceiling, viewportWidth / width, viewportHeight / height);
   return positive(fit) ? fit : reading;
 }
