@@ -1,5 +1,6 @@
 node_modules/
-.paseo-source/
+.paseo-source
+.compat-runtime/
 .smoke/
 client/generated/
 server/generated/

@@ -1,5 +1,5 @@
-// End-to-end smoke against released Paseo 0.8.0 code paths:
-// - the compiler shipped in @getpaseo/server@0.8.0 builds both bundles;
+// Smoke against the selected official runtime and pinned 0.8 app source fixtures:
+// - the compiler shipped in @getpaseo/server builds both bundles;
 // - the server bundle is evaluated the way the daemon subprocess does and its
 //   RPCs are invoked with contract validation;
 // - the client bundle is evaluated in a registration harness, then the official
@@ -8,15 +8,11 @@
 // Harness only: no React Native UI is rendered here.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import { build } from "esbuild";
 import { transformSync } from "@babel/core";
-import * as sdk from "@getpaseo/plugin";
-import * as clientSdk from "@getpaseo/plugin/client";
-import * as nativeSdk from "@getpaseo/plugin/client/react-native";
-import * as uiSdk from "@getpaseo/plugin/client/ui";
 import { transformTimelineItem } from "../.paseo-source/packages/app/src/plugins/timeline/model.ts";
 import { projectPluginTimelineItems } from "../.paseo-source/packages/app/src/plugins/timeline/projection.ts";
 import { splitMarkdownBlocks } from "../.paseo-source/packages/app/src/utils/split-markdown-blocks.ts";
@@ -24,21 +20,47 @@ import { resolveMermaidRuntime } from "../server/mermaid/runtime.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
-// The released daemon package does not export its compiler; load the shipped
-// file directly so the smoke uses the exact compiler Paseo 0.8.0 runs.
-const serverDist = path.join(root, "node_modules/@getpaseo/server/dist/server/server/plugins");
+// Keep the 0.8 development dependencies as the oldest supported baseline. An
+// isolated runtime can supply a newer official compiler and SDK without changing
+// the lockfile. App projection fixtures remain pinned to the 0.8 source checkout.
+const runtimeRoot = path.resolve(process.env.PASEO_COMPAT_RUNTIME ?? root);
+const runtimeRequire = createRequire(path.join(runtimeRoot, "package.json"));
+const runtimeImport = (name) => {
+  const resolved = runtimeRequire.resolve(name);
+  const relative = path.relative(path.join(runtimeRoot, "node_modules"), resolved);
+  assert.ok(
+    relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative),
+    `${name} resolved outside the selected runtime: ${resolved}`,
+  );
+  return import(pathToFileURL(resolved).href);
+};
+const sdk = await runtimeImport("@getpaseo/plugin");
+const clientSdk = await runtimeImport("@getpaseo/plugin/client");
+const nativeSdk = await runtimeImport("@getpaseo/plugin/client/react-native");
+const uiSdk = await runtimeImport("@getpaseo/plugin/client/ui");
+const { assertPluginCompatibility } = await runtimeImport("@getpaseo/protocol/plugin-requirements");
+const serverRoot = path.join(runtimeRoot, "node_modules/@getpaseo/server");
+const serverPackage = JSON.parse(await readFile(path.join(serverRoot, "package.json"), "utf8"));
+const serverDist = path.join(serverRoot, "dist/server/server/plugins");
 const { compilePlugin } = await import(pathToFileURL(path.join(serverDist, "compiler.js")).href);
 const { readPluginManifest } = await import(
   pathToFileURL(path.join(serverDist, "manifest.js")).href
 );
 const report = {
-  paseo: "0.8.0 (compiler from @getpaseo/server@0.8.0; app sources at v0.8.0)",
+  paseo: `${serverPackage.version} compiler and SDK; projection/stream fixtures from v0.8.0`,
   steps: {},
 };
 
 export async function loadCompiledPlugin() {
   const manifest = await readPluginManifest(root);
-  assert.equal(manifest.requirements?.paseo, "0.8.0");
+  for (const runtime of ["app", "daemon"]) {
+    assertPluginCompatibility({
+      id: manifest.id,
+      requirements: manifest.requirements,
+      version: serverPackage.version,
+      runtime,
+    });
+  }
   const bundles = await compilePlugin({
     client: path.join(root, "index.client.tsx"),
     server: path.join(root, "index.server.ts"),
@@ -469,6 +491,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       chineseBoldBox: { width: chineseBox.width, height: chineseBox.height },
     };
     const runtime = await resolveMermaidRuntime();
+    if (process.env.PASEO_REQUIRE_MERMAID === "1") {
+      assert.equal(
+        runtime.ready,
+        true,
+        "Real Mermaid rendering requires a prepared browser runtime",
+      );
+    }
     const diagram = await plugin.invoke("advanced-markdown.mermaid.render", {
       source: "flowchart LR\n  A[开始] --> B{判断}\n  B -->|是| C[发布]",
       theme: "dark",

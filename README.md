@@ -1,7 +1,7 @@
 # Advanced Markdown for Paseo
 
 Renders math formulas and Mermaid diagrams inside assistant messages in
-[Paseo](https://paseo.sh) 0.8.0, as an installable plugin. No Paseo fork, no
+[Paseo](https://paseo.sh) 0.8.x and 0.9.x, as an installable plugin. No Paseo fork, no
 patch: the official app, daemon, and plugin SDK are the only dependencies.
 
 - Math: `$…$`, `\(…\)`, `$$…$$`, `\[…\]`, and ```` ```math ```` fences,
@@ -14,8 +14,8 @@ patch: the official app, daemon, and plugin SDK are the only dependencies.
 - Copy TeX and original source, formula/diagram inspection, light and dark themes,
   and per-host size/module settings.
 
-The mathematical reading controls below are implemented in the **0.2 candidate**
-and are shipped in the current tagged build. New native iPhone/Electron
+The mathematical reading controls below shipped in **v0.1.4** and remain in
+**v0.1.5**. New native iPhone/Electron
 interaction verification is pending; see the
 [candidate evidence](docs/qa/math-reading-candidate.md).
 
@@ -23,7 +23,7 @@ interaction verification is pending; see the
 
 | Side | Requirement |
 | --- | --- |
-| Paseo | app and daemon **0.8.0** (the manifest pins `requirements.paseo` to `0.8.0`; other releases are untested) |
+| Paseo | app and daemon **>=0.8.0 <0.10.0**; compiler/SDK checks cover 0.8.0 and 0.9.0-beta.2 (see the [compatibility record](docs/qa/paseo-0.9-compatibility.md)) |
 | Daemon host | Node ≥ 22.22 and npm on `PATH` for the preparation step, Git, about 700 MiB of disk in the plugin cache, network access during installation only |
 | Text font | A font covering any non-Latin characters used inside formulas (Chinese, Japanese, Korean, …). macOS and most desktop Linux installs already have one; see [Text inside formulas](#text-inside-formulas) |
 | Daemon host OS | verified on macOS arm64; Linux needs a CJK font (`fonts-noto-cjk`), `ps` (`procps`), the usual Chrome shared libraries, and either unprivileged user namespaces or `PASEO_ADVANCED_MARKDOWN_NO_SANDBOX=1` in the daemon's environment (Ubuntu 24.04 restricts them by default); Windows is untested |
@@ -32,12 +32,17 @@ interaction verification is pending; see the
 Plugins must be enabled on the daemon (Settings → Plugins, or `pluginsEnabled`
 in `config.json`).
 
+Paseo also checks prereleases against their stable core, so `0.9.0-beta.2`
+meets this range. This is a bounded compatibility policy, not a claim that every
+0.8/0.9 build has received device QA. **v0.1.5** adds this compatibility range;
+tags through v0.1.4 still require exactly 0.8.0. Install v0.1.5 for Paseo 0.9.
+
 ## Install
 
 From Git, pinned to a tag (recommended):
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.4
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.5
 paseo plugin ls
 ```
 
@@ -68,11 +73,12 @@ codebase: its server side runs unsandboxed on the daemon host.
 ```bash
 paseo plugin update advanced-markdown        # tracks the ref you installed
 paseo plugin remove advanced-markdown
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.3   # roll back
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.1.3   # roll back on Paseo 0.8.0 only
 ```
 
-A fixed tag does not advance to the next release. To switch from `v0.1.3` to
-`v0.1.4`, remove the plugin and add it with `--ref v0.1.4`.
+A fixed tag does not advance to the next release. To switch from an older tag to
+`v0.1.5`, remove the plugin and add it with `--ref v0.1.5`.
+Earlier tags require exactly Paseo 0.8.0 and cannot be used to roll back on 0.9.
 
 A failed preparation during `plugin update` keeps the installed version running. Updates never touch
 chat history, Drafts, or other plugins.
@@ -167,7 +173,7 @@ Settings → Plugins → Advanced Markdown, per host:
   renderer the next time it is displayed; rows already on screen update after a
   reload or when the conversation is reopened.
 - Text size inside plugin rows.
-- Formula size and its independent reset (unreleased candidate).
+- Formula size and its independent reset.
 - Runtime status: engine versions, browser, cache directory, queue and cache
   counts.
 
@@ -205,9 +211,20 @@ npm run prepare-browser  # Mermaid runtime + Chrome headless shell into the cach
 npm run typecheck && npm run lint && npm run format:check
 npm test                 # parser, renderer, cache, Mermaid, fault injection
 npm run paseo-source     # official Paseo 0.8.0 app sources for the smoke
-npm run smoke            # released compiler + official projection + RPCs
+npm run smoke            # 0.8 compiler + official projection + RPCs
 HERMES_BIN=… npm run smoke:hermes
 ```
+
+To check a newer compiler/SDK without changing the 0.8 development lockfile:
+
+```bash
+npm install --prefix .compat-runtime --no-save --package-lock=false @getpaseo/server@0.9.0-beta.2 @getpaseo/plugin@0.9.0-beta.2
+PASEO_COMPAT_RUNTIME=.compat-runtime npm run smoke
+```
+
+The app projection/stream fixtures remain pinned to 0.8.0. The selected compiler,
+manifest validator, SDK registrations and RPC handlers use the selected runtime;
+this smoke does not replace a real 0.9 client/device check.
 
 QA notes and evidence: `docs/qa/`. Licensing: Apache-2.0, see `LICENSE` and
 `NOTICE` (parts adapted from q5m-ai/paseo-math).

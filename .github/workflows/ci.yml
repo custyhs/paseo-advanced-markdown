@@ -28,4 +28,28 @@ jobs:
       - run: npm test
       - run: npm run paseo-source
       - run: npm run smoke
+        env:
+          PASEO_REQUIRE_MERMAID: "1"
       - run: npm audit --omit=dev --audit-level=moderate
+
+  compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.0"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Keep the lockfile and 0.8 development baseline intact. Exercise the new
+      # compiler, manifest validator and SDK in a separate dependency directory.
+      - run: npm install --prefix .compat-runtime --no-save --package-lock=false @getpaseo/server@0.9.0-beta.2 @getpaseo/plugin@0.9.0-beta.2
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk fonts-dejavu-core procps
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: npm run prepare-browser
+      - run: npm run paseo-source
+      - run: npm run smoke
+        env:
+          PASEO_COMPAT_RUNTIME: .compat-runtime
+          PASEO_REQUIRE_MERMAID: "1"
