@@ -7,6 +7,8 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      PASEO_ADVANCED_MARKDOWN_CACHE: ${{ github.workspace }}/.smoke/npm/cache
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,10 +32,14 @@ jobs:
       - run: npm run smoke
         env:
           PASEO_REQUIRE_MERMAID: "1"
+      - run: npm run pack
+      - run: npm run smoke:package
       - run: npm audit --omit=dev --audit-level=moderate
 
   compatibility:
     runs-on: ubuntu-latest
+    env:
+      PASEO_ADVANCED_MARKDOWN_CACHE: ${{ github.workspace }}/.smoke/npm/cache
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,3 +59,7 @@ jobs:
         env:
           PASEO_COMPAT_RUNTIME: .compat-runtime
           PASEO_REQUIRE_MERMAID: "1"
+      - run: npm run pack
+      - run: npm run smoke:package
+        env:
+          PASEO_COMPAT_RUNTIME: .compat-runtime

@@ -14,7 +14,11 @@ patch: the official app, daemon, and plugin SDK are the only dependencies.
 - Copy TeX and original source, formula/diagram inspection, light and dark themes,
   and per-host size/module settings.
 
-**v0.2.0** adds a shared formula/diagram viewer, mouse dragging for overflowing
+**v0.2.1** prepares the plugin for npm distribution with prebuilt rendering code,
+verified offline assets, and a complete package source-size check. See the
+[release notes](docs/release/0.2.1.md) and [package validation](docs/qa/npm-package.md).
+
+v0.2.0 added a shared formula/diagram viewer, mouse dragging for overflowing
 formulas and code, and fixes for footnote rendering and native inline formula
 layout. See the [release notes](docs/release/0.2.0.md) and
 [validation record](docs/qa/click-viewer.md). The latest iPhone layout adjustment
@@ -36,23 +40,24 @@ in `config.json`).
 Paseo also checks prereleases against their stable core, so `0.9.0-beta.2`
 meets this range. This is a bounded compatibility policy, not a claim that every
 0.8/0.9 build has received device QA. **v0.1.5** adds this compatibility range;
-tags through v0.1.4 still require exactly 0.8.0. Install v0.2.0 for the current release.
+tags through v0.1.4 still require exactly 0.8.0. Install v0.2.1 for the current release.
 
 ## Install
 
 From Git, pinned to a tag (recommended):
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.2.0
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.2.1
 paseo plugin ls
 ```
 
 Paseo runs the manifest's preparation commands on the daemon host:
-`npm ci`, `npm run build`, and `npm run prepare-browser`. The last one installs
-the pinned Mermaid CLI runtime and Chrome headless shell into
+`npm ci`, `npm run build`, and `npm run prepare-browser`. The last one prepares
+the formula assets and installs the pinned Mermaid CLI runtime and Chrome headless shell into
 `~/.cache/paseo-advanced-markdown` (or `$XDG_CACHE_HOME/paseo-advanced-markdown`,
 `%LOCALAPPDATA%\paseo-advanced-markdown` on Windows; override with
-`PASEO_ADVANCED_MARKDOWN_CACHE`). That directory is outside Paseo's managed
+`PASEO_ADVANCED_MARKDOWN_CACHE`, which must be an absolute path). Relative
+`XDG_CACHE_HOME` and `LOCALAPPDATA` values are ignored. That directory is outside Paseo's managed
 checkouts, so plugin updates reuse it and a removed plugin can be cleaned up by
 deleting it.
 
@@ -79,12 +84,12 @@ A fixed tag does not advance to the next release. If `paseo plugin update --help
 lists `--ref`, switch an existing Git installation without removing its settings:
 
 ```bash
-paseo plugin update advanced-markdown --ref v0.2.0
+paseo plugin update advanced-markdown --ref v0.2.1
 ```
 
 Older CLIs require removing and adding the plugin with the new tag; record your
 plugin settings before removal, because removal deletes them. To roll back, use
-`v0.1.5`, which supports the same Paseo version range. Tags through v0.1.4 require
+`v0.2.0`, which supports the same Paseo version range. Tags through v0.1.4 require
 exactly Paseo 0.8.0 and cannot be used to roll back on 0.9.
 
 A failed preparation during `plugin update` keeps the installed version running. Updates never touch
@@ -206,7 +211,7 @@ Settings → Plugins → Advanced Markdown, per host:
 These switches do not change Paseo's built-in Mermaid rendering for rows the
 plugin does not own.
 
-## Limits
+## Limitations
 
 | Limit | Value |
 | --- | --- |
@@ -232,8 +237,8 @@ one of them.
 
 ```bash
 npm ci
-npm run build            # portable Markdown bundle, resvg WASM, runtime manifest
-npm run prepare-browser  # Mermaid runtime + Chrome headless shell into the cache
+npm run build            # Markdown/MathJax bundles, formula assets, runtime manifest
+npm run prepare-browser  # formula assets, Mermaid runtime and browser into the cache
 npm run typecheck && npm run lint && npm run format:check
 npm test                 # parser, renderer, cache, Mermaid, fault injection
 npm run paseo-source     # official Paseo 0.8.0 app sources for the smoke
@@ -251,6 +256,52 @@ PASEO_COMPAT_RUNTIME=.compat-runtime npm run smoke
 The app projection/stream fixtures remain pinned to 0.8.0. The selected compiler,
 manifest validator, SDK registrations and RPC handlers use the selected runtime;
 this smoke does not replace a real 0.9 client/device check.
+
+### Prepare an npm package
+
+```bash
+npm run pack
+npm run smoke:package
+PASEO_COMPAT_RUNTIME=.compat-runtime npm run smoke:package
+```
+
+`npm run pack` builds the generated modules and writes
+`.smoke/npm/paseo-advanced-markdown-<version>.tgz`, plus a file inventory and integrity
+hash in `.smoke/npm/pack.json`. It does not publish anything. The generated package
+contains the runtime sources, original resvg WASM, precompiled MathJax renderer,
+static MathJax SVG font data, preparation scripts,
+worker lockfile, and a production `npm-shrinkwrap.json`. Host libraries and build
+tools are excluded from its dependencies. The precompiled renderer uses the same
+MathJax 3.2.2 profile as the Git source and includes its license. Unused MathJax
+speech/XML dependencies are not installed; dependency overrides in a published
+package do not reliably control the consuming application's dependency graph.
+
+The repository stays private in npm metadata because its manifest prepares a Git
+checkout with `npm ci` and a source build. The generated npm package is public-ready
+and its manifest prepares the formula assets, Mermaid worker and browser. Publish the
+generated `.tgz`, not the repository directory; do not use bare `npm pack` here.
+Keep the package and GitHub source versions aligned before publication.
+
+The WASM and font JSON are data files, not embedded JavaScript. Preparation checks
+their SHA256 and size and copies them to content-addressed paths under the cache's
+`assets/` directory. Runtime reads verify the same bytes without network access.
+Old asset versions are retained for running processes and rollback. For formula-only
+development or to repair damaged assets, run `npm run prepare-assets` after building,
+using the same cache environment as the daemon. Prepare before reloading a local
+directory installation; directory reloads do not run manifest build commands.
+
+Packaging counts every JS/TS source file shipped under `client/`, `server/`,
+`shared/`, and `scripts/`, plus the root entries, including generated modules and
+declarations. It fails above 2,000,000 bytes in total or per file, or 200 files.
+The count is saved in `.smoke/npm/source-budget.json` and does not depend on the
+community scanner's import traversal.
+
+`smoke:package` installs the tarball outside the checkout with lifecycle scripts
+disabled and production dependencies only. It runs the package's preparation,
+moves the installation to simulate activation, compiles both entries with the
+selected official Paseo compiler, and renders real
+formula and Mermaid PNGs through the compiled RPC handlers. Its browser cache and
+reports stay under `.smoke/npm/`; it does not reload the production plugin or daemon.
 
 QA notes and evidence: `docs/qa/`. Licensing: Apache-2.0, see `LICENSE` and
 `NOTICE` (parts adapted from q5m-ai/paseo-math).

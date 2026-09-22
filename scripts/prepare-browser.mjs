@@ -1,6 +1,7 @@
 // Declarative host preparation: install the pinned Mermaid worker runtime and
 // the pinned Chrome headless shell into the plugin's own cache directory.
-// Runs from the manifest `build` list after `npm ci` and `npm run build`.
+// Runs from the manifest `build` list. Git prepares sources first; npm packages
+// already contain generated modules and install their production dependencies.
 // It never runs at message time and never reaches the network afterwards.
 import { spawn } from "node:child_process";
 import { access, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -16,8 +17,10 @@ import {
 } from "@puppeteer/browsers";
 import { cacheLayout, resolveCacheRoot } from "../server/mermaid/cache-root.mjs";
 import { readWorkerSpec } from "./lib/worker-key.mjs";
+import { prepareAssets } from "./lib/prepare-assets.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
+await prepareAssets(root);
 const spec = await readWorkerSpec(root);
 const layout = cacheLayout(resolveCacheRoot());
 const workerDir = path.join(layout.workers, spec.key);

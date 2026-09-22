@@ -4,6 +4,8 @@
 // status accessor for the settings screen.
 
 import { initWasm, Resvg, type ResvgRenderOptions } from "@resvg/resvg-wasm";
+import { readPreparedAsset } from "../assets/store.mjs";
+import assets from "../generated/assets.json";
 import { mathjax } from "mathjax-full/js/mathjax.js";
 import { TeX } from "mathjax-full/js/input/tex.js";
 import { SVG } from "mathjax-full/js/output/svg.js";
@@ -32,7 +34,6 @@ import {
 import { BoundedCache } from "../cache.js";
 import { loadTextFont, missingFontMessage } from "./fonts.js";
 import { mathDensityCandidates, resolveMathDensity } from "./density.js";
-import { wasmBase64 } from "../generated/wasm.js";
 
 const EM = 16;
 // Keep the v0.1.3 half-pixel geometry grid regardless of requested raster detail.
@@ -383,10 +384,13 @@ async function renderUncached(
   // Await before allocating TeX trees so a burst during WASM startup retains
   // inputs only. Rasterization itself is synchronous and serialized.
   try {
-    wasmReady ??= initWasm(Buffer.from(wasmBase64, "base64")).catch((error) => {
-      wasmReady = undefined;
-      throw error;
-    });
+    // Preparation stores the pinned binary outside movable plugin checkouts.
+    wasmReady ??= readPreparedAsset(assets.resvg)
+      .then((bytes) => initWasm(bytes))
+      .catch((error) => {
+        wasmReady = undefined;
+        throw error;
+      });
     await wasmReady;
     const formula = typeset(input);
     const { text, needsBold } = formula;

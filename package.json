@@ -1,6 +1,6 @@
 {
   "name": "paseo-advanced-markdown",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Advanced Markdown rendering for Paseo 0.8 and 0.9: math formulas and Mermaid diagrams in assistant messages",
   "type": "module",
@@ -11,7 +11,10 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "pack": "node scripts/pack.mjs",
+    "smoke:package": "node scripts/smoke-package.mjs",
     "prepare-browser": "node scripts/prepare-browser.mjs",
+    "prepare-assets": "node scripts/prepare-assets.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
     "test": "vitest run",
     "paseo-source": "node scripts/paseo-source.mjs",
@@ -23,11 +26,10 @@
     "format:check": "biome format ."
   },
   "dependencies": {
+    "@puppeteer/browsers": "3.2.2",
     "@resvg/resvg-wasm": "2.6.2",
     "fontkit": "2.0.4",
-    "markdown-it": "15.0.1",
-    "mathjax-full": "3.2.2",
-    "react-native-markdown-display": "7.0.2"
+    "markdown-it": "15.0.1"
   },
   "overrides": {
     "react-native-markdown-display": {
@@ -41,16 +43,17 @@
     "@biomejs/biome": "^2.5.13",
     "@getpaseo/plugin": "0.8.0",
     "@getpaseo/server": "0.8.0",
-    "@puppeteer/browsers": "3.2.2",
     "@tanstack/react-query": "^5.90.11",
     "@types/fontkit": "2.0.8",
     "@types/node": "^22.0.0",
     "@types/react": "~19.2.0",
     "esbuild": "^0.25.0",
+    "mathjax-full": "3.2.2",
     "puppeteer-core": "^25.11.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-markdown-display": "7.0.2",
     "react-native-web": "0.21.2",
     "tsx": "^4.20.0",
     "typescript": "^5.9.3",

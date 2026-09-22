@@ -3,7 +3,9 @@
 import { access, mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { prepareAssets } from "../scripts/lib/prepare-assets.mjs";
 import { WORKER_KEY, BROWSER, BROWSER_BUILD_ID } from "../server/generated/runtime.js";
 import { cacheLayout } from "../server/mermaid/cache-root.mjs";
 import {
@@ -52,6 +54,7 @@ async function tempDirsNamed(prefix: string): Promise<string[]> {
 beforeAll(async () => {
   root = await mkdtemp(path.join(os.tmpdir(), "pam-fake-cache-"));
   process.env.PASEO_ADVANCED_MARKDOWN_CACHE = root;
+  await prepareAssets(fileURLToPath(new URL("../", import.meta.url)));
 });
 
 afterAll(async () => {
