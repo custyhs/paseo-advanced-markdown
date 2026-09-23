@@ -28,6 +28,7 @@ const files = [
   "scripts/lib/prepare-assets.mjs",
   "scripts/lib/worker-key.mjs",
   "README.md",
+  "images",
   "LICENSE",
   "NOTICE",
 ];
@@ -91,6 +92,9 @@ for (const required of [
   "worker/package-lock.json",
   "npm-shrinkwrap.json",
   "scripts/prepare-browser.mjs",
+  "images/01-math-overview.jpg",
+  "images/02-formula-viewer.jpg",
+  "images/03-mermaid-diagram.jpg",
 ])
   assert.ok(packedFiles.has(required), `Missing package asset: ${required}`);
 assert.ok(!packedFiles.has("scripts/build.mjs"), "The npm package must not require a source build");

@@ -14,15 +14,34 @@ patch: the official app, daemon, and plugin SDK are the only dependencies.
 - Copy TeX and original source, formula/diagram inspection, light and dark themes,
   and per-host size/module settings.
 
-**v0.2.1** prepares the plugin for npm distribution with prebuilt rendering code,
-verified offline assets, and a complete package source-size check. See the
-[release notes](docs/release/0.2.1.md) and [package validation](docs/qa/npm-package.md).
+**v0.2.2** adds a screenshot gallery for the plugin catalog and includes those
+images in the npm package. See the [release notes](docs/release/0.2.2.md).
+
+v0.2.1 prepared npm distribution with prebuilt rendering code, verified offline
+assets, and a complete package source-size check. See the
+[package validation](docs/qa/npm-package.md).
 
 v0.2.0 added a shared formula/diagram viewer, mouse dragging for overflowing
 formulas and code, and fixes for footnote rendering and native inline formula
 layout. See the [release notes](docs/release/0.2.0.md) and
 [validation record](docs/qa/click-viewer.md). The latest iPhone layout adjustment
 still needs device confirmation; Android UI validation remains pending.
+
+## Screenshots
+
+Captured in the official Paseo 0.9.0-beta.2 web client, using sample conversations.
+
+Inline and display math mixed with ordinary Markdown:
+
+![Inline and display equations in an explanation of attention](images/01-math-overview.jpg)
+
+Click a formula to preview it, adjust its zoom, inspect the source, or copy LaTeX:
+
+![Formula viewer with Preview, Source, Copy LaTeX, and zoom controls](images/02-formula-viewer.jpg)
+
+Mermaid diagrams rendered alongside prose and tables:
+
+![Mermaid release pipeline rendered inside a Paseo conversation](images/03-mermaid-diagram.jpg)
 
 ## Requirements
 
@@ -40,14 +59,14 @@ in `config.json`).
 Paseo also checks prereleases against their stable core, so `0.9.0-beta.2`
 meets this range. This is a bounded compatibility policy, not a claim that every
 0.8/0.9 build has received device QA. **v0.1.5** adds this compatibility range;
-tags through v0.1.4 still require exactly 0.8.0. Install v0.2.1 for the current release.
+tags through v0.1.4 still require exactly 0.8.0. Install v0.2.2 for the current release.
 
 ## Install
 
 From Git, pinned to a tag (recommended):
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.2.1
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.2.2
 paseo plugin ls
 ```
 
@@ -84,12 +103,12 @@ A fixed tag does not advance to the next release. If `paseo plugin update --help
 lists `--ref`, switch an existing Git installation without removing its settings:
 
 ```bash
-paseo plugin update advanced-markdown --ref v0.2.1
+paseo plugin update advanced-markdown --ref v0.2.2
 ```
 
 Older CLIs require removing and adding the plugin with the new tag; record your
 plugin settings before removal, because removal deletes them. To roll back, use
-`v0.2.0`, which supports the same Paseo version range. Tags through v0.1.4 require
+`v0.2.1`, which supports the same Paseo version range. Tags through v0.1.4 require
 exactly Paseo 0.8.0 and cannot be used to roll back on 0.9.
 
 A failed preparation during `plugin update` keeps the installed version running. Updates never touch
