@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { cacheLayout, resolveCacheRoot } from "../mermaid/cache-root.mjs";
@@ -47,4 +47,32 @@ export async function readPreparedAsset(asset, env = process.env) {
     throw new Error(`Renderer asset ${asset.file} is not prepared. ${repair}`);
   }
   return verifyAsset(bytes, asset);
+}
+
+// Shared by installation and startup. The source is read only when the cached
+// bytes are missing or invalid; old content-addressed versions stay available.
+export function ensurePreparedAssetSync(asset, loadSource, env = process.env) {
+  const target = preparedAssetPath(asset, env);
+  try {
+    return verifyAsset(readFileSync(target), asset);
+  } catch {
+    // Recover only from a source that passes the same integrity check.
+  }
+  try {
+    const bytes = verifyAsset(loadSource(), asset);
+    mkdirSync(path.dirname(target), { recursive: true });
+    const temporary = `${target}.${randomUUID()}.tmp`;
+    try {
+      writeFileSync(temporary, bytes, { flag: "wx" });
+      renameSync(temporary, target);
+    } finally {
+      rmSync(temporary, { force: true });
+    }
+    return readPreparedAssetSync(asset, env);
+  } catch (cause) {
+    throw new Error(
+      `Renderer asset ${asset.file} could not be restored at ${target}: ${cause instanceof Error ? cause.message : String(cause)} Check cache permissions or reinstall the plugin.`,
+      { cause },
+    );
+  }
 }

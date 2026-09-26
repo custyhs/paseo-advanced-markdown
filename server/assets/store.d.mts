@@ -7,3 +7,8 @@ export function preparedAssetPath(asset: RendererAsset, env?: NodeJS.ProcessEnv)
 export function verifyAsset(bytes: Buffer, asset: RendererAsset): Buffer;
 export function readPreparedAssetSync(asset: RendererAsset, env?: NodeJS.ProcessEnv): Buffer;
 export function readPreparedAsset(asset: RendererAsset, env?: NodeJS.ProcessEnv): Promise<Buffer>;
+export function ensurePreparedAssetSync(
+  asset: RendererAsset,
+  loadSource: () => Buffer,
+  env?: NodeJS.ProcessEnv,
+): Buffer;

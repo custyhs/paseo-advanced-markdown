@@ -11,6 +11,7 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { brotliCompressSync } from "node:zlib";
 import { readWorkerSpec } from "./lib/worker-key.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -168,6 +169,21 @@ await writeFile(
     },
     null,
     2,
+  )}\n`,
+);
+
+// Recovery must survive Paseo's in-memory compilation: runtime cannot locate
+// the original package directory. Keep compressed bytes as data, and import
+// them into the server bundle for offline startup recovery only.
+await writeFile(
+  path.join(root, "server/generated/asset-recovery.json"),
+  `${JSON.stringify(
+    Object.fromEntries(
+      [wasm, fonts].map((bytes) => [
+        createHash("sha256").update(bytes).digest("hex"),
+        brotliCompressSync(bytes).toString("base64"),
+      ]),
+    ),
   )}\n`,
 );
 

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { brotliDecompressSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import assets from "../server/generated/assets.json";
 
@@ -9,6 +10,21 @@ const require = createRequire(import.meta.url);
 const generated = new URL("../server/generated/", import.meta.url);
 
 describe("generated renderer data assets", () => {
+  it("ships offline recovery data that expands to the exact original assets", async () => {
+    const recovery = JSON.parse(await readFile(new URL("asset-recovery.json", generated), "utf8"));
+    expect(Object.keys(recovery).sort()).toEqual(
+      Object.values(assets)
+        .map((asset) => asset.sha256)
+        .sort(),
+    );
+    for (const asset of Object.values(assets)) {
+      const bytes = brotliDecompressSync(Buffer.from(recovery[asset.sha256], "base64"), {
+        maxOutputLength: asset.bytes,
+      });
+      expect(bytes.equals(await readFile(new URL(asset.file, generated)))).toBe(true);
+    }
+  });
+
   it("preserves the exact pinned rasterizer binary with a matching integrity descriptor", async () => {
     const original = await readFile(require.resolve("@resvg/resvg-wasm/index_bg.wasm"));
     const packaged = await readFile(new URL(assets.resvg.file, generated));

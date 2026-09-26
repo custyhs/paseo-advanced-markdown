@@ -14,7 +14,11 @@ patch: the official app, daemon, and plugin SDK are the only dependencies.
 - Copy TeX and original source, formula/diagram inspection, light and dark themes,
   and per-host size/module settings.
 
-**v0.2.2** adds a screenshot gallery for the plugin catalog and includes those
+**v0.2.3** repairs missing or damaged formula assets automatically at startup,
+including local directory reloads and npm installations. Recovery works offline
+before MathJax loads its font tables. See the [release notes](docs/release/0.2.3.md).
+
+v0.2.2 adds a screenshot gallery for the plugin catalog and includes those
 images in the npm package. See the [release notes](docs/release/0.2.2.md).
 
 v0.2.1 prepared npm distribution with prebuilt rendering code, verified offline
@@ -59,14 +63,14 @@ in `config.json`).
 Paseo also checks prereleases against their stable core, so `0.9.0-beta.2`
 meets this range. This is a bounded compatibility policy, not a claim that every
 0.8/0.9 build has received device QA. **v0.1.5** adds this compatibility range;
-tags through v0.1.4 still require exactly 0.8.0. Install v0.2.2 for the current release.
+tags through v0.1.4 still require exactly 0.8.0. Install v0.2.3 for the current release.
 
 ## Install
 
 From Git, pinned to a tag (recommended):
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.2.2
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.2.3
 paseo plugin ls
 ```
 
@@ -103,12 +107,12 @@ A fixed tag does not advance to the next release. If `paseo plugin update --help
 lists `--ref`, switch an existing Git installation without removing its settings:
 
 ```bash
-paseo plugin update advanced-markdown --ref v0.2.2
+paseo plugin update advanced-markdown --ref v0.2.3
 ```
 
 Older CLIs require removing and adding the plugin with the new tag; record your
 plugin settings before removal, because removal deletes them. To roll back, use
-`v0.2.1`, which supports the same Paseo version range. Tags through v0.1.4 require
+`v0.2.2`, which supports the same Paseo version range. Tags through v0.1.4 require
 exactly Paseo 0.8.0 and cannot be used to roll back on 0.9.
 
 A failed preparation during `plugin update` keeps the installed version running. Updates never touch
@@ -301,13 +305,22 @@ and its manifest prepares the formula assets, Mermaid worker and browser. Publis
 generated `.tgz`, not the repository directory; do not use bare `npm pack` here.
 Keep the package and GitHub source versions aligned before publication.
 
-The WASM and font JSON are data files, not embedded JavaScript. Preparation checks
-their SHA256 and size and copies them to content-addressed paths under the cache's
-`assets/` directory. Runtime reads verify the same bytes without network access.
-Old asset versions are retained for running processes and rollback. For formula-only
-development or to repair damaged assets, run `npm run prepare-assets` after building,
-using the same cache environment as the daemon. Prepare before reloading a local
-directory installation; directory reloads do not run manifest build commands.
+The WASM and font JSON are data files. Preparation checks their SHA256 and size
+and copies them to content-addressed paths under the cache's `assets/` directory.
+The build also produces compressed recovery data, imported into the server bundle
+because Paseo evaluates that bundle in memory without a reliable package path.
+Before loading the renderer, startup verifies both assets and restores missing or
+damaged copies offline. The first render can also recover a binary removed after
+startup. Valid cache files are reused; old versions are retained for running
+processes and rollback. Recovery never installs dependencies or downloads a browser.
+
+Local directory reloads do not run manifest build commands. After changing source,
+run `npm run build` before reloading; formula assets then repair themselves even
+with an empty cache. Mermaid still needs `npm run prepare-browser` when its worker
+or browser is absent. `npm run prepare-assets` remains available for explicit formula
+asset preparation, using the same cache environment as the daemon. If automatic
+recovery fails, the error identifies the asset and cache path; check write permissions
+or reinstall/rebuild the plugin if its bundled recovery data is damaged.
 
 Packaging counts every JS/TS source file shipped under `client/`, `server/`,
 `shared/`, and `scripts/`, plus the root entries, including generated modules and
@@ -318,8 +331,10 @@ community scanner's import traversal.
 `smoke:package` installs the tarball outside the checkout with lifecycle scripts
 disabled and production dependencies only. It runs the package's preparation,
 moves the installation to simulate activation, compiles both entries with the
-selected official Paseo compiler, and renders real
-formula and Mermaid PNGs through the compiled RPC handlers. Its browser cache and
+selected official Paseo compiler, and renders real formula and Mermaid PNGs
+through the compiled RPC handlers. It also clears or corrupts the formula cache
+and removes the original data files after compilation to verify offline startup
+recovery from the in-memory bundle. Its browser cache and
 reports stay under `.smoke/npm/`; it does not reload the production plugin or daemon.
 
 QA notes and evidence: `docs/qa/`. Licensing: Apache-2.0, see `LICENSE` and

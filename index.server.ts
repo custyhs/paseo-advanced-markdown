@@ -1,3 +1,4 @@
+import "./server/assets/startup.mjs";
 import type { PluginServerContext } from "@getpaseo/plugin/server";
 import { renderMath, renderMermaid, runtimeStatus } from "./shared/rpc.js";
 import { moduleSettings } from "./shared/settings.js";

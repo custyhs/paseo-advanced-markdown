@@ -86,6 +86,7 @@ for (const required of [
   "server/generated/resvg.wasm",
   "server/generated/mathjax-fonts.json",
   "server/generated/assets.json",
+  "server/generated/asset-recovery.json",
   "server/generated/runtime.ts",
   "server/math/render.js",
   "server/generated/mathjax.LICENSE",

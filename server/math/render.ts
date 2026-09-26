@@ -4,7 +4,7 @@
 // status accessor for the settings screen.
 
 import { initWasm, Resvg, type ResvgRenderOptions } from "@resvg/resvg-wasm";
-import { readPreparedAsset } from "../assets/store.mjs";
+import { readRuntimeAsset } from "../assets/runtime.mjs";
 import assets from "../generated/assets.json";
 import { mathjax } from "mathjax-full/js/mathjax.js";
 import { TeX } from "mathjax-full/js/input/tex.js";
@@ -384,8 +384,8 @@ async function renderUncached(
   // Await before allocating TeX trees so a burst during WASM startup retains
   // inputs only. Rasterization itself is synchronous and serialized.
   try {
-    // Preparation stores the pinned binary outside movable plugin checkouts.
-    wasmReady ??= readPreparedAsset(assets.resvg)
+    // Repair again if the cache was cleared after startup, before the first render.
+    wasmReady ??= readRuntimeAsset(assets.resvg)
       .then((bytes) => initWasm(bytes))
       .catch((error) => {
         wasmReady = undefined;

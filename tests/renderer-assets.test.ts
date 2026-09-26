@@ -1,15 +1,29 @@
-import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { prepareAssets } from "../scripts/lib/prepare-assets.mjs";
 import {
   preparedAssetPath,
+  ensurePreparedAssetSync,
   readPreparedAsset,
   readPreparedAssetSync,
 } from "../server/assets/store.mjs";
+import { readRuntimeAsset, readRuntimeAssetSync } from "../server/assets/runtime.mjs";
 import assets from "../server/generated/assets.json";
 import { renderFormula } from "../server/math/render.js";
 import { decodePng, inkCount } from "./helpers/png.js";
@@ -28,6 +42,67 @@ afterEach(async () => {
 });
 
 describe("packaged renderer assets", () => {
+  it("restores missing and corrupt runtime assets offline with sync and async readers", async () => {
+    const { env } = await fixture();
+    for (const asset of Object.values(assets)) {
+      const original = await readFile(path.join(root, "server/generated", asset.file));
+      expect(readRuntimeAssetSync(asset, env).equals(original)).toBe(true);
+      const damaged = Buffer.from(original);
+      damaged[100] ^= 1;
+      await writeFile(preparedAssetPath(asset, env), damaged);
+      expect((await readRuntimeAsset(asset, env)).equals(original)).toBe(true);
+    }
+  });
+
+  it("leaves valid cached assets untouched without reading recovery data", async () => {
+    const { env } = await fixture();
+    await prepareAssets(root, env);
+    const target = preparedAssetPath(assets.resvg, env);
+    const before = await stat(target);
+    const source = vi.fn((): Buffer => {
+      throw new Error("Valid cache must not need recovery data");
+    });
+    expect(ensurePreparedAssetSync(assets.resvg, source, env).length).toBe(assets.resvg.bytes);
+    expect(source).not.toHaveBeenCalled();
+    const after = await stat(target);
+    expect({ ino: after.ino, mtimeMs: after.mtimeMs }).toEqual({
+      ino: before.ino,
+      mtimeMs: before.mtimeMs,
+    });
+  });
+
+  it("reports the asset and cache path when recovery cannot write", async () => {
+    const { env } = await fixture();
+    await writeFile(env.PASEO_ADVANCED_MARKDOWN_CACHE, "obstructed cache");
+    expect(() => readRuntimeAssetSync(assets.resvg, env)).toThrow(
+      `Renderer asset resvg.wasm could not be restored at ${preparedAssetPath(assets.resvg, env)}`,
+    );
+    await expect(readRuntimeAsset(assets.resvg, env)).rejects.toThrow(/Check cache permissions/);
+  });
+
+  it("handles simultaneous cold starts without leaving partial or temporary assets", async () => {
+    const { env } = await fixture();
+    const code = [
+      `import { readRuntimeAssetSync } from ${JSON.stringify(new URL("../server/assets/runtime.mjs", import.meta.url).href)};`,
+      `for (const asset of ${JSON.stringify(Object.values(assets))}) readRuntimeAssetSync(asset);`,
+    ].join("\n");
+    const exec = promisify(execFile);
+    await Promise.all(
+      [0, 1, 2].map(() =>
+        exec(process.execPath, ["--input-type=module", "-e", code], {
+          env: { ...process.env, ...env },
+        }),
+      ),
+    );
+    for (const asset of Object.values(assets))
+      expect(readPreparedAssetSync(asset, env).length).toBe(asset.bytes);
+    expect((await readdir(path.dirname(preparedAssetPath(assets.resvg, env)))).sort()).toEqual(
+      Object.values(assets)
+        .map((asset) => path.basename(preparedAssetPath(asset, env)))
+        .sort(),
+    );
+  });
+
   it("prepares the exact pinned WASM and readable font data without a browser", async () => {
     const { env } = await fixture();
     await prepareAssets(root, env);

@@ -113,33 +113,66 @@ try {
   });
   assert.ok(bundles.clientBundle && bundles.serverBundle);
   const sdk = await import(pathToFileURL(runtimeRequire.resolve("@getpaseo/plugin")).href);
-  const handlers = new Map();
   // biome-ignore lint/security/noGlobalEval: evaluates the official compiler output like the daemon
   const evaluate = globalThis.eval;
-  const entry = evaluate(bundles.serverBundle)((name) => {
-    if (name === "@getpaseo/plugin") return sdk;
-    if (name === "@getpaseo/plugin/server") return {};
-    if (name === "zod") return runtimeRequire(name);
-    return packageRequire(name);
-  });
-  const cleanup = entry.default({
-    handle(contract, handler) {
-      handlers.set(contract.name, { contract, handler });
-    },
-    registerSettings() {},
-    on() {
-      return () => {};
-    },
-    before() {
-      return () => {};
-    },
-  });
-  assert.equal(typeof cleanup, "function");
-  async function invoke(method, input) {
-    const { contract, handler } = handlers.get(method);
-    return contract.output.parseAsync(await handler(await contract.input.parseAsync(input), {}));
+  function startPlugin() {
+    const handlers = new Map();
+    const entry = evaluate(bundles.serverBundle)((name) => {
+      if (name === "@getpaseo/plugin") return sdk;
+      if (name === "@getpaseo/plugin/server") return {};
+      if (name === "zod") return runtimeRequire(name);
+      return packageRequire(name);
+    });
+    const cleanup = entry.default({
+      handle(contract, handler) {
+        handlers.set(contract.name, { contract, handler });
+      },
+      registerSettings() {},
+      on() {
+        return () => {};
+      },
+      before() {
+        return () => {};
+      },
+    });
+    assert.equal(typeof cleanup, "function");
+    async function invoke(method, input) {
+      const { contract, handler } = handlers.get(method);
+      return contract.output.parseAsync(await handler(await contract.input.parseAsync(input), {}));
+    }
+    return { cleanup, invoke };
   }
+
+  const assets = JSON.parse(
+    await readFile(path.join(pluginRoot, "server/generated/assets.json"), "utf8"),
+  );
+  const assetPath = (asset) =>
+    path.join(
+      process.env.PASEO_ADVANCED_MARKDOWN_CACHE,
+      "assets",
+      `${asset.sha256}${path.extname(asset.file)}`,
+    );
+  async function assertAssetCache() {
+    for (const asset of Object.values(assets)) {
+      const bytes = await readFile(assetPath(asset));
+      assert.equal(bytes.length, asset.bytes);
+      assert.equal(createHash("sha256").update(bytes).digest("hex"), asset.sha256);
+    }
+  }
+  // Neither preexisting cache files nor a runtime path back to the source may
+  // hide a broken startup. The compiled bundle must contain its recovery data.
+  await rm(path.join(process.env.PASEO_ADVANCED_MARKDOWN_CACHE, "assets"), {
+    recursive: true,
+    force: true,
+  });
+  for (const filename of [
+    ...Object.values(assets).map((asset) => asset.file),
+    "asset-recovery.json",
+  ])
+    await rm(path.join(pluginRoot, "server/generated", filename));
+  const { cleanup, invoke } = startPlugin();
   try {
+    await assertAssetCache();
     const status = await invoke("advanced-markdown.status", {});
     assert.equal(status.plugin.version, packed.version);
     assert.equal(status.mermaid.ready, true);
@@ -172,9 +205,32 @@ try {
       report[name] = { width: result.width, height: result.height };
     }
     report.bundles = { client: bundles.clientBundle.length, server: bundles.serverBundle.length };
-    report.status = "passed";
   } finally {
     await cleanup();
+  }
+
+  const changed = await readFile(assetPath(assets.resvg));
+  changed[100] ^= 1;
+  await writeFile(assetPath(assets.resvg), changed);
+  await rm(assetPath(assets.fonts));
+  const restarted = startPlugin();
+  try {
+    await assertAssetCache();
+    const result = await restarted.invoke("advanced-markdown.math.render", {
+      expression: String.raw`\frac{a+b}{c+d}`,
+      display: false,
+      color: "#fafafa",
+    });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(
+      Buffer.from(result.png, "base64").subarray(0, 8).toString("hex"),
+      "89504e470d0a1a0a",
+    );
+    report.startupRecovery = ["empty-cache", "corrupt-wasm-and-missing-fonts"];
+    report.recoveryWithoutPackageFiles = true;
+    report.status = "passed";
+  } finally {
+    await restarted.cleanup();
   }
   await mkdir(output, { recursive: true });
   await writeFile(
