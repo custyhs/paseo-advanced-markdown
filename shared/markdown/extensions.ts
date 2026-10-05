@@ -10,10 +10,12 @@ import MarkdownIt, {
   type Token,
 } from "markdown-it";
 import {
+  MAX_CODE_SOURCE,
   MAX_DOCUMENT,
   MAX_INLINE_RUN,
   MAX_MATH_EXPRESSION,
   MAX_MERMAID_SOURCE,
+  MAX_TABLE_CELLS,
 } from "../limits.js";
 import { isSupportedLink } from "./links.js";
 
@@ -435,11 +437,21 @@ export function markdownExtensions(md: MarkdownParser): void {
 export interface DetectedExtensions {
   math: boolean;
   mermaid: boolean;
+  /** At least one ordinary fenced or indented code block (not math/mermaid). */
+  code: boolean;
+  /** At least one GFM table within the size budget. */
+  table: boolean;
   /** Nodes the plugin renderer does not cover (images and unsupported links). */
   unsupported: boolean;
 }
 
-const NONE: DetectedExtensions = Object.freeze({ math: false, mermaid: false, unsupported: false });
+const NONE: DetectedExtensions = Object.freeze({
+  math: false,
+  mermaid: false,
+  code: false,
+  table: false,
+  unsupported: false,
+});
 
 let detector: MarkdownParser | undefined;
 
@@ -447,39 +459,56 @@ let detector: MarkdownParser | undefined;
 export function detectExtensions(source: string): DetectedExtensions {
   if (source.length > MAX_DOCUMENT) return NONE;
   const mayHaveMath = source.includes("$") || source.includes("\\(") || source.includes("\\[");
-  const mayHaveFence = source.includes("```") || source.includes("~~~");
-  if (!mayHaveMath && !mayHaveFence) return NONE;
-  if (!mayHaveMath && !/mermaid/i.test(source) && !/math/i.test(source)) return NONE;
+  // Cheap gates before parsing: a math delimiter, a fence, an indented line, or a table pipe.
+  const mayHaveBlock =
+    source.includes("```") ||
+    source.includes("~~~") ||
+    /^(?: {4}|\t)/m.test(source) ||
+    source.includes("|");
+  if (!mayHaveMath && !mayHaveBlock) return NONE;
   if (!detector) {
     detector = new MarkdownIt().use(markdownExtensions);
     detector.validateLink = () => true;
   }
   let math = false;
   let mermaid = false;
+  let code = false;
+  let table = false;
   let unsupported = false;
+  let tableCells = 0;
   const pending: Token[] = [...detector.parse(source, {})];
   while (pending.length) {
     const token = pending.pop()!;
     if (token.type === MATH_INLINE || token.type === MATH_BLOCK) math = true;
     else if (token.type === MERMAID_BLOCK) mermaid = true;
+    else if (token.type === "fence" || token.type === "code_block") {
+      if (token.content.length <= MAX_CODE_SOURCE) code = true;
+    } else if (token.type === "td_open" || token.type === "th_open") tableCells++;
     else if (token.type === "image") unsupported = true;
     else if (token.type === "link_open" && !isSupportedLink(String(token.attrGet("href") ?? "")))
       unsupported = true;
     if (token.children) for (const child of token.children) pending.push(child);
   }
-  if (!math && !mermaid) return NONE;
-  return { math, mermaid, unsupported };
+  if (tableCells > 0 && tableCells <= MAX_TABLE_CELLS) table = true;
+  if (!math && !mermaid && !code && !table) return NONE;
+  return { math, mermaid, code, table, unsupported };
 }
 
 export function hasAnyExtension(detected: DetectedExtensions): boolean {
-  return detected.math || detected.mermaid;
+  return detected.math || detected.mermaid || detected.code || detected.table;
 }
 
 /** Whether the plugin should own the item given which modules are enabled. */
 export function shouldTakeOver(
   detected: DetectedExtensions,
-  enabled: { math: boolean; mermaid: boolean },
+  enabled: { math: boolean; mermaid: boolean; codeBlocks: boolean; tables: boolean },
 ): boolean {
+  // Images and unsupported links are not rendered by this plugin; defer to Paseo.
   if (detected.unsupported) return false;
-  return (detected.math && enabled.math) || (detected.mermaid && enabled.mermaid);
+  return (
+    (detected.math && enabled.math) ||
+    (detected.mermaid && enabled.mermaid) ||
+    (detected.code && enabled.codeBlocks) ||
+    (detected.table && enabled.tables)
+  );
 }

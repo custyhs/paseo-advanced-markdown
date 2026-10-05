@@ -26,6 +26,7 @@ import { Formula } from "./formula.js";
 import { MathTextGroup } from "./math-text-group.js";
 import { ContentViewerProvider } from "./content-viewer.js";
 import { moduleState } from "./module-state.js";
+import { MarkdownTable, MarkdownTableCell } from "./table.js";
 import { colorHex, mermaidThemeFor } from "./theme.js";
 import { viewerIdentity } from "./viewer-identity.js";
 import { FilePreview } from "./file-preview.js";
@@ -225,6 +226,36 @@ const MemoizedMessage = memo(
         [MERMAID_BLOCK]: mermaidRule,
         fence: codeRule,
         code_block: codeRule,
+        table: (node, children, _parents, ruleStyles) => (
+          <MarkdownTable
+            key={node.key}
+            table={node}
+            fontSize={fontSize}
+            frameStyle={ruleStyles._VIEW_SAFE_table ?? ruleStyles.table}
+            theme={theme}
+            compact={layout.compact}
+          >
+            {children}
+          </MarkdownTable>
+        ),
+        th: (node, children, _parents, ruleStyles) => (
+          <MarkdownTableCell
+            key={node.key}
+            cell={node}
+            cellStyle={ruleStyles._VIEW_SAFE_th ?? ruleStyles.th}
+          >
+            {children}
+          </MarkdownTableCell>
+        ),
+        td: (node, children, _parents, ruleStyles) => (
+          <MarkdownTableCell
+            key={node.key}
+            cell={node}
+            cellStyle={ruleStyles._VIEW_SAFE_td ?? ruleStyles.td}
+          >
+            {children}
+          </MarkdownTableCell>
+        ),
         text: (node, _children, _parents, ruleStyles, inherited = {}) => (
           <Text key={node.key} selectable style={[inherited, ruleStyles.text]}>
             {node.content}
@@ -240,6 +271,7 @@ const MemoizedMessage = memo(
       colors.foreground,
       host.id,
       width,
+      fontSize,
       theme,
       layout.compact,
       modules.math,

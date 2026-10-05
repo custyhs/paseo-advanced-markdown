@@ -7,6 +7,10 @@ export const MAX_MATH_EXPRESSION = 4096;
 export const MAX_MERMAID_SOURCE = 32 * 1024;
 /** Longest inline run that the math tokenizer probes with real Markdown rules. */
 export const MAX_INLINE_RUN = 65_536;
+/** Longest fenced or indented code block the code-block module will take over. */
+export const MAX_CODE_SOURCE = 64 * 1024;
+/** Cells a table may hold before the plugin leaves tables to the host renderer. */
+export const MAX_TABLE_CELLS = 400;
 /** Longest source item the transformer will scan. Larger items stay with the host. */
 export const MAX_DOCUMENT = 1_048_576;
 /** Largest rendered image, as base64 text, that one RPC response may carry. */

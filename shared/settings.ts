@@ -14,6 +14,8 @@ export const moduleSettings = defineSettings({
   schema: z.object({
     math: z.boolean().default(true),
     mermaid: z.boolean().default(true),
+    codeBlocks: z.boolean().default(false),
+    tables: z.boolean().default(false),
     fontScale: z.enum(FONT_SCALES).default("default"),
     mathScale: z.literal(MATH_SCALES).default(1),
   }),

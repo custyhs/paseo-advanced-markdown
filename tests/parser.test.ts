@@ -17,6 +17,11 @@ import { compactEquationTags, normalizeTex } from "../shared/tex.js";
 
 const meta = (token: Token): ExtensionMeta => token.meta as unknown as ExtensionMeta;
 
+const MATH_ONLY = { math: true, mermaid: false, codeBlocks: false, tables: false };
+const MERMAID_ONLY = { math: false, mermaid: true, codeBlocks: false, tables: false };
+const NO_MODULES = { math: false, mermaid: false, codeBlocks: false, tables: false };
+const ALL_MODULES = { math: true, mermaid: true, codeBlocks: true, tables: true };
+
 function parse(source: string): Token[] {
   const tokens: Token[] = [];
   const visit = (token: Token): void => {
@@ -103,7 +108,13 @@ describe("raw-source math within Markdown", () => {
   it("keeps Python fences with dollar strings as code", () => {
     const source = 'Run:\n\n```python\nprice = "$5 + $10"\nformula = "$x^2$"\n```\n';
     expect(expressions(source)).toEqual([]);
-    expect(detectExtensions(source)).toEqual({ math: false, mermaid: false, unsupported: false });
+    expect(detectExtensions(source)).toEqual({
+      math: false,
+      mermaid: false,
+      code: true,
+      table: false,
+      unsupported: false,
+    });
   });
 
   it("keeps raw delimiter intent separate from decoded TeX entities", () => {
@@ -280,7 +291,13 @@ describe("Mermaid fences", () => {
     expect(tokens[0].content).toBe("flowchart LR\n  A[开始] --> B{判断}\n\n  B -->|yes| C\n");
     expect(tokens[0].meta).toEqual({ source: flow, language: "mermaid" });
     expect(tokens[0].block).toBe(true);
-    expect(detectExtensions(flow)).toEqual({ math: false, mermaid: true, unsupported: false });
+    expect(detectExtensions(flow)).toEqual({
+      math: false,
+      mermaid: true,
+      code: false,
+      table: false,
+      unsupported: false,
+    });
   });
 
   it("keeps unclosed, empty, lookalike, and oversized fences as ordinary code", () => {
@@ -378,30 +395,92 @@ describe("mixed content", () => {
       "bullet_list_open",
       "link_open",
     ]);
-    expect(detectExtensions(mixed)).toEqual({ math: true, mermaid: true, unsupported: false });
+    expect(detectExtensions(mixed)).toEqual({
+      math: true,
+      mermaid: true,
+      code: true,
+      table: true,
+      unsupported: false,
+    });
+  });
+
+  it("reports code and table modules but not plain prose", () => {
+    expect(detectExtensions("```ts\nconst x = 1;\n```")).toEqual({
+      math: false,
+      mermaid: false,
+      code: true,
+      table: false,
+      unsupported: false,
+    });
+    const tree = "```text\nroot/\n├── a/\n│   └── b.txt\n└── c.txt\n```";
+    expect(detectExtensions(tree)).toEqual({
+      math: false,
+      mermaid: false,
+      code: true,
+      table: false,
+      unsupported: false,
+    });
+    const table =
+      "| Provider | Model | Context | Input | Output |\n| - | - | - | - | - |\n| OpenAI | gpt | 400k | $1 | $10 |";
+    expect(detectExtensions(table)).toEqual({
+      math: false,
+      mermaid: false,
+      code: false,
+      table: true,
+      unsupported: false,
+    });
+    for (const source of [
+      "# Plain\n\nJust **text** with `code` and a [link](https://example.org).",
+      "Only prose here, no blocks at all.",
+    ]) {
+      const detected = detectExtensions(source);
+      expect(detected.math || detected.mermaid || detected.code || detected.table).toBe(false);
+      expect(detected.unsupported).toBe(false);
+    }
+  });
+
+  it("honors the code and table module switches", () => {
+    const code = detectExtensions("```text\nroot/\n└── a.txt\n```");
+    expect(
+      shouldTakeOver(code, { math: false, mermaid: false, codeBlocks: true, tables: false }),
+    ).toBe(true);
+    expect(shouldTakeOver(code, NO_MODULES)).toBe(false);
+    const table = detectExtensions("| a | b |\n| - | - |\n| 1 | 2 |");
+    expect(
+      shouldTakeOver(table, { math: false, mermaid: false, codeBlocks: false, tables: true }),
+    ).toBe(true);
+    expect(shouldTakeOver(table, NO_MODULES)).toBe(false);
   });
 
   it("reports nothing for plain Markdown so the host keeps it", () => {
-    for (const source of [
-      "# Plain\n\nJust **text** with `code` and a [link](https://example.org).",
-      "```ts\nconst x = 1;\n```",
-      "",
-    ]) {
-      expect(detectExtensions(source)).toEqual({ math: false, mermaid: false, unsupported: false });
+    for (const source of ["# Plain\n\nJust **text** with *emphasis* and prose."]) {
+      expect(detectExtensions(source)).toEqual({
+        math: false,
+        mermaid: false,
+        code: false,
+        table: false,
+        unsupported: false,
+      });
     }
   });
 
   it("leaves items with inline images to the host and honors module switches", () => {
     const withImage = "Formula $x$ and ![figure](https://example.org/a.png)";
     const detected = detectExtensions(withImage);
-    expect(detected).toEqual({ math: true, mermaid: false, unsupported: true });
-    expect(shouldTakeOver(detected, { math: true, mermaid: true })).toBe(false);
+    expect(detected).toEqual({
+      math: true,
+      mermaid: false,
+      code: false,
+      table: false,
+      unsupported: true,
+    });
+    expect(shouldTakeOver(detected, ALL_MODULES)).toBe(false);
     const mathOnly = detectExtensions("Only $x$ here");
-    expect(shouldTakeOver(mathOnly, { math: true, mermaid: false })).toBe(true);
-    expect(shouldTakeOver(mathOnly, { math: false, mermaid: true })).toBe(false);
+    expect(shouldTakeOver(mathOnly, MATH_ONLY)).toBe(true);
+    expect(shouldTakeOver(mathOnly, MERMAID_ONLY)).toBe(false);
     const both = detectExtensions(mixed);
-    expect(shouldTakeOver(both, { math: false, mermaid: true })).toBe(true);
-    expect(shouldTakeOver(both, { math: false, mermaid: false })).toBe(false);
+    expect(shouldTakeOver(both, MERMAID_ONLY)).toBe(true);
+    expect(shouldTakeOver(both, NO_MODULES)).toBe(false);
   });
 });
 
@@ -443,7 +522,7 @@ m_T
 \left\lfloor \left(\frac{T}{\log T}\right)^{1/2} \right\rfloor
 $$
 [对应源码](/Users/example/project/main.py:120)`;
-    expect(shouldTakeOver(detectExtensions(source), { math: true, mermaid: true })).toBe(true);
+    expect(shouldTakeOver(detectExtensions(source), ALL_MODULES)).toBe(true);
     expect(formulas(source)).toHaveLength(1);
     expect(parse(source).some((token) => token.type === "heading_open")).toBe(false);
   });
@@ -455,19 +534,13 @@ $$
       "vscode://file/tmp/a",
       "#section",
     ]) {
-      expect(
-        shouldTakeOver(detectExtensions(`Formula $x$ [source](${href})`), {
-          math: true,
-          mermaid: true,
-        }),
-      ).toBe(false);
+      expect(shouldTakeOver(detectExtensions(`Formula $x$ [source](${href})`), ALL_MODULES)).toBe(
+        false,
+      );
     }
-    expect(
-      shouldTakeOver(detectExtensions("Formula $x$ ![plot](src/plot.png)"), {
-        math: true,
-        mermaid: true,
-      }),
-    ).toBe(false);
+    expect(shouldTakeOver(detectExtensions("Formula $x$ ![plot](src/plot.png)"), ALL_MODULES)).toBe(
+      false,
+    );
   });
   it("keeps footnotes readable without treating their prose as a file destination", () => {
     const source = [
@@ -480,8 +553,14 @@ $$
       "flowchart LR\n A --> B",
       "```",
     ].join("\n");
-    expect(detectExtensions(source)).toEqual({ math: true, mermaid: true, unsupported: false });
-    expect(shouldTakeOver(detectExtensions(source), { math: true, mermaid: true })).toBe(true);
+    expect(detectExtensions(source)).toEqual({
+      math: true,
+      mermaid: true,
+      code: false,
+      table: false,
+      unsupported: false,
+    });
+    expect(shouldTakeOver(detectExtensions(source), ALL_MODULES)).toBe(true);
     expect(expressions(source)).toEqual(["E=mc^2", "a+b=c"]);
     expect(text(source)).toContain("[^render-note]: 这是脚注内容，用于观察编号、跳转和返回链接。");
     expect(parse(source).filter((token) => token.type === "link_open")).toHaveLength(0);
@@ -498,20 +577,16 @@ $$
       "src/main.ts#L10-L20",
       "file:///tmp/foo%20bar.ts#L2",
     ]) {
-      expect(
-        shouldTakeOver(detectExtensions(`$x$ [source](${link})`), { math: true, mermaid: true }),
-        link,
-      ).toBe(true);
+      expect(shouldTakeOver(detectExtensions(`$x$ [source](${link})`), ALL_MODULES), link).toBe(
+        true,
+      );
     }
     for (const link of ["https://example.org/a", "http://example.org", "mailto:a@example.org"]) {
-      expect(
-        shouldTakeOver(detectExtensions(`$x$ [source](${link})`), { math: true, mermaid: true }),
-        link,
-      ).toBe(true);
+      expect(shouldTakeOver(detectExtensions(`$x$ [source](${link})`), ALL_MODULES), link).toBe(
+        true,
+      );
     }
-    expect(
-      shouldTakeOver(detectExtensions("$x$ `src/main.ts`"), { math: true, mermaid: true }),
-    ).toBe(true);
+    expect(shouldTakeOver(detectExtensions("$x$ `src/main.ts`"), ALL_MODULES)).toBe(true);
   });
 
   it("renders reference links immediately after footnotes alongside formulas", () => {
@@ -525,9 +600,11 @@ $$
       expect(detectExtensions(source), source).toEqual({
         math: true,
         mermaid: false,
+        code: false,
+        table: false,
         unsupported: false,
       });
-      expect(shouldTakeOver(detectExtensions(source), { math: true, mermaid: true })).toBe(true);
+      expect(shouldTakeOver(detectExtensions(source), ALL_MODULES)).toBe(true);
       expect(
         parse(source)
           .filter((token) => token.type === "link_open")

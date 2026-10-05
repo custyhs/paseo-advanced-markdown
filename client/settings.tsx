@@ -92,6 +92,20 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
                 disabled={settings.saving}
                 onValueChange={(mermaid) => void update({ mermaid })}
               />
+              <SettingsSwitch
+                label="Code blocks"
+                hint="Fenced and indented code blocks render with a horizontal scroll instead of wrapping long lines and breaking indentation. Messages that also contain math, diagrams, or tables are shown by this plugin regardless; this switch adds code blocks to what it takes over."
+                value={settings.values.codeBlocks}
+                disabled={settings.saving}
+                onValueChange={(codeBlocks) => void update({ codeBlocks })}
+              />
+              <SettingsSwitch
+                label="Tables"
+                hint="Markdown tables keep readable column widths and scroll horizontally inside the message instead of squeezing every column. Only tables within the size budget are taken over."
+                value={settings.values.tables}
+                disabled={settings.saving}
+                onValueChange={(tables) => void update({ tables })}
+              />
               <SettingsSelect
                 label="Text size in plugin items"
                 value={settings.values.fontScale}
@@ -124,10 +138,10 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
           )}
         </SettingsCard>
         <Text style={muted}>
-          These switches apply to this host only. Messages that contain enabled content are shown by
-          this plugin; a message with every module off is left to Paseo's own renderer the next time
-          it is displayed. Existing rows update after a plugin reload or when the conversation is
-          reopened.
+          These switches apply to this host only. Code blocks and tables are off by default so the
+          plugin takes over the same messages as before; turn them on to fix wrapped folder trees
+          and squeezed tables on narrow screens. Each client fits content to its own available
+          space.
         </Text>
       </SettingsSection>
       <SettingsSection title="Runtime on this host">

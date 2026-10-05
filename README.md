@@ -10,6 +10,8 @@ Math formulas and Mermaid diagrams, rendered directly in your
 - **Read math and diagrams** alongside text, tables, code, and local file links.
 - **Click to inspect** a formula or diagram, zoom in, view its source, and copy it.
 - **Keep rendering local** on your Paseo daemon host, with light and dark themes.
+- **Optional code and table handling** keeps folder trees from wrapping and wide
+  tables from squeezing into unreadable columns on narrow screens.
 
 ![Math formulas mixed with Markdown in a Paseo conversation](images/01-math-overview.jpg)
 
@@ -57,6 +59,10 @@ Click or tap a formula or diagram to open its viewer. Use **Preview** to zoom an
 copy LaTeX or Mermaid; use **Source** to copy Markdown. On desktop, drag long
 formulas and overflowing code blocks horizontally. Local file links open a
 read-only preview.
+
+Turn on **Code blocks** and **Tables** (off by default) to also render ordinary
+fenced code and Markdown tables through the plugin, so long lines scroll instead
+of wrapping and wide tables stay readable on phones.
 
 Change text size, formula size, and enabled modules in
 **Settings → Plugins → Advanced Markdown**.
