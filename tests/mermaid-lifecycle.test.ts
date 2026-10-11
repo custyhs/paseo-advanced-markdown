@@ -1,6 +1,6 @@
 // Fault injection for the Mermaid worker: a fake prepared runtime whose CLI
 // entry misbehaves. Uses the real spawn, timeout, cleanup, and queue code.
-import { access, mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,10 +47,6 @@ async function writeFakeRuntime(script: string): Promise<void> {
   );
 }
 
-async function tempDirsNamed(prefix: string): Promise<string[]> {
-  return (await readdir(os.tmpdir())).filter((name) => name.startsWith(prefix));
-}
-
 beforeAll(async () => {
   root = await mkdtemp(path.join(os.tmpdir(), "pam-fake-cache-"));
   process.env.PASEO_ADVANCED_MARKDOWN_CACHE = root;
@@ -66,9 +62,15 @@ afterAll(async () => {
 
 describe("Mermaid worker faults", () => {
   it("terminates a hung renderer at the time budget and removes its temp directory", async () => {
-    await writeFakeRuntime("setInterval(() => {}, 1000);\n");
+    const workDirMarker = path.join(root, "timeout-work-dir.txt");
+    await writeFakeRuntime(`
+      import { writeFile } from "node:fs/promises";
+      import path from "node:path";
+      const inputPath = process.argv[process.argv.indexOf("--input") + 1];
+      await writeFile(${JSON.stringify(workDirMarker)}, path.dirname(inputPath));
+      setInterval(() => {}, 1000);
+    `);
     resetMermaidForTests();
-    const before = await tempDirsNamed("paseo-advanced-markdown-");
     const started = Date.now();
     const result = await renderDiagram({ source: "flowchart LR\n A --> B", theme: "default" });
     const elapsed = Date.now() - started;
@@ -79,8 +81,9 @@ describe("Mermaid worker faults", () => {
     });
     expect(elapsed).toBeGreaterThanOrEqual(MERMAID_TASK_TIMEOUT_MS - 200);
     expect(elapsed).toBeLessThan(MERMAID_TASK_TIMEOUT_MS + 5000);
-    const after = await tempDirsNamed("paseo-advanced-markdown-");
-    expect(after.length).toBeLessThanOrEqual(before.length);
+    // Other test workers create directories with the same prefix in os.tmpdir().
+    const workDir = await readFile(workDirMarker, "utf8");
+    await expect(access(workDir)).rejects.toMatchObject({ code: "ENOENT" });
     // A retryable failure is not cached: the next call runs the worker again.
     expect(mermaidQueueLength()).toBe(0);
   }, 30_000);
