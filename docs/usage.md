@@ -54,6 +54,21 @@ on desktop. **Select text** switches to text selection; **Drag to scroll** switc
 back. **Copy source** copies the entire original block body in either mode. Short
 code blocks and native clients keep their usual text selection and scrolling.
 
+## Reading tables
+
+Enable **Tables**, then use **Open table** below a table to open its viewer.
+**Preview** keeps the rendered cells; **Source** shows the copyable Markdown.
+**Copy Markdown** preserves links, emphasis, inline code, formulas, column
+alignment, and escaped pipes. For tables inside lists or quotes, it removes the
+outer container markers; referenced link definitions are included when needed.
+**More → Copy as TSV** copies displayed cell text for spreadsheets. Tabs and line
+breaks within a cell become spaces so they cannot create extra columns or rows.
+
+Tables scroll horizontally when their columns cannot fit. Links and text selection
+remain available in the conversation; copying actions live inside the viewer.
+Turning **Tables** off restores the standard table layout in plugin-owned messages
+as well as leaving ordinary table-only messages to Paseo.
+
 ## Settings
 
 Settings → Plugins → Advanced Markdown, per host:
@@ -62,6 +77,13 @@ Settings → Plugins → Advanced Markdown, per host:
   source. A message whose enabled content is exhausted returns to Paseo's own
   renderer the next time it is displayed; rows already on screen update after a
   reload or when the conversation is reopened.
+- Code blocks on/off (off by default). When on, fenced and indented code blocks
+  render with a horizontal scroll instead of wrapping long lines and breaking
+  indentation. Messages that also contain math, diagrams, or tables are shown by
+  the plugin regardless.
+- Tables on/off (off by default). When on, Markdown tables keep readable column
+  widths and scroll horizontally inside the message instead of squeezing every
+  column to a fraction of the message width.
 - Text size inside plugin rows.
 - Formula size and its independent reset.
 - Runtime status: engine versions, browser, cache directory, queue and cache
@@ -69,6 +91,11 @@ Settings → Plugins → Advanced Markdown, per host:
 
 These switches do not change Paseo's built-in Mermaid rendering for rows the
 plugin does not own.
+
+Code blocks and tables are off by default so an update does not change which rows
+the plugin owns; turn them on to fix wrapped folder trees and squeezed tables on
+narrow screens. Copying a code block still copies its source, without the fence.
+Use the table viewer to copy Markdown or TSV.
 
 ## What is rendered, and what is not
 
@@ -80,7 +107,8 @@ plugin does not own.
 | Unclosed delimiters or fences while streaming | readable source until closed |
 | Prices (`$5 and $10`), `\$`, inline code, other fences | plain text / code |
 | Footnote markers and definitions (`[^note]`, `[^note]: …`) | readable text; formulas in definition lines render, without footnote navigation |
-| Invalid TeX, invalid Mermaid, oversized input | source with a short reason; other content still renders |
+| Invalid or oversized TeX/Mermaid | readable source; ordinary code limits below still apply |
+| Any ordinary code block or table over its budget, including beside math or diagrams | the entire timeline row is left to Paseo’s renderer |
 | Local source-file links beside formulas or diagrams | clickable read-only source preview on the selected host; supports relative paths, absolute paths, `file://` URLs, `:line` and `#Lline` anchors |
 | Messages with inline images or unsupported link schemes | left to Paseo's renderer |
 | User messages, tool output, other timeline rows | unchanged |
@@ -109,6 +137,8 @@ rows while it streams; this last action copies only the row containing the entry
 | --- | --- |
 | Formula | 4096 characters |
 | Mermaid definition | 32 KiB |
+| Ordinary code block | 65,536 JavaScript string units, including a parsed trailing newline |
+| Table | 400 cells per table, including the header; multiple tables are budgeted separately |
 | Image | 2,000,000 base64 characters; 8 M raster pixels and 4096 px longest edge (large diagrams are re-rendered at a lower scale, down to 0.5x) |
 | Math raster | Density 1/2/3/4/6/8; logical size independent of density; lower detail is used when an image budget is reached |
 | Math queue | 1 rendering, up to 128 waiting inputs; duplicate requests share work |

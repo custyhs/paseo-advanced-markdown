@@ -6,7 +6,7 @@ type ViewerPathNode = {
 
 /** Renderer parents run from nearest ancestor to root; React keys are not viewer identity. */
 export function viewerIdentity(
-  kind: "formula" | "diagram",
+  kind: "formula" | "diagram" | "table",
   node: ViewerPathNode,
   parents: readonly ViewerPathNode[],
   source: string,

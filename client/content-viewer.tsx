@@ -48,7 +48,9 @@ export function ContentViewerProvider({
   }, [resetKey]);
   useEffect(() => {
     setActive((current) =>
-      current && !source.includes(current.selection.source) ? undefined : current,
+      current && !source.includes(current.selection.sourceAnchor ?? current.selection.source)
+        ? undefined
+        : current,
     );
   }, [source]);
   return (
@@ -120,7 +122,9 @@ function ContentViewer({
   rowSource: string;
   onClose(): void;
 }) {
-  const [mode, setMode] = useState<"preview" | "source">(selection.image ? "preview" : "source");
+  const [mode, setMode] = useState<"preview" | "source">(
+    selection.image || selection.tablePreview ? "preview" : "source",
+  );
   const [zoom, setZoom] = useState<"fit" | number>("fit");
   const [more, setMore] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -156,8 +160,11 @@ function ContentViewer({
     }
   };
   const appearance = { theme, compact };
-  const bodyLabel = selection.kind === "formula" ? "LaTeX" : "Mermaid";
-  const sourceMode = mode === "source" || !image || failedImage;
+  const isTable = selection.kind === "table";
+  const bodyLabel = isTable ? "TSV" : selection.kind === "formula" ? "LaTeX" : "Mermaid";
+  const hasPreview = Boolean(selection.tablePreview || (image && !failedImage));
+  const sourceMode = mode === "source" || !hasPreview;
+  const copyMarkdown = isTable || sourceMode;
   const retry = () => {
     setFailedImage(false);
     selection.retry?.();
@@ -166,7 +173,7 @@ function ContentViewer({
     setZoom(Math.min(8, Math.max(0.1, (scale / reading) * factor)));
   return (
     <Modal
-      title={selection.kind === "formula" ? "Formula" : "Diagram"}
+      title={isTable ? "Table" : selection.kind === "formula" ? "Formula" : "Diagram"}
       open
       onOpenChange={(open) => {
         if (!open) onClose();
@@ -186,7 +193,7 @@ function ContentViewer({
                 {...appearance}
                 label="Preview"
                 selected={!sourceMode}
-                disabled={!image || failedImage}
+                disabled={!hasPreview}
                 onPress={() => setMode("preview")}
               />
               <ViewerButton
@@ -199,11 +206,11 @@ function ContentViewer({
             <View style={{ flex: 1 }} />
             <ViewerButton
               {...appearance}
-              label={`Copy ${sourceMode ? "Markdown" : bodyLabel}`}
+              label={`Copy ${copyMarkdown ? "Markdown" : bodyLabel}`}
               onPress={() =>
                 void copy(
-                  sourceMode ? selection.source : selection.body,
-                  sourceMode ? "Markdown source" : bodyLabel,
+                  copyMarkdown ? selection.source : selection.body,
+                  copyMarkdown ? "Markdown source" : bodyLabel,
                 )
               }
             />
@@ -225,11 +232,13 @@ function ContentViewer({
             >
               <ViewerButton
                 {...appearance}
-                label={`Copy ${sourceMode ? bodyLabel : "Markdown source"}`}
+                label={
+                  isTable ? "Copy as TSV" : `Copy ${sourceMode ? bodyLabel : "Markdown source"}`
+                }
                 onPress={() =>
                   void copy(
-                    sourceMode ? selection.body : selection.source,
-                    sourceMode ? bodyLabel : "Markdown source",
+                    copyMarkdown ? selection.body : selection.source,
+                    copyMarkdown ? bodyLabel : "Markdown source",
                   )
                 }
               />
@@ -296,7 +305,9 @@ function ContentViewer({
           style={{ minWidth: 0, width: "100%" }}
           onLayout={(event) => setViewportWidth(event.nativeEvent.layout.width)}
         >
-          {preview ? (
+          {!sourceMode && selection.tablePreview ? (
+            selection.tablePreview
+          ) : preview ? (
             selection.math ? (
               <FormulaPreview
                 selection={selection}

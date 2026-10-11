@@ -10,12 +10,15 @@ import MarkdownIt, {
   type Token,
 } from "markdown-it";
 import {
+  MAX_CODE_SOURCE,
   MAX_DOCUMENT,
   MAX_INLINE_RUN,
   MAX_MATH_EXPRESSION,
   MAX_MERMAID_SOURCE,
+  MAX_TABLE_CELLS,
 } from "../limits.js";
 import { isSupportedLink } from "./links.js";
+import { tableSourcePlugin } from "./table-source.js";
 
 /** Token types the extensions add. Renderers match on these names. */
 export const MATH_INLINE = "math_inline";
@@ -327,6 +330,7 @@ function fenceLanguage(info: string): string {
 }
 
 export function markdownExtensions(md: MarkdownParser): void {
+  md.use(tableSourcePlugin);
   // Pinned Markdown 15 packages expose state classes and named rule registries.
   // Capture the real rules rather than maintaining a competing Markdown scanner.
   const balancePairs = md.inline.ruler2.__rules__.find((rule) => rule.name === "balance_pairs")?.fn;
@@ -435,11 +439,21 @@ export function markdownExtensions(md: MarkdownParser): void {
 export interface DetectedExtensions {
   math: boolean;
   mermaid: boolean;
-  /** Nodes the plugin renderer does not cover (images and unsupported links). */
+  /** At least one ordinary fenced or indented code block (not math/mermaid). */
+  code: boolean;
+  /** At least one GFM table within the size budget. */
+  table: boolean;
+  /** Unsupported nodes or blocks exceeding the client renderer's size budgets. */
   unsupported: boolean;
 }
 
-const NONE: DetectedExtensions = Object.freeze({ math: false, mermaid: false, unsupported: false });
+const NONE: DetectedExtensions = Object.freeze({
+  math: false,
+  mermaid: false,
+  code: false,
+  table: false,
+  unsupported: false,
+});
 
 let detector: MarkdownParser | undefined;
 
@@ -447,39 +461,63 @@ let detector: MarkdownParser | undefined;
 export function detectExtensions(source: string): DetectedExtensions {
   if (source.length > MAX_DOCUMENT) return NONE;
   const mayHaveMath = source.includes("$") || source.includes("\\(") || source.includes("\\[");
-  const mayHaveFence = source.includes("```") || source.includes("~~~");
-  if (!mayHaveMath && !mayHaveFence) return NONE;
-  if (!mayHaveMath && !/mermaid/i.test(source) && !/math/i.test(source)) return NONE;
+  // Cheap gates before parsing: a math delimiter, a fence, an indented line, or a table pipe.
+  const mayHaveBlock =
+    source.includes("```") ||
+    source.includes("~~~") ||
+    /^(?: {4}|\t)/m.test(source) ||
+    source.includes("|");
+  if (!mayHaveMath && !mayHaveBlock) return NONE;
   if (!detector) {
     detector = new MarkdownIt().use(markdownExtensions);
     detector.validateLink = () => true;
   }
   let math = false;
   let mermaid = false;
+  let code = false;
+  let table = false;
   let unsupported = false;
-  const pending: Token[] = [...detector.parse(source, {})];
+  let tableCells = 0;
+  const pending: Token[] = detector.parse(source, {}).reverse();
   while (pending.length) {
     const token = pending.pop()!;
     if (token.type === MATH_INLINE || token.type === MATH_BLOCK) math = true;
     else if (token.type === MERMAID_BLOCK) mermaid = true;
-    else if (token.type === "image") unsupported = true;
+    else if (token.type === "fence" || token.type === "code_block") {
+      if (token.content.length <= MAX_CODE_SOURCE) code = true;
+      else unsupported = true;
+    } else if (token.type === "table_open") tableCells = 0;
+    else if (token.type === "td_open" || token.type === "th_open") tableCells++;
+    else if (token.type === "table_close") {
+      if (tableCells > MAX_TABLE_CELLS) unsupported = true;
+      else if (tableCells > 0) table = true;
+    } else if (token.type === "image") unsupported = true;
     else if (token.type === "link_open" && !isSupportedLink(String(token.attrGet("href") ?? "")))
       unsupported = true;
-    if (token.children) for (const child of token.children) pending.push(child);
+    // Visit in document order so each table has an independent cell budget.
+    if (token.children) {
+      for (let i = token.children.length - 1; i >= 0; i--) pending.push(token.children[i]);
+    }
   }
-  if (!math && !mermaid) return NONE;
-  return { math, mermaid, unsupported };
+  if (!math && !mermaid && !code && !table && !unsupported) return NONE;
+  return { math, mermaid, code, table, unsupported };
 }
 
 export function hasAnyExtension(detected: DetectedExtensions): boolean {
-  return detected.math || detected.mermaid;
+  return detected.math || detected.mermaid || detected.code || detected.table;
 }
 
 /** Whether the plugin should own the item given which modules are enabled. */
 export function shouldTakeOver(
   detected: DetectedExtensions,
-  enabled: { math: boolean; mermaid: boolean },
+  enabled: { math: boolean; mermaid: boolean; codeBlocks: boolean; tables: boolean },
 ): boolean {
+  // Ownership is per item, so even disabled modules must respect renderer limits.
   if (detected.unsupported) return false;
-  return (detected.math && enabled.math) || (detected.mermaid && enabled.mermaid);
+  return (
+    (detected.math && enabled.math) ||
+    (detected.mermaid && enabled.mermaid) ||
+    (detected.code && enabled.codeBlocks) ||
+    (detected.table && enabled.tables)
+  );
 }

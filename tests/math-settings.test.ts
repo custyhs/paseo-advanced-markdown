@@ -22,15 +22,26 @@ describe("formula-size settings", () => {
       {
         math: false,
         mermaid: true,
+        codeBlocks: false,
+        tables: false,
         fontScale: "large",
         mathScale: 1,
       },
     );
     expect(DEFAULT_MODULE_SETTINGS.mathScale).toBe(1);
+    expect(DEFAULT_MODULE_SETTINGS.codeBlocks).toBe(false);
+    expect(DEFAULT_MODULE_SETTINGS.tables).toBe(false);
   });
 
   it.each(MATH_SCALES)("round-trips the %s formula-size preset independently", (mathScale) => {
-    const stored = { math: true, mermaid: false, fontScale: "small", mathScale };
+    const stored = {
+      math: true,
+      mermaid: false,
+      codeBlocks: false,
+      tables: false,
+      fontScale: "small",
+      mathScale,
+    };
     expect(moduleSettings.schema.parse(JSON.parse(JSON.stringify(stored)))).toEqual(stored);
   });
 

@@ -25,6 +25,8 @@ function createModuleState(): ModuleStateApi {
       if (
         values.math === current.math &&
         values.mermaid === current.mermaid &&
+        values.codeBlocks === current.codeBlocks &&
+        values.tables === current.tables &&
         values.fontScale === current.fontScale &&
         values.mathScale === current.mathScale
       )
