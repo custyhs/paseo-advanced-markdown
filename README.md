@@ -35,7 +35,7 @@ and about 700 MiB for the rendering cache.
 Enable plugins in **Settings → Plugins**, then run:
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.2.6
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.3.0
 paseo plugin ls
 ```
 
@@ -43,7 +43,7 @@ Paseo prepares the rendering dependencies automatically. For an existing Git
 installation with `--ref` support:
 
 ```bash
-paseo plugin update advanced-markdown --ref v0.2.6
+paseo plugin update advanced-markdown --ref v0.3.0
 ```
 
 A pinned tag stays on that release until you select a newer tag.
