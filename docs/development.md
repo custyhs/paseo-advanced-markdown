@@ -9,22 +9,24 @@ npm ci
 npm run build            # Markdown/MathJax bundles, formula assets, runtime manifest
 npm run prepare-browser  # formula assets, Mermaid runtime and browser into the cache
 npm run typecheck && npm run lint && npm run format:check
-npm run paseo-source     # official Paseo 0.8.0 app sources for the smoke
-npm run smoke            # 0.8 compiler + official projection + RPCs
+npm run paseo-source     # pinned app projection/stream fixtures for the smoke
+npm run smoke            # 0.11.0 compiler/SDK + pinned fixtures + RPCs
 HERMES_BIN=… npm run smoke:hermes
 ```
 
 For local regression tests, run the relevant file with
 `npx vitest run tests/<file>.test.ts --bail=1`. The full suite runs in GitHub CI.
 
-To check a newer compiler/SDK without changing the 0.8 development lockfile:
+The development compiler and SDK use official Paseo 0.11.0, the minimum supported
+release. To check 0.12.0 without changing that baseline:
 
 ```bash
-npm install --prefix .compat-runtime --no-save --package-lock=false @getpaseo/server@0.11.0-beta.3 @getpaseo/plugin@0.11.0-beta.3
+npm install --prefix .compat-runtime --no-save --package-lock=false @getpaseo/server@0.12.0 @getpaseo/plugin@0.12.0
 PASEO_COMPAT_RUNTIME=.compat-runtime npm run smoke
 ```
 
-The app projection/stream fixtures remain pinned to 0.8.0. The selected compiler,
+The app projection/stream fixtures remain pinned to 0.8.0 as a legacy regression
+fixture; this does not extend the supported Paseo range. The selected compiler,
 manifest validator, SDK registrations and RPC handlers use the selected runtime;
 this smoke does not replace a real client/device check for the selected version.
 

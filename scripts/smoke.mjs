@@ -20,7 +20,7 @@ import { resolveMermaidRuntime } from "../server/mermaid/runtime.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
-// Keep the 0.8 development dependencies as the oldest supported baseline. An
+// Keep the 0.11 development dependencies as the oldest supported baseline. An
 // isolated runtime can supply a newer official compiler and SDK without changing
 // the lockfile. App projection fixtures remain pinned to the 0.8 source checkout.
 const runtimeRoot = path.resolve(process.env.PASEO_COMPAT_RUNTIME ?? root);

@@ -26,7 +26,16 @@ function startPlugin() {
   const handlers = new Map<string, (input: unknown) => Promise<unknown>>();
   const entry = factory(require);
   const cleanup = entry.default({
-    registerSettings() {},
+    registerSettings() {
+      return {
+        async read(): Promise<never> {
+          throw new Error("Asset recovery must not read plugin settings");
+        },
+        subscribe(): never {
+          throw new Error("Asset recovery must not subscribe to plugin settings");
+        },
+      };
+    },
     handle(contract, handler) {
       for (const asset of Object.values(assets))
         expect(readPreparedAssetSync(asset).length).toBe(asset.bytes);
@@ -41,6 +50,9 @@ function startPlugin() {
       );
     },
     registerProvider() {},
+    registerUsageSource(): never {
+      throw new Error("Asset recovery must not register a usage source");
+    },
     on: () => () => {},
     before: () => () => {},
   });

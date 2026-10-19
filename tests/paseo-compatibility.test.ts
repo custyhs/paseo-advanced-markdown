@@ -6,28 +6,31 @@ const manifest = JSON.parse(readFileSync(new URL("../paseo-plugin.json", import.
 
 describe.each(["app", "daemon"] as const)("Paseo %s compatibility", (runtime) => {
   it.each([
-    "0.8.0",
-    "0.8.1",
-    "0.9.0-beta.2",
-    "0.9.0",
-    "0.9.2",
-    "0.10.0-beta.1",
-    "0.10.0",
-    "0.10.1",
-    "0.10.99",
     "0.11.0-beta.1",
     "0.11.0-beta.3",
     "0.11.0",
     "0.11.1",
     "0.11.99",
+    "0.12.0-beta.1",
+    "0.12.0",
+    "0.12.1",
+    "0.12.99",
   ])("accepts %s using the official version gate", (version) => {
     expect(() => assertPluginCompatibility({ ...manifest, runtime, version })).not.toThrow();
   });
 
-  it.each(["0.7.9", "0.12.0-beta.1", "0.12.0", "0.12.1", "1.0.0", "invalid"])(
-    "rejects unsupported or unknown version %s",
-    (version) => {
-      expect(() => assertPluginCompatibility({ ...manifest, runtime, version })).toThrow();
-    },
-  );
+  it.each([
+    "0.7.9",
+    "0.8.0",
+    "0.9.0",
+    "0.10.0",
+    "0.10.99",
+    "0.13.0-beta.1",
+    "0.13.0",
+    "0.13.1",
+    "1.0.0",
+    "invalid",
+  ])("rejects unsupported or unknown version %s", (version) => {
+    expect(() => assertPluginCompatibility({ ...manifest, runtime, version })).toThrow();
+  });
 });

@@ -28,14 +28,15 @@ Screenshots use sample conversations in the official Paseo 0.9.0-beta.2 web clie
 
 ## Install
 
-Requires **Paseo 0.8–0.11** on both app and daemon (`>=0.8.0 <0.12.0`).
+Requires **Paseo 0.11–0.12** on both app and daemon (`>=0.11.0 <0.13.0`).
+For Paseo 0.8–0.10, install v0.3.0 instead.
 The daemon host needs Node ≥ 22.22, npm, Git, internet access for installation,
 and about 700 MiB for the rendering cache.
 
 Enable plugins in **Settings → Plugins**, then run:
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.3.0
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.3.1
 paseo plugin ls
 ```
 
@@ -43,7 +44,7 @@ Paseo prepares the rendering dependencies automatically. For an existing Git
 installation with `--ref` support:
 
 ```bash
-paseo plugin update advanced-markdown --ref v0.3.0
+paseo plugin update advanced-markdown --ref v0.3.1
 ```
 
 A pinned tag stays on that release until you select a newer tag.
@@ -70,7 +71,7 @@ Change text size, formula size, and enabled modules in
 
 ## Compatibility and details
 
-The latest release was tested with official **Paseo 0.11.0-beta.3**, including
+The latest release was tested with official **Paseo 0.12.0**, including
 web layouts at desktop and phone widths. This release has no new iOS/Android
 device validation; Windows is untested.
 
