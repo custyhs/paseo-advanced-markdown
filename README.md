@@ -28,8 +28,9 @@ Screenshots use sample conversations in the official Paseo 0.9.0-beta.2 web clie
 
 ## Install
 
-Requires **Paseo 0.11.0 or later** on both app and daemon (`>=0.11.0`), with no upper version limit.
-For Paseo 0.8–0.10, install v0.3.0 instead.
+**[v0.3.2](https://github.com/custyhs/paseo-advanced-markdown/releases/tag/v0.3.2)
+requires Paseo `>=0.11.0`, with no upper version limit.**
+This applies to both app and daemon. For Paseo 0.8–0.10, install v0.3.0 instead.
 The daemon host needs Node ≥ 22.22, npm, Git, internet access for installation,
 and about 700 MiB for the rendering cache.
 
@@ -48,6 +49,13 @@ paseo plugin update advanced-markdown --ref v0.3.2
 ```
 
 A pinned tag stays on that release until you select a newer tag.
+
+For an existing npm installation, select the npm release instead:
+
+```bash
+paseo plugin update advanced-markdown --version 0.3.2
+```
+
 See the [installation guide](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/installation.md)
 for Linux setup, local checkouts, rollback, and troubleshooting.
 
@@ -71,9 +79,8 @@ Change text size, formula size, and enabled modules in
 
 ## Compatibility and details
 
-Compiler and package checks cover official **Paseo 0.11.0 and 0.12.0**.
-The most recent web UI validation used **Paseo 0.12.0** at desktop and phone widths.
-Later versions are allowed by the manifest but have not been validated.
+Validated with official **Paseo 0.11.0 and 0.12.0**, with web UI checks on
+0.12.0 at desktop and phone widths. Later versions are allowed but remain untested.
 This release has no new iOS/Android device validation; Windows is untested.
 
 - [Usage and limits](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/usage.md) — supported content, viewer behavior, and rendering limits.
