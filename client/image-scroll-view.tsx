@@ -1,4 +1,4 @@
-import { ScrollView } from "@getpaseo/plugin/client/react-native";
+import { ScrollView } from "@getpaseo/plugin/client/ui";
 import { useEffect, useRef } from "react";
 import type { ScrollView as NativeScrollView, ScrollViewProps } from "react-native";
 import { enableHorizontalDrag } from "./web.js";

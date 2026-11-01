@@ -2,6 +2,9 @@
 
 [Back to README](../README.md) · [Installation](installation.md)
 
+This guide describes v0.4.0 (Paseo >=0.13.0).
+For older installations, see the [v0.3.2 guide](https://github.com/custyhs/paseo-advanced-markdown/blob/v0.3.2/docs/usage.md).
+
 ## Reading formulas
 
 Formula size offers 75%, 100%, 125%, 150%, and 200%, relative to the text size.
@@ -49,10 +52,19 @@ existing literal behavior. See the [host limitations](qa/math-reading-gaps.md).
 
 ## Reading code blocks
 
-In messages rendered by this plugin, overflowing code blocks support mouse dragging
-on desktop. **Select text** switches to text selection; **Drag to scroll** switches
-back. **Copy source** copies the entire original block body in either mode. Short
-code blocks and native clients keep their usual text selection and scrolling.
+Ordinary code blocks use Paseo's Markdown component, including its syntax
+highlighting and copy control. Enable **Enhanced code scrolling** to use the plugin's plain
+text viewer instead: overflowing blocks support mouse dragging on desktop.
+**Select text** switches to text selection; **Drag to scroll** switches back.
+**Copy source** copies the original block body in either mode. Short code blocks
+and native clients keep their usual text selection and scrolling.
+
+## Reading diagrams
+
+Mermaid uses Paseo's renderer by default, including inside a message with math.
+Enable **Enhanced Mermaid viewer** to use the plugin's server-rendered images and shared
+viewer. Existing installations keep their saved choice. Incomplete or oversized
+diagram fences in plugin-owned messages remain source.
 
 ## Reading tables
 
@@ -73,14 +85,14 @@ as well as leaving ordinary table-only messages to Paseo.
 
 Settings → Plugins → Advanced Markdown, per host:
 
-- Math formulas on/off, Mermaid diagrams on/off. A disabled module shows its
-  source. A message whose enabled content is exhausted returns to Paseo's own
-  renderer the next time it is displayed; rows already on screen update after a
-  reload or when the conversation is reopened.
-- Code blocks on/off (off by default). When on, fenced and indented code blocks
-  render with a horizontal scroll instead of wrapping long lines and breaking
-  indentation. Messages that also contain math, diagrams, or tables are shown by
-  the plugin regardless.
+- Math formulas on/off (on by default). Disabled math shows its source in a
+  plugin-owned message.
+- Enhanced Mermaid viewer on/off (off by default). Off uses Paseo's renderer; on uses
+  the plugin's image viewer. A message with no enabled plugin enhancement stays
+  with Paseo. Reopen the conversation after changing which messages are claimed.
+- Enhanced code scrolling on/off (off by default). When on, fenced and indented code blocks
+  use the plugin's drag-to-scroll and selection controls. Off uses Paseo's code
+  rendering, including within messages that also contain math.
 - Tables on/off (off by default). When on, Markdown tables keep readable column
   widths and scroll horizontally inside the message instead of squeezing every
   column to a fraction of the message width.
@@ -92,10 +104,9 @@ Settings → Plugins → Advanced Markdown, per host:
 These switches do not change Paseo's built-in Mermaid rendering for rows the
 plugin does not own.
 
-Code blocks and tables are off by default so an update does not change which rows
-the plugin owns; turn them on to fix wrapped folder trees and squeezed tables on
-narrow screens. Copying a code block still copies its source, without the fence.
-Use the table viewer to copy Markdown or TSV.
+Mermaid, code blocks and tables are opt-in enhancements. Math remains enabled by
+default. Copying a code block copies its source, without the fence. Use the table
+viewer to copy Markdown or TSV.
 
 ## What is rendered, and what is not
 
@@ -103,7 +114,7 @@ Use the table viewer to copy Markdown or TSV.
 | --- | --- |
 | Complete inline or display math, closed `math` fence | image; click or tap to inspect and copy |
 | A `math` fence whose body is itself wrapped in `\[…\]`, `$$…$$`, `\(…\)`, or `$…$` | the redundant wrapper is ignored, the formula renders |
-| Complete `mermaid` fence: flowchart, sequence, class, state, ER, Gantt (verified); other types on a best-effort basis | image; click or tap to inspect and copy |
+| Complete `mermaid` fence | Paseo's diagram renderer by default; plugin image and viewer when Enhanced Mermaid viewer is enabled |
 | Unclosed delimiters or fences while streaming | readable source until closed |
 | Prices (`$5 and $10`), `\$`, inline code, other fences | plain text / code |
 | Footnote markers and definitions (`[^note]`, `[^note]: …`) | readable text; formulas in definition lines render, without footnote navigation |
@@ -113,9 +124,9 @@ Use the table viewer to copy Markdown or TSV.
 | Messages with inline images or unsupported link schemes | left to Paseo's renderer |
 | User messages, tool output, other timeline rows | unchanged |
 
-Bare `$$` display math that contains a blank line is split by Paseo while
-streaming; each half stays readable source. Use a ```` ```math ```` fence for
-multi-paragraph display math.
+Current Paseo transformers receive the accumulated assistant message, including
+blank lines inside `$$` display math. Incomplete delimiters stay as source until
+closed. The paragraph-splitting behavior in the 0.8 QA records is historical.
 
 Local file links open a plugin preview because Paseo's public timeline SDK does
 not expose file-tab navigation. Files are read only after a click, relative to
@@ -128,8 +139,9 @@ Copy scopes: copying happens inside the viewer. In **Preview**, **Copy LaTeX** o
 **Copy Mermaid** copies the original expression or diagram body. In **Source**,
 **Copy Markdown** copies the exact block, including its delimiters or fence.
 **More** offers the other copy format and **Copy fragment Markdown**,
-which copies the timeline row's text. Paseo may split one long reply into several
-rows while it streams; this last action copies only the row containing the entry.
+which copies the source message supplied to the plugin, including its prose and
+other blocks. A turn can contain several assistant messages: this action does
+not collect the other messages or replace Paseo's **Copy turn** action.
 
 ## Limitations
 

@@ -4,11 +4,16 @@
 // copyable code blocks, and item-level copy labelled by its actual scope.
 import type { PluginTimelineItemProps } from "@getpaseo/plugin/client";
 import { useSettings } from "@getpaseo/plugin/client";
-import { useToast } from "@getpaseo/plugin/client/react-native";
+import { Markdown as HostMarkdown, useToast } from "@getpaseo/plugin/client/ui";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Linking, Text, View, type TextStyle } from "react-native";
 import type { MessageData } from "../shared/message.js";
 import { isExternalLink, isSupportedLink, parseFileLink } from "../shared/markdown/links.js";
+import {
+  codeBlockLanguage,
+  codeBlockMarkdown,
+  hostCodeBlockMarkdown,
+} from "../shared/markdown/host-block.js";
 import { fontScaleToBaseSize, moduleSettings, type ModuleSettings } from "../shared/settings.js";
 import Markdown, {
   MarkdownIt,
@@ -40,7 +45,7 @@ markdown.validateLink = isSupportedLink;
 
 // The dependency's runtime retains token.meta, but its public ASTNode type
 // omits sourceMeta. Narrow that field instead of serializing TeX into markup.
-type ExtensionNode = ASTNode & { sourceMeta?: unknown; info?: string };
+type ExtensionNode = ASTNode & { sourceMeta?: unknown; sourceInfo?: string };
 interface FileSelection {
   href: string;
   hostId: string;
@@ -179,42 +184,50 @@ const MemoizedMessage = memo(
         parents,
         _styles,
         inherited: TextStyle = {},
-      ) => (
-        <Diagram
-          key={node.key}
-          viewerId={viewerIdentity(
-            "diagram",
-            node,
-            parents,
-            metaString(node.sourceMeta, "source") ?? node.content,
-          )}
-          definition={node.content}
-          source={metaString(node.sourceMeta, "source") ?? node.content}
-          hostId={host.id}
-          theme={theme}
-          mermaidTheme={mermaidTheme}
-          compact={layout.compact}
-          enabled={modules.mermaid}
-          textStyle={inherited}
-          containerWidth={Math.max(64, width)}
-        />
-      );
+      ) =>
+        modules.mermaid ? (
+          <Diagram
+            key={node.key}
+            viewerId={viewerIdentity(
+              "diagram",
+              node,
+              parents,
+              metaString(node.sourceMeta, "source") ?? node.content,
+            )}
+            definition={node.content}
+            source={metaString(node.sourceMeta, "source") ?? node.content}
+            hostId={host.id}
+            theme={theme}
+            mermaidTheme={mermaidTheme}
+            compact={layout.compact}
+            enabled
+            textStyle={inherited}
+            containerWidth={Math.max(64, width)}
+          />
+        ) : (
+          <HostMarkdown key={node.key}>{codeBlockMarkdown(node)}</HostMarkdown>
+        );
       const codeRule: RenderFunction = (
         node: ExtensionNode,
         _children,
         _parents,
         _styles,
         inherited: TextStyle = {},
-      ) => (
-        <CodeBlock
-          key={node.key}
-          source={node.content}
-          label={(node.info ?? "").trim().split(/\s+/)[0] || undefined}
-          theme={theme}
-          compact={layout.compact}
-          textStyle={inherited}
-        />
-      );
+      ) => {
+        const hostSource = hostCodeBlockMarkdown(node, modules.codeBlocks);
+        if (hostSource !== undefined)
+          return <HostMarkdown key={node.key}>{hostSource}</HostMarkdown>;
+        return (
+          <CodeBlock
+            key={node.key}
+            source={node.content}
+            label={codeBlockLanguage(node)}
+            theme={theme}
+            compact={layout.compact}
+            textStyle={inherited}
+          />
+        );
+      };
       return {
         textgroup: (node, children, _parents, ruleStyles, inherited = {}) => (
           <MathTextGroup key={node.key} style={{ ...inherited, ...ruleStyles.textgroup }}>
@@ -284,6 +297,7 @@ const MemoizedMessage = memo(
       modules.math,
       modules.mathScale,
       modules.mermaid,
+      modules.codeBlocks,
       modules.tables,
       mermaidTheme,
     ]);

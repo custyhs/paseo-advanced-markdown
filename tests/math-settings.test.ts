@@ -4,6 +4,17 @@ import { DEFAULT_MODULE_SETTINGS, MATH_SCALES, moduleSettings } from "../shared/
 import { moduleState } from "../client/module-state.js";
 
 describe("formula-size settings", () => {
+  it("enables math by default and leaves optional enhancements to Paseo", () => {
+    expect(DEFAULT_MODULE_SETTINGS).toEqual({
+      math: true,
+      mermaid: false,
+      codeBlocks: false,
+      tables: false,
+      fontScale: "default",
+      mathScale: 1,
+    });
+  });
+
   it("notifies mounted consumers when only formula size changes", () => {
     moduleState.reset();
     let changes = 0;

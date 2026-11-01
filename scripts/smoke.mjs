@@ -20,7 +20,7 @@ import { resolveMermaidRuntime } from "../server/mermaid/runtime.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
-// Keep the 0.11 development dependencies as the oldest supported baseline. An
+// Keep the 0.13 development dependencies as the oldest supported baseline. An
 // isolated runtime can supply a newer official compiler and SDK without changing
 // the lockfile. App projection fixtures remain pinned to the 0.8 source checkout.
 const runtimeRoot = path.resolve(process.env.PASEO_COMPAT_RUNTIME ?? root);
@@ -36,7 +36,6 @@ const runtimeImport = (name) => {
 };
 const sdk = await runtimeImport("@getpaseo/plugin");
 const clientSdk = await runtimeImport("@getpaseo/plugin/client");
-const nativeSdk = await runtimeImport("@getpaseo/plugin/client/react-native");
 const uiSdk = await runtimeImport("@getpaseo/plugin/client/ui");
 const { assertPluginCompatibility } = await runtimeImport("@getpaseo/protocol/plugin-requirements");
 const serverRoot = path.join(runtimeRoot, "node_modules/@getpaseo/server");
@@ -194,7 +193,6 @@ async function exerciseClientBundle(bundle, id) {
     if (name === "@getpaseo/plugin") return sdk;
     if (name === "@getpaseo/plugin/client")
       return { ...clientSdk, useSettings: () => ({ status: "loading" }) };
-    if (name === "@getpaseo/plugin/client/react-native") return nativeSdk;
     if (name === "@getpaseo/plugin/client/ui") return uiSdk;
     if (name === "@tanstack/react-query") return require("@tanstack/react-query");
     if (name === "react-native") return require("react-native-web");

@@ -5,7 +5,7 @@
 // line before wrapping; a table whose columns cannot fit at that width scrolls
 // horizontally inside the message instead of squeezing every column to width/N.
 // Estimates run slightly wide so semibold headers do not break mid-word.
-import { Icon, ScrollView } from "@getpaseo/plugin/client/react-native";
+import { Icon, ScrollView } from "@getpaseo/plugin/client/ui";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, Text, View, type LayoutChangeEvent, type ViewStyle } from "react-native";

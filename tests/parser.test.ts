@@ -20,6 +20,7 @@ import {
   MAX_TABLE_CELLS,
 } from "../shared/limits.js";
 import { compactEquationTags, normalizeTex } from "../shared/tex.js";
+import { DEFAULT_MODULE_SETTINGS, moduleSettings } from "../shared/settings.js";
 
 const meta = (token: Token): ExtensionMeta => token.meta as unknown as ExtensionMeta;
 
@@ -456,6 +457,17 @@ describe("mixed content", () => {
       shouldTakeOver(table, { math: false, mermaid: false, codeBlocks: false, tables: true }),
     ).toBe(true);
     expect(shouldTakeOver(table, NO_MODULES)).toBe(false);
+  });
+
+  it("leaves Mermaid-only messages to Paseo by default while preserving mixed math", () => {
+    const diagram = "```mermaid\nflowchart LR\nA --> B\n```";
+    expect(shouldTakeOver(detectExtensions(diagram), DEFAULT_MODULE_SETTINGS)).toBe(false);
+    expect(
+      shouldTakeOver(detectExtensions(`Formula $x$.\n\n${diagram}`), DEFAULT_MODULE_SETTINGS),
+    ).toBe(true);
+    expect(
+      shouldTakeOver(detectExtensions(diagram), moduleSettings.schema.parse({ mermaid: true })),
+    ).toBe(true);
   });
 
   it("reports nothing for plain Markdown so the host keeps it", () => {

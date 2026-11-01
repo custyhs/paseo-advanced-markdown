@@ -38,7 +38,7 @@ var atob = function(input) {
   return output;
 };
 var allowed = ['react', 'react/jsx-runtime', 'react-native', 'zod', '@tanstack/react-query',
-  '@getpaseo/plugin/client', '@getpaseo/plugin/client/react-native', '@getpaseo/plugin/client/ui', '@getpaseo/plugin'];
+  '@getpaseo/plugin/client', '@getpaseo/plugin/client/ui', '@getpaseo/plugin'];
 var zodStub = { z: proxy };
 var sdkStub = {
   defineRpc: function(x) { return x; },

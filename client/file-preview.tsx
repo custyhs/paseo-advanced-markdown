@@ -1,6 +1,6 @@
 import type { PluginTheme } from "@getpaseo/plugin";
 import { useRpc } from "@getpaseo/plugin/client";
-import { Modal, ScrollView, copyText, useToast } from "@getpaseo/plugin/client/react-native";
+import { Modal, ScrollView, copyText, useToast } from "@getpaseo/plugin/client/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Pressable, Text, View } from "react-native";
 import { previewFile } from "../shared/file-preview.js";

@@ -1,5 +1,5 @@
 import type { PluginTheme } from "@getpaseo/plugin";
-import { Modal, ScrollView, copyText, useToast } from "@getpaseo/plugin/client/react-native";
+import { Modal, ScrollView, copyText, useToast } from "@getpaseo/plugin/client/ui";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Image, PixelRatio, Pressable, Text, View, useWindowDimensions } from "react-native";
 import { monospace } from "./code-block.js";

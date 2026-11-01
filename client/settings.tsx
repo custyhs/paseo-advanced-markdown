@@ -86,28 +86,29 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
                 onValueChange={(math) => void update({ math })}
               />
               <SettingsSwitch
-                label="Mermaid diagrams"
-                hint="```mermaid fences render as images through this plugin. Off leaves the fence as source in plugin items; Paseo's own Mermaid support is unaffected."
+                label="Enhanced Mermaid viewer"
+                hint="Off uses Paseo's diagram renderer, including beside formulas. On uses this plugin's image viewer and adds Mermaid-only messages to what it renders."
                 value={settings.values.mermaid}
                 disabled={settings.saving}
                 onValueChange={(mermaid) => void update({ mermaid })}
               />
               <SettingsSwitch
-                label="Code blocks"
-                hint="Fenced and indented code blocks render with a horizontal scroll instead of wrapping long lines and breaking indentation. Messages that also contain math, diagrams, or tables are shown by this plugin regardless; this switch adds code blocks to what it takes over."
+                label="Enhanced code scrolling"
+                hint="Off uses Paseo's syntax highlighting and copy controls. On uses plain text with horizontal dragging and text-selection controls, and adds code-only messages to what this plugin renders."
                 value={settings.values.codeBlocks}
                 disabled={settings.saving}
                 onValueChange={(codeBlocks) => void update({ codeBlocks })}
               />
               <SettingsSwitch
                 label="Tables"
-                hint="Keep readable column widths and open tables in a viewer to copy Markdown or TSV. Off restores the standard table layout, including in messages with math. Oversized tables stay with Paseo."
+                hint="Keep readable column widths and open tables in a viewer to copy Markdown or TSV. Off uses the basic table layout in messages this plugin renders. Oversized tables stay with Paseo."
                 value={settings.values.tables}
                 disabled={settings.saving}
                 onValueChange={(tables) => void update({ tables })}
               />
               <SettingsSelect
-                label="Text size in plugin items"
+                label="Plugin text size"
+                hint="Changes plugin-rendered prose and enhanced code. Paseo-rendered code and diagrams keep Paseo's own sizing."
                 value={settings.values.fontScale}
                 options={FONT_SCALES.map((value) => ({ value, label: FONT_LABELS[value] }))}
                 disabled={settings.saving}
@@ -138,10 +139,10 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
           )}
         </SettingsCard>
         <Text style={muted}>
-          These switches apply to this host only. Code blocks and tables are off by default so the
-          plugin takes over the same messages as before; turn them on to fix wrapped folder trees
-          and squeezed tables on narrow screens. Reopen the conversation after changing which
-          messages the plugin takes over. Each client fits content to its own available space.
+          These switches apply to this host only. New installations enable math and leave the
+          optional Mermaid, code, and table enhancements off. Existing preferences are preserved.
+          Reopen the conversation after changing which messages the plugin takes over. Each client
+          fits content to its own available space.
         </Text>
       </SettingsSection>
       <SettingsSection title="Runtime on this host">
@@ -189,10 +190,10 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
           />
         </SettingsCard>
         <Text style={muted}>
-          Formulas and diagrams are rendered on the selected host by pinned local engines. Message
-          content never leaves the host. If the Mermaid runtime is not ready, run "npm run
-          prepare-browser" in the plugin directory or reinstall the plugin so its preparation step
-          runs again.
+          Formulas and enhanced Mermaid diagrams are rendered on the selected host by pinned local
+          engines. Paseo renders other diagrams on the client. If the enhanced Mermaid runtime is
+          not ready, run "npm run prepare-browser" in the plugin directory or reinstall the plugin
+          so its preparation step runs again.
         </Text>
       </SettingsSection>
     </>

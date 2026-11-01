@@ -1,4 +1,4 @@
-import { ScrollView, copyText, useToast } from "@getpaseo/plugin/client/react-native";
+import { ScrollView, copyText, useToast } from "@getpaseo/plugin/client/ui";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {

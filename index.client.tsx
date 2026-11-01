@@ -50,8 +50,8 @@ function setupPlugin(client: PluginClientContext) {
     icon: "Sigma",
     Component: SettingsScreen,
   });
-  // Paseo 0.8 projects assembled assistant text at render time. Its phase is
-  // "complete" even while that text grows; do not use phase to gate rendering.
+  // Inspect the accumulated source on every revision, including streaming text.
+  // Closed expressions can render before the surrounding reply is complete.
   client.addTimelineTransformer({
     id: "assistant-advanced-markdown",
     query: { itemType: "assistant_message" },
