@@ -12,7 +12,7 @@ describe("published package source budget", () => {
         { path: "server/generated/unused.mjs", size: 50 },
         { path: "server/generated/unused.d.mts", size: 60 },
         { path: "shared/contract.cts", size: 70 },
-        { path: "scripts/prepare-browser.mjs", size: 80 },
+        { path: "scripts/prepare-assets.mjs", size: 80 },
         { path: "server/generated/resvg.wasm", size: 3_000_000 },
         { path: "server/generated/font-data.json", size: 1_000_000 },
         { path: "README.md", size: 100 },
@@ -20,7 +20,7 @@ describe("published package source budget", () => {
     ).toEqual({
       sourceFiles: 8,
       sourceBytes: 360,
-      largestSource: { path: "scripts/prepare-browser.mjs", size: 80 },
+      largestSource: { path: "scripts/prepare-assets.mjs", size: 80 },
     });
   });
 

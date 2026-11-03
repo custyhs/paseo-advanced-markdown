@@ -77,7 +77,6 @@ export function inspectorScale({
   viewportWidth,
   viewportHeight,
   zoom,
-  fitCeiling,
 }: {
   width: number;
   height: number;
@@ -85,8 +84,6 @@ export function inspectorScale({
   viewportWidth: number;
   viewportHeight: number;
   zoom: "fit" | number;
-  /** Absolute scale cap for content such as raster diagrams. */
-  fitCeiling?: number;
 }): number {
   const reading = positive(preferredScale) ? preferredScale : 1;
   if (zoom !== "fit") {
@@ -94,7 +91,6 @@ export function inspectorScale({
     return positive(scale) ? scale : reading;
   }
   if (![width, height, viewportWidth, viewportHeight].every(positive)) return reading;
-  const ceiling = fitCeiling !== undefined && positive(fitCeiling) ? fitCeiling : reading * 1.5;
-  const fit = Math.min(ceiling, viewportWidth / width, viewportHeight / height);
+  const fit = Math.min(reading * 1.5, viewportWidth / width, viewportHeight / height);
   return positive(fit) ? fit : reading;
 }

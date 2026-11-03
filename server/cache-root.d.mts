@@ -2,7 +2,4 @@ export function resolveCacheRoot(env?: NodeJS.ProcessEnv, platform?: NodeJS.Plat
 export function cacheLayout(root: string): {
   root: string;
   assets: string;
-  browsers: string;
-  workers: string;
-  manifest: string;
 };

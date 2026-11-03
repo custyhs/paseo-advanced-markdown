@@ -7,7 +7,7 @@ import {
   codeBlockMarkdown,
   hostCodeBlockMarkdown,
 } from "../shared/markdown/host-block.js";
-import { MAX_MATH_EXPRESSION, MAX_MERMAID_SOURCE } from "../shared/limits.js";
+import { MAX_MATH_EXPRESSION } from "../shared/limits.js";
 
 interface BlockNode {
   type: string;
@@ -129,16 +129,12 @@ describe("host code delegation", () => {
     expect(hostCodeBlockMarkdown(node, true)).toBeUndefined();
   });
 
-  it.each([
-    ["math", MAX_MATH_EXPRESSION],
-    ["mermaid", MAX_MERMAID_SOURCE],
-  ] as const)(
+  it.each(["math", "mermaid"])(
     "keeps rejected %s fences as source, never as rebuilt host fences",
-    (language, limit) => {
+    (language) => {
       const sources = [
         `\`\`\`${language}\nx`,
         `\`\`\`${language}\nx\n\`\`\` trailing`,
-        `\`\`\`${language}\n${"x".repeat(limit + 1)}\n\`\`\``,
         `~~~${language.toUpperCase()} title\nx`,
       ];
       for (const source of sources) {
@@ -149,6 +145,17 @@ describe("host code delegation", () => {
       }
     },
   );
+
+  it("keeps oversized math as source while delegating long diagrams beside formulas", () => {
+    const [math] = blocks(`\`\`\`math\n${"x".repeat(MAX_MATH_EXPRESSION + 1)}\n\`\`\``);
+    expect(math.type).toBe("fence");
+    expect(hostCodeBlockMarkdown(math, false)).toBeUndefined();
+    const [diagram] = blocks(
+      `Formula $x$.\n\n\`\`\`mermaid\nflowchart LR\nA --> B\n%% ${"x".repeat(32 * 1024)}\n\`\`\``,
+    );
+    expect(diagram.type).toBe(MERMAID_BLOCK);
+    expectStandaloneBlock(diagram);
+  });
 
   it("does not pass an empty Mermaid fence to the host diagram engine", () => {
     const [node] = blocks("```mermaid\n\n```");

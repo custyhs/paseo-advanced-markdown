@@ -6,6 +6,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   realpath,
   rename,
   rm,
@@ -35,6 +36,11 @@ const serverRoot = path.join(runtimeRoot, "node_modules/@getpaseo/server");
 const serverPackage = JSON.parse(await readFile(path.join(serverRoot, "package.json"), "utf8"));
 let workspace = await realpath(await mkdtemp(path.join(os.tmpdir(), "paseo-markdown-package-")));
 let pluginRoot = path.join(workspace, "node_modules", packed.name);
+const previousCache = process.env.PASEO_ADVANCED_MARKDOWN_CACHE;
+const cache = await realpath(await mkdtemp(path.join(os.tmpdir(), "paseo-markdown-cache-")));
+async function assertMathOnlyCache() {
+  assert.deepEqual((await readdir(cache)).sort(), ["assets"]);
+}
 const report = {
   package: `${packed.name}@${packed.version}`,
   integrity,
@@ -68,24 +74,48 @@ try {
     "mathjax-full",
     "speech-rule-engine",
     "@xmldom/xmldom",
+    "@puppeteer/browsers",
+    "puppeteer",
+    "puppeteer-core",
+    "@mermaid-js/mermaid-cli",
   ]) {
     await assert.rejects(access(path.join(workspace, "node_modules", dependency)));
   }
   process.stdout.write(await runNpm(["audit", "--omit=dev", "--audit-level=moderate"], workspace));
   const manifest = JSON.parse(await readFile(path.join(pluginRoot, "paseo-plugin.json"), "utf8"));
   assert.equal(manifest.id, "advanced-markdown");
-  assert.deepEqual(manifest.build, [["node", "scripts/prepare-browser.mjs"]]);
+  assert.deepEqual(manifest.build, [["node", "scripts/prepare-assets.mjs"]]);
 
-  // Exercise the actual package preparation with a separate cache. The user's
-  // production worker/browser cache must not be pruned or rewritten by QA.
-  process.env.PASEO_ADVANCED_MARKDOWN_CACHE = path.join(output, "cache");
-  const prepared = await exec(process.execPath, ["scripts/prepare-browser.mjs"], {
+  // The install hook must work offline and without spawning executable software.
+  // Start with an empty isolated cache, even if a previous release prepared Chrome.
+  process.env.PASEO_ADVANCED_MARKDOWN_CACHE = cache;
+  const guard = path.join(workspace, "offline-preparation.mjs");
+  await writeFile(
+    guard,
+    [
+      'import childProcess from "node:child_process";',
+      'import http from "node:http";',
+      'import https from "node:https";',
+      'import net from "node:net";',
+      'import { syncBuiltinESMExports } from "node:module";',
+      'const blocked = () => { throw new Error("Preparation must be offline and subprocess-free"); };',
+      'for (const name of ["exec", "execFile", "execFileSync", "execSync", "fork", "spawn", "spawnSync"]) childProcess[name] = blocked;',
+      'for (const module of [http, https]) for (const name of ["get", "request"]) module[name] = blocked;',
+      "net.connect = net.createConnection = net.Socket.prototype.connect = blocked;",
+      "globalThis.fetch = blocked;",
+      "syncBuiltinESMExports();",
+      "",
+    ].join("\n"),
+  );
+  const prepared = await exec(process.execPath, ["--import", guard, "scripts/prepare-assets.mjs"], {
     cwd: pluginRoot,
     env: process.env,
     maxBuffer: 10 * 1024 * 1024,
   });
   process.stdout.write(prepared.stdout);
   if (prepared.stderr) process.stderr.write(prepared.stderr);
+  await assertMathOnlyCache();
+  report.offlinePreparation = true;
 
   // Paseo activates a prepared candidate by moving its checkout. Asset reads
   // must survive that move, including MathJax's module-initialization reads.
@@ -175,7 +205,9 @@ try {
     await assertAssetCache();
     const status = await invoke("advanced-markdown.status", {});
     assert.equal(status.plugin.version, packed.version);
-    assert.equal(status.mermaid.ready, true);
+    assert.equal(status.mermaid, undefined);
+    assert.equal(status.math.cacheRoot, cache);
+    await assertMathOnlyCache();
     for (const [name, method, input] of [
       [
         "formula",
@@ -191,11 +223,6 @@ try {
           color: "#fafafa",
         },
       ],
-      [
-        "diagram",
-        "advanced-markdown.mermaid.render",
-        { source: "flowchart LR\n  A[Start] --> B[Packed plugin]", theme: "dark" },
-      ],
     ]) {
       const result = await invoke(method, input);
       assert.equal(result.ok, true, JSON.stringify(result));
@@ -204,6 +231,7 @@ try {
       await writeFile(path.join(output, `${name}-${serverPackage.version}.png`), png);
       report[name] = { width: result.width, height: result.height };
     }
+    await assertMathOnlyCache();
     report.bundles = { client: bundles.clientBundle.length, server: bundles.serverBundle.length };
   } finally {
     await cleanup();
@@ -228,6 +256,8 @@ try {
     );
     report.startupRecovery = ["empty-cache", "corrupt-wasm-and-missing-fonts"];
     report.recoveryWithoutPackageFiles = true;
+    await assertMathOnlyCache();
+    report.cacheContents = ["assets"];
     report.status = "passed";
   } finally {
     await restarted.cleanup();
@@ -239,5 +269,8 @@ try {
   );
   console.log(JSON.stringify(report, null, 2));
 } finally {
+  if (previousCache === undefined) delete process.env.PASEO_ADVANCED_MARKDOWN_CACHE;
+  else process.env.PASEO_ADVANCED_MARKDOWN_CACHE = previousCache;
   await rm(workspace, { recursive: true, force: true });
+  await rm(cache, { recursive: true, force: true });
 }

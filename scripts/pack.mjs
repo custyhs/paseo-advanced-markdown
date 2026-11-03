@@ -13,22 +13,20 @@ await rm(staging, { recursive: true, force: true });
 await mkdir(staging, { recursive: true });
 
 // Keep Git preparation in the checkout. The npm artifact contains generated
-// modules and only needs the host-specific browser preparation after install.
+// modules and only verifies/copies its bundled renderer data after install.
 const files = [
   "index.client.tsx",
   "index.server.ts",
   "client",
   "server",
   "shared",
-  "worker/package.json",
-  "worker/package-lock.json",
-  "worker/browser.json",
-  "scripts/prepare-browser.mjs",
   "scripts/prepare-assets.mjs",
   "scripts/lib/prepare-assets.mjs",
-  "scripts/lib/worker-key.mjs",
   "README.md",
-  "images",
+  "OVERVIEW.md",
+  "images/04-math-and-native-mermaid.png",
+  "images/05-formula-viewer.png",
+  "images/06-settings.png",
   "LICENSE",
   "NOTICE",
 ];
@@ -57,13 +55,12 @@ const packageJson = {
   ...metadata,
   files: [...files, "paseo-plugin.json", "npm-shrinkwrap.json"],
   scripts: {
-    "prepare-browser": sourcePackage.scripts["prepare-browser"],
     "prepare-assets": sourcePackage.scripts["prepare-assets"],
   },
   publishConfig: { access: "public", registry: "https://registry.npmjs.org/" },
 };
 const manifest = JSON.parse(await readFile(path.join(root, "paseo-plugin.json"), "utf8"));
-manifest.build = [["node", "scripts/prepare-browser.mjs"]];
+manifest.build = [["node", "scripts/prepare-assets.mjs"]];
 await writeFile(path.join(staging, "package.json"), `${JSON.stringify(packageJson, null, 2)}\n`);
 await writeFile(path.join(staging, "paseo-plugin.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 // Seed from the reviewed development lock instead of resolving fresh ranges
@@ -90,14 +87,23 @@ for (const required of [
   "server/generated/runtime.ts",
   "server/math/render.js",
   "server/generated/mathjax.LICENSE",
-  "worker/package-lock.json",
   "npm-shrinkwrap.json",
-  "scripts/prepare-browser.mjs",
-  "images/01-math-overview.jpg",
-  "images/02-formula-viewer.jpg",
-  "images/03-mermaid-diagram.jpg",
+  "OVERVIEW.md",
+  "scripts/prepare-assets.mjs",
+  "images/04-math-and-native-mermaid.png",
+  "images/05-formula-viewer.png",
+  "images/06-settings.png",
 ])
   assert.ok(packedFiles.has(required), `Missing package asset: ${required}`);
+for (const file of packedFiles)
+  assert.ok(
+    !file.startsWith("worker/") &&
+      !file.startsWith("server/mermaid/") &&
+      file !== "scripts/prepare-browser.mjs" &&
+      file !== "scripts/lib/worker-key.mjs" &&
+      file !== "server/generated/mermaid-setup.json",
+    `Unexpected browser runtime asset: ${file}`,
+  );
 assert.ok(!packedFiles.has("scripts/build.mjs"), "The npm package must not require a source build");
 assert.ok(
   !packedFiles.has("server/math/render.ts"),

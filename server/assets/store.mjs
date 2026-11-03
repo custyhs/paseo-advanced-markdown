@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { cacheLayout, resolveCacheRoot } from "../mermaid/cache-root.mjs";
+import { cacheLayout, resolveCacheRoot } from "../cache-root.mjs";
 
 const repair = 'Run "npm run prepare-assets" in the plugin directory or reinstall the plugin.';
 

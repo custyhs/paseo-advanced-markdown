@@ -1,6 +1,6 @@
 import os from "node:os";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveCacheRoot } from "../server/mermaid/cache-root.mjs";
+import { resolveCacheRoot } from "../server/cache-root.mjs";
 
 afterEach(() => vi.restoreAllMocks());
 

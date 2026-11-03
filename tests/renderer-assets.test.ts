@@ -106,6 +106,7 @@ describe("packaged renderer assets", () => {
   it("prepares the exact pinned WASM and readable font data without a browser", async () => {
     const { env } = await fixture();
     await prepareAssets(root, env);
+    expect(await readdir(env.PASEO_ADVANCED_MARKDOWN_CACHE)).toEqual(["assets"]);
     const original = await readFile(require.resolve("@resvg/resvg-wasm/index_bg.wasm"));
     expect((await readPreparedAsset(assets.resvg, env)).equals(original)).toBe(true);
     expect(readPreparedAssetSync(assets.resvg, env).equals(original)).toBe(true);

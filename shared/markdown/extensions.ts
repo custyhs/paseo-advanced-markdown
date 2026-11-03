@@ -14,7 +14,6 @@ import {
   MAX_DOCUMENT,
   MAX_INLINE_RUN,
   MAX_MATH_EXPRESSION,
-  MAX_MERMAID_SOURCE,
   MAX_TABLE_CELLS,
 } from "../limits.js";
 import { isSupportedLink } from "./links.js";
@@ -397,8 +396,7 @@ export function markdownExtensions(md: MarkdownParser): void {
       const token = state.tokens[state.tokens.length - 1];
       const language = fenceLanguage(token.info);
       if (language !== "math" && language !== "mermaid") return true;
-      const limit = language === "math" ? MAX_MATH_EXPRESSION : MAX_MERMAID_SOURCE;
-      if (token.content.length > limit) return true;
+      if (language === "math" && token.content.length > MAX_MATH_EXPRESSION) return true;
       // Inspect the actual fence rule's final line while container offsets are
       // still active. Core-phase offsets no longer describe nested containers.
       // An unclosed fence stays ordinary code so streaming input keeps its source.
@@ -457,7 +455,7 @@ const NONE: DetectedExtensions = Object.freeze({
 
 let detector: MarkdownParser | undefined;
 
-/** Reports which modules have at least one complete token in the source. */
+/** Reports complete plugin content and host-owned diagrams in the source. */
 export function detectExtensions(source: string): DetectedExtensions {
   if (source.length > MAX_DOCUMENT) return NONE;
   const mayHaveMath = source.includes("$") || source.includes("\\(") || source.includes("\\[");
@@ -510,13 +508,12 @@ export function hasAnyExtension(detected: DetectedExtensions): boolean {
 /** Whether the plugin should own the item given which modules are enabled. */
 export function shouldTakeOver(
   detected: DetectedExtensions,
-  enabled: { math: boolean; mermaid: boolean; codeBlocks: boolean; tables: boolean },
+  enabled: { math: boolean; codeBlocks: boolean; tables: boolean },
 ): boolean {
   // Ownership is per item, so even disabled modules must respect renderer limits.
   if (detected.unsupported) return false;
   return (
     (detected.math && enabled.math) ||
-    (detected.mermaid && enabled.mermaid) ||
     (detected.code && enabled.codeBlocks) ||
     (detected.table && enabled.tables)
   );

@@ -14,14 +14,11 @@ try {
   console.log("read:", JSON.stringify(read));
   const values = {
     math: true,
-    mermaid: true,
     fontScale: "default",
     ...(read.status === "ready" ? read.values : {}),
   };
-  if (mode === "mermaid-off") Object.assign(values, { mermaid: false });
-  if (mode === "both-off") Object.assign(values, { math: false, mermaid: false });
-  if (mode === "restore")
-    Object.assign(values, { math: true, mermaid: true, fontScale: "default" });
+  if (mode === "math-off") Object.assign(values, { math: false });
+  if (mode === "restore") Object.assign(values, { math: true, fontScale: "default" });
   if (mode === "large") Object.assign(values, { fontScale: "large" });
   if (mode) {
     const write = await client.invokePluginRpc("advanced-markdown", "settings.modules.write", {

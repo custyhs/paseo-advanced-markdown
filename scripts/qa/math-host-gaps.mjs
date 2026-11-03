@@ -23,7 +23,7 @@ const evidence = Object.entries(inputs).map(([name, source]) => {
     source,
     blocks: splitMarkdownBlocks(source),
     detected,
-    takeover: shouldTakeOver(detected, { math: true, mermaid: true }),
+    takeover: shouldTakeOver(detected, { math: true }),
   };
 });
 process.stdout.write(`${JSON.stringify({ sourceRoot, evidence }, null, 2)}\n`);

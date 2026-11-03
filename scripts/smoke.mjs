@@ -16,7 +16,6 @@ import { transformSync } from "@babel/core";
 import { transformTimelineItem } from "../.paseo-source/packages/app/src/plugins/timeline/model.ts";
 import { projectPluginTimelineItems } from "../.paseo-source/packages/app/src/plugins/timeline/projection.ts";
 import { splitMarkdownBlocks } from "../.paseo-source/packages/app/src/utils/split-markdown-blocks.ts";
-import { resolveMermaidRuntime } from "../server/mermaid/runtime.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -324,7 +323,7 @@ async function exerciseClientBundle(bundle, id) {
       ]);
     }
 
-    // 4. Mermaid fence: stays assistant while unclosed, becomes plugin when closed.
+    // 4. Mermaid fences stay with the host, including legacy mermaid:true settings.
     {
       const unclosedKinds = new Set();
       const { rows } = stream(
@@ -344,13 +343,16 @@ async function exerciseClientBundle(bundle, id) {
       outcomes.mermaid = rows.map((row) => [row.kind, sourceOf(row)]);
       assert.deepEqual(outcomes.mermaid, [
         ["assistant_message", "Flow:"],
-        ["plugin", "```mermaid\nflowchart LR\n  A[开始] --> B{判断}\n  B -->|是| C\n```"],
+        [
+          "assistant_message",
+          "```mermaid\nflowchart LR\n  A[开始] --> B{判断}\n  B -->|是| C\n```",
+        ],
         ["assistant_message", "End"],
       ]);
     }
 
-    // 5. Mixed message: every block with math or Mermaid is a plugin row, the
-    //    table and the Python fence stay with the host, order is preserved.
+    // 5. Mixed message: math becomes a plugin row; Mermaid, tables, and code
+    //    stay with the host, with order preserved.
     {
       const { rows } = stream(samples.mixed, () => {}, 5);
       outcomes.mixed = rows.map((row) => [row.kind, sourceOf(row).split("\n")[0]]);
@@ -358,7 +360,7 @@ async function exerciseClientBundle(bundle, id) {
         ["assistant_message", "# Mixed"],
         ["plugin", "Inline $E=mc^2$ and a table:"],
         ["assistant_message", "| a | b |"],
-        ["plugin", "```mermaid"],
+        ["assistant_message", "```mermaid"],
         ["plugin", "$$"],
         ["assistant_message", "```python"],
       ]);
@@ -434,7 +436,7 @@ async function exerciseClientBundle(bundle, id) {
       outcomes.fileLinks = "inline formula and local links survive one-character streaming";
     }
 
-    // 9. Settings snapshot: disabling both modules returns new items to the host.
+    // 9. The math settings snapshot controls formula takeover.
     {
       const item = { type: "assistant_message", text: samples.mathInline };
       assert.ok(timelineTransformers[0].transform({ item, phase: "complete" }));
@@ -504,37 +506,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       invalidFallback: invalid.reason,
       chineseBoldBox: { width: chineseBox.width, height: chineseBox.height },
     };
-    const runtime = await resolveMermaidRuntime();
-    if (process.env.PASEO_REQUIRE_MERMAID === "1") {
-      assert.equal(
-        runtime.ready,
-        true,
-        "Real Mermaid rendering requires a prepared browser runtime",
-      );
-    }
-    const diagram = await plugin.invoke("advanced-markdown.mermaid.render", {
-      source: "flowchart LR\n  A[开始] --> B{判断}\n  B -->|是| C[发布]",
-      theme: "dark",
-    });
-    if (runtime.ready) {
-      assert.equal(diagram.ok, true, JSON.stringify(diagram));
-      await writeFile(path.join(root, ".smoke/diagram.png"), Buffer.from(diagram.png, "base64"));
-      const broken = await plugin.invoke("advanced-markdown.mermaid.render", {
-        source: "notadiagram\n A --> B",
-        theme: "default",
-      });
-      assert.equal(broken.ok, false);
-      report.steps.mermaid = {
-        width: diagram.width,
-        height: diagram.height,
-        scale: diagram.scale,
-        invalidFallback: broken.reason,
-      };
-    } else {
-      assert.equal(diagram.ok, false);
-      assert.equal(diagram.reason, "unavailable");
-      report.steps.mermaid = { unavailable: runtime.message };
-    }
+    assert.ok(!plugin.methods.includes("advanced-markdown.mermaid.render"));
     const status = await plugin.invoke("advanced-markdown.status", {});
     report.steps.status = status;
     await writeFile(path.join(root, ".smoke/client.bundle.js"), plugin.bundles.clientBundle);

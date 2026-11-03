@@ -5,9 +5,9 @@
 ## Local setup
 
 ```bash
-npm ci
-npm run build            # Markdown/MathJax bundles, formula assets, runtime manifest
-npm run prepare-browser  # formula assets, Mermaid runtime and browser into the cache
+npm ci --ignore-scripts
+npm run build           # Markdown/MathJax bundles, formula assets, version metadata
+npm run prepare-assets  # verify and copy bundled formula assets into the cache
 npm run typecheck && npm run lint && npm run format:check
 npm run paseo-source     # pinned app projection/stream fixtures for the smoke
 npm run smoke            # 0.13.0 compiler/SDK + legacy fixtures + RPCs
@@ -45,16 +45,17 @@ PASEO_COMPAT_RUNTIME=.compat-runtime npm run smoke:package
 `.smoke/npm/paseo-advanced-markdown-<version>.tgz`, plus a file inventory and integrity
 hash in `.smoke/npm/pack.json`. It does not publish anything. The generated package
 contains the runtime sources, original resvg WASM, precompiled MathJax renderer,
-static MathJax SVG font data, preparation scripts,
-worker lockfile, and a production `npm-shrinkwrap.json`. Host libraries and build
+static MathJax SVG font data, offline asset-preparation scripts, `OVERVIEW.md`,
+listing images, and a production `npm-shrinkwrap.json`. It contains no Mermaid CLI
+worker, Puppeteer browser installer, or Chrome download script. Host libraries and build
 tools are excluded from its dependencies. The precompiled renderer uses the same
 MathJax 3.2.2 profile as the Git source and includes its license. Unused MathJax
 speech/XML dependencies are not installed; dependency overrides in a published
 package do not reliably control the consuming application's dependency graph.
 
 The repository stays private in npm metadata because its manifest prepares a Git
-checkout with `npm ci` and a source build. The generated npm package is public-ready
-and its manifest prepares the formula assets, Mermaid worker and browser. Publish the
+checkout with `npm ci --ignore-scripts` and a source build. The generated npm package is public-ready
+and its manifest only prepares bundled formula assets offline. Publish the
 generated `.tgz`, not the repository directory; do not use bare `npm pack` here.
 Keep the package and GitHub source versions aligned before publication.
 
@@ -67,11 +68,13 @@ community scanner's import traversal.
 `smoke:package` installs the tarball outside the checkout with lifecycle scripts
 disabled and production dependencies only. It runs the package's preparation,
 moves the installation to simulate activation, compiles both entries with the
-selected official Paseo compiler, and renders real formula and Mermaid PNGs
-through the compiled RPC handlers. It also clears or corrupts the formula cache
+selected official Paseo compiler, and renders real formula PNGs through the
+compiled RPC handler. It verifies that preparation and activation create no browser
+or Mermaid worker runtime. It also clears or corrupts the formula cache
 and removes the original data files after compilation to verify offline startup
-recovery from the in-memory bundle. Its browser cache and
-reports stay under `.smoke/npm/`; it does not reload the production plugin or daemon.
+recovery from the in-memory bundle. Its isolated installation and cache use temporary
+directories that are removed afterward; reports stay under `.smoke/npm/`.
+It does not reload the production plugin or daemon.
 
 ## Asset recovery
 

@@ -1,7 +1,18 @@
 {
   "id": "advanced-markdown",
+  "name": "Advanced Markdown",
+  "description": "LaTeX formulas and optional code and table viewers for Paseo, with built-in Mermaid rendering",
+  "media": [
+    "images/04-math-and-native-mermaid.png",
+    "images/05-formula-viewer.png",
+    "images/06-settings.png"
+  ],
   "requirements": {
     "paseo": ">=0.13.0"
   },
-  "build": [["npm", "ci"], ["npm", "run", "build"], ["npm", "run", "prepare-browser"]]
+  "build": [
+    ["npm", "ci", "--ignore-scripts"],
+    ["npm", "run", "build"],
+    ["npm", "run", "prepare-assets"]
+  ]
 }

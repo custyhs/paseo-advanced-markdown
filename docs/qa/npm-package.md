@@ -1,5 +1,8 @@
 # npm package validation — 2026-09-22
 
+This is the historical 0.2.1 record. The browser and worker described below were
+removed in [0.4.1](../release/0.4.1.md); these results do not validate that release.
+
 The `paseo-advanced-markdown@0.2.1` tarball passes isolated installation, official
 Paseo compilation, rendering, and community source-budget checks. This record
 does not establish npm registry publication or paseo.cafe admission.

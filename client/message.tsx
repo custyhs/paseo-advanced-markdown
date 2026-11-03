@@ -26,13 +26,12 @@ import Markdown, {
   type RenderRules,
 } from "./generated/markdown.js";
 import { CodeBlock, monospace } from "./code-block.js";
-import { Diagram } from "./diagram.js";
 import { Formula } from "./formula.js";
 import { MathTextGroup } from "./math-text-group.js";
 import { ContentViewerProvider } from "./content-viewer.js";
 import { moduleState } from "./module-state.js";
 import { MarkdownTable, MarkdownTableCell } from "./table.js";
-import { colorHex, mermaidThemeFor } from "./theme.js";
+import { colorHex } from "./theme.js";
 import { viewerIdentity } from "./viewer-identity.js";
 import { FilePreview } from "./file-preview.js";
 
@@ -99,7 +98,6 @@ const MemoizedMessage = memo(
     const selectedFile =
       fileSelection?.hostId === host.id && fileSelection.agentId === agentId ? fileSelection : null;
     const fontSize = fontScaleToBaseSize(modules.fontScale, layout.compact);
-    const mermaidTheme = mermaidThemeFor(theme);
     const styles = useMemo(
       () => ({
         body: {
@@ -178,35 +176,9 @@ const MemoizedMessage = memo(
           />
         );
       };
-      const mermaidRule: RenderFunction = (
-        node: ExtensionNode,
-        _children,
-        parents,
-        _styles,
-        inherited: TextStyle = {},
-      ) =>
-        modules.mermaid ? (
-          <Diagram
-            key={node.key}
-            viewerId={viewerIdentity(
-              "diagram",
-              node,
-              parents,
-              metaString(node.sourceMeta, "source") ?? node.content,
-            )}
-            definition={node.content}
-            source={metaString(node.sourceMeta, "source") ?? node.content}
-            hostId={host.id}
-            theme={theme}
-            mermaidTheme={mermaidTheme}
-            compact={layout.compact}
-            enabled
-            textStyle={inherited}
-            containerWidth={Math.max(64, width)}
-          />
-        ) : (
-          <HostMarkdown key={node.key}>{codeBlockMarkdown(node)}</HostMarkdown>
-        );
+      const mermaidRule: RenderFunction = (node: ExtensionNode) => (
+        <HostMarkdown key={node.key}>{codeBlockMarkdown(node)}</HostMarkdown>
+      );
       const codeRule: RenderFunction = (
         node: ExtensionNode,
         _children,
@@ -296,10 +268,8 @@ const MemoizedMessage = memo(
       layout.compact,
       modules.math,
       modules.mathScale,
-      modules.mermaid,
       modules.codeBlocks,
       modules.tables,
-      mermaidTheme,
     ]);
 
     const onLinkPress = useCallback(
@@ -328,7 +298,7 @@ const MemoizedMessage = memo(
           source={text}
           theme={theme}
           compact={layout.compact}
-          resetKey={`${host.id}:${colors.foreground}:${colors.surface0}:${modules.mathScale}:${fontSize}:${modules.math}:${modules.mermaid}:${modules.codeBlocks}:${modules.tables}`}
+          resetKey={`${host.id}:${colors.foreground}:${colors.surface0}:${modules.mathScale}:${fontSize}:${modules.math}:${modules.codeBlocks}:${modules.tables}`}
         >
           <Markdown markdownit={markdown} style={styles} rules={rules} onLinkPress={onLinkPress}>
             {text}
@@ -357,7 +327,6 @@ const MemoizedMessage = memo(
       previous.host.id === next.host.id &&
       previous.layout.compact === next.layout.compact &&
       previous.modules.math === next.modules.math &&
-      previous.modules.mermaid === next.modules.mermaid &&
       previous.modules.tables === next.modules.tables &&
       previous.modules.codeBlocks === next.modules.codeBlocks &&
       previous.modules.fontScale === next.modules.fontScale &&

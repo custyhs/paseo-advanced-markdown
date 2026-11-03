@@ -18,12 +18,9 @@ Paseo is Copyright 2025-present Mohamed Boudra, Apache-2.0.
 
 Runtime dependency licenses remain in their npm packages and generated bundles:
 react-native-markdown-display (MIT), markdown-it (MIT), MathJax (Apache-2.0),
-resvg (MPL-2.0), Mermaid and @mermaid-js/mermaid-cli (MIT), Puppeteer
-(Apache-2.0), and their respective dependencies. The unmodified resvg WASM
+resvg (MPL-2.0), fontkit (MIT), and their respective dependencies. The unmodified resvg WASM
 binary is distributed as server/generated/resvg.wasm; its source is available at
 https://github.com/thx/resvg-js/tree/v2.6.2 and https://github.com/linebender/resvg.
-Chrome for Testing (chrome-headless-shell) is downloaded during preparation
-under Google's Chrome for Testing terms and is not redistributed here.
 
 The npm artifact includes a prebuilt MathJax 3.2.2 core/TeX/SVG profile in
 server/math/render.js, with its static SVG font data in

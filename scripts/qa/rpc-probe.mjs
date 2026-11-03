@@ -40,14 +40,6 @@ const timed = async (label, method, input) => {
     height: output?.height,
   };
 };
-function bigFlowchart(nodes) {
-  const lines = ["flowchart TD"];
-  for (let index = 0; index < nodes; index++) {
-    lines.push(`  N${index}[节点 ${index} label ${index}] --> N${(index + 1) % nodes}`);
-    if (index % 7 === 0) lines.push(`  N${index} --> N${(index * 3) % nodes}`);
-  }
-  return lines.join("\n");
-}
 const results = {};
 try {
   results.status = await call(`${pluginId}.status`, {});
@@ -73,44 +65,11 @@ try {
       color: "#e0e0e0",
     }),
   ];
-  const small = "flowchart LR\n  A[开始] --> B{判断}\n  B -->|是| C[发布]";
-  results.mermaid = [
-    await timed("mermaid cold", `${pluginId}.mermaid.render`, { source: small, theme: "dark" }),
-    await timed("mermaid warm", `${pluginId}.mermaid.render`, { source: small, theme: "dark" }),
-    await timed("mermaid 60 nodes", `${pluginId}.mermaid.render`, {
-      source: bigFlowchart(60),
-      theme: "dark",
-    }),
-    await timed("mermaid 150 nodes", `${pluginId}.mermaid.render`, {
-      source: bigFlowchart(150),
-      theme: "dark",
-    }),
-    await timed("mermaid 400 nodes", `${pluginId}.mermaid.render`, {
-      source: bigFlowchart(400),
-      theme: "dark",
-    }),
-    await timed("mermaid invalid", `${pluginId}.mermaid.render`, {
-      source: "notadiagram\n  A --> B",
-      theme: "dark",
-    }),
-  ];
-  // Concurrency: ten different diagrams at once exercise the queue (limit 8 waiting + 1 active).
-  const burst = Array.from({ length: 10 }, (_, index) =>
-    timed(`burst ${index}`, `${pluginId}.mermaid.render`, {
-      source: `flowchart LR\n  A${index} --> B${index}[burst ${index}]`,
-      theme: "default",
-    }),
-  );
-  results.burst = await Promise.all(burst);
-  results.burstSummary = {
-    ok: results.burst.filter((entry) => entry.ok).length,
-    busy: results.burst.filter((entry) => entry.reason === "busy").length,
-    maxMs: Math.max(...results.burst.map((entry) => entry.ms)),
-  };
   results.statusAfter = await call(`${pluginId}.status`, {});
-  results.schemaRejection = await call(`${pluginId}.mermaid.render`, {
-    source: "flowchart LR\n A-->B",
-    theme: "neon",
+  results.schemaRejection = await call(`${pluginId}.math.render`, {
+    expression: "x",
+    display: true,
+    color: "not-a-color",
   }).then(
     (value) => ({ accepted: true, value }),
     (error) => ({ accepted: false, error: String(error?.message ?? error).slice(0, 200) }),

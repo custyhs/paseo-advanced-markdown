@@ -10,7 +10,7 @@ export interface ActionItem {
   disabled?: boolean;
 }
 
-/** Compact row of icon buttons rendered under a formula or diagram. */
+/** Compact row of code-block actions. */
 export function ActionBar({
   actions,
   theme,

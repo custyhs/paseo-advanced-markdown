@@ -85,13 +85,7 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
                 disabled={settings.saving}
                 onValueChange={(math) => void update({ math })}
               />
-              <SettingsSwitch
-                label="Enhanced Mermaid viewer"
-                hint="Off uses Paseo's diagram renderer, including beside formulas. On uses this plugin's image viewer and adds Mermaid-only messages to what it renders."
-                value={settings.values.mermaid}
-                disabled={settings.saving}
-                onValueChange={(mermaid) => void update({ mermaid })}
-              />
+              <SettingsRow label="Mermaid diagrams" hint="Paseo built-in" />
               <SettingsSwitch
                 label="Enhanced code scrolling"
                 hint="Off uses Paseo's syntax highlighting and copy controls. On uses plain text with horizontal dragging and text-selection controls, and adds code-only messages to what this plugin renders."
@@ -140,9 +134,9 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
         </SettingsCard>
         <Text style={muted}>
           These switches apply to this host only. New installations enable math and leave the
-          optional Mermaid, code, and table enhancements off. Existing preferences are preserved.
-          Reopen the conversation after changing which messages the plugin takes over. Each client
-          fits content to its own available space.
+          optional code and table enhancements off. Existing math, code, and table preferences are
+          preserved. Reopen the conversation after changing which messages the plugin takes over.
+          Each client fits content to its own available space.
         </Text>
       </SettingsSection>
       <SettingsSection title="Runtime on this host">
@@ -162,27 +156,12 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
             hint={
               runtime.data
                 ? `${runtime.data.math.engine} · ${runtime.data.math.cached} cached`
-                : "—"
-            }
-          />
-          <SettingsRow
-            label="Mermaid runtime"
-            hint={
-              runtime.data
-                ? runtime.data.mermaid.ready
-                  ? `${runtime.data.mermaid.cli} · ${runtime.data.mermaid.browser ?? "browser"} · ${runtime.data.mermaid.cached} cached, ${runtime.data.mermaid.queued} queued`
-                  : `Not ready: ${runtime.data.mermaid.message ?? "unknown reason"}`
                 : runtime.error
                   ? `Status unavailable: ${runtime.error instanceof Error ? runtime.error.message : String(runtime.error)}`
                   : "—"
             }
-            error={
-              runtime.data && !runtime.data.mermaid.ready
-                ? (runtime.data.mermaid.message ?? null)
-                : null
-            }
           />
-          <SettingsRow label="Cache directory" hint={runtime.data?.mermaid.cacheRoot ?? "—"} />
+          <SettingsRow label="Cache directory" hint={runtime.data?.math.cacheRoot ?? "—"} />
           <SettingsAction
             label="Refresh status"
             actionLabel="Refresh"
@@ -190,10 +169,7 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
           />
         </SettingsCard>
         <Text style={muted}>
-          Formulas and enhanced Mermaid diagrams are rendered on the selected host by pinned local
-          engines. Paseo renders other diagrams on the client. If the enhanced Mermaid runtime is
-          not ready, run "npm run prepare-browser" in the plugin directory or reinstall the plugin
-          so its preparation step runs again.
+          Formulas are rendered on the selected host. Paseo renders Mermaid diagrams on the client.
         </Text>
       </SettingsSection>
     </>

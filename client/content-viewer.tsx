@@ -131,7 +131,7 @@ function ContentViewer({
   const [failedImage, setFailedImage] = useState(false);
   const { height: windowHeight } = useWindowDimensions();
   const viewportHeight = Math.max(120, Math.min(420, windowHeight * 0.5));
-  const reading = selection.math?.preferredScale ?? selection.readingScale ?? 1;
+  const reading = selection.math?.preferredScale ?? 1;
   const image = selection.image;
   const imageUri = image?.uri;
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new source image clears only its previous decode failure.
@@ -143,8 +143,6 @@ function ContentViewer({
         preferredScale: reading,
         viewportWidth: viewportWidth - 24,
         viewportHeight: viewportHeight - 24,
-        // Raster diagrams keep their original size until explicitly enlarged.
-        fitCeiling: selection.kind === "diagram" ? 1 : undefined,
         zoom,
       })
     : reading;
@@ -161,7 +159,7 @@ function ContentViewer({
   };
   const appearance = { theme, compact };
   const isTable = selection.kind === "table";
-  const bodyLabel = isTable ? "TSV" : selection.kind === "formula" ? "LaTeX" : "Mermaid";
+  const bodyLabel = isTable ? "TSV" : "LaTeX";
   const hasPreview = Boolean(selection.tablePreview || (image && !failedImage));
   const sourceMode = mode === "source" || !hasPreview;
   const copyMarkdown = isTable || sourceMode;
@@ -173,7 +171,7 @@ function ContentViewer({
     setZoom(Math.min(8, Math.max(0.1, (scale / reading) * factor)));
   return (
     <Modal
-      title={isTable ? "Table" : selection.kind === "formula" ? "Formula" : "Diagram"}
+      title={isTable ? "Table" : "Formula"}
       open
       onOpenChange={(open) => {
         if (!open) onClose();
@@ -308,26 +306,15 @@ function ContentViewer({
           {!sourceMode && selection.tablePreview ? (
             selection.tablePreview
           ) : preview ? (
-            selection.math ? (
-              <FormulaPreview
-                selection={selection}
-                scale={scale}
-                viewportWidth={viewportWidth}
-                viewportHeight={viewportHeight}
-                theme={theme}
-                compact={compact}
-                onImageError={() => setFailedImage(true)}
-              />
-            ) : (
-              <ImagePreview
-                image={image}
-                label={selection.source}
-                scale={scale}
-                viewportWidth={viewportWidth}
-                viewportHeight={viewportHeight}
-                onImageError={() => setFailedImage(true)}
-              />
-            )
+            <FormulaPreview
+              selection={selection}
+              scale={scale}
+              viewportWidth={viewportWidth}
+              viewportHeight={viewportHeight}
+              theme={theme}
+              compact={compact}
+              onImageError={() => setFailedImage(true)}
+            />
           ) : (
             <ScrollView
               horizontal

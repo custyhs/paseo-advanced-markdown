@@ -1,7 +1,7 @@
 // Adapted from paseo-math (Apache-2.0), client/render-cache.ts at
 // https://github.com/q5m-ai/paseo-math/tree/3644aa73d40f2e4e51f7a4ef48b22b668db017d8
-// Changes: generalized to any image RPC so math and Mermaid share one bounded
-// client cache; a retryable failure can be forgotten explicitly.
+// Changes: bounded client cache with shared in-flight requests; a retryable
+// failure can be forgotten explicitly.
 import { IMAGE_CACHE_BYTES, IMAGE_CACHE_ENTRIES } from "../shared/limits.js";
 
 export type ImageResult = { ok: true; png: string } | { ok: false };

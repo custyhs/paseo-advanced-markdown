@@ -15,8 +15,8 @@ import {
 import type { ExtensionMeta } from "../shared/markdown/extensions.js";
 import {
   MAX_CODE_SOURCE,
+  MAX_DOCUMENT,
   MAX_MATH_EXPRESSION,
-  MAX_MERMAID_SOURCE,
   MAX_TABLE_CELLS,
 } from "../shared/limits.js";
 import { compactEquationTags, normalizeTex } from "../shared/tex.js";
@@ -24,10 +24,10 @@ import { DEFAULT_MODULE_SETTINGS, moduleSettings } from "../shared/settings.js";
 
 const meta = (token: Token): ExtensionMeta => token.meta as unknown as ExtensionMeta;
 
-const MATH_ONLY = { math: true, mermaid: false, codeBlocks: false, tables: false };
-const MERMAID_ONLY = { math: false, mermaid: true, codeBlocks: false, tables: false };
-const NO_MODULES = { math: false, mermaid: false, codeBlocks: false, tables: false };
-const ALL_MODULES = { math: true, mermaid: true, codeBlocks: true, tables: true };
+const MATH_ONLY = { math: true, codeBlocks: false, tables: false };
+const LEGACY_MERMAID_ONLY = { math: false, mermaid: true, codeBlocks: false, tables: false };
+const NO_MODULES = { math: false, codeBlocks: false, tables: false };
+const ALL_MODULES = { math: true, codeBlocks: true, tables: true };
 
 function parse(source: string): Token[] {
   const tokens: Token[] = [];
@@ -307,14 +307,13 @@ describe("Mermaid fences", () => {
     });
   });
 
-  it("keeps unclosed, empty, lookalike, and oversized fences as ordinary code", () => {
+  it("keeps unclosed, empty, and lookalike fences as ordinary code", () => {
     for (const source of [
       "```mermaid\nflowchart LR\n  A --> B",
       "```mermaid\nflowchart LR\n``` trailing",
       "```mermaid\n\n```",
       "```mermaidjs\nflowchart LR\n```",
       "```javascript\nconst mermaid = 1;\n```",
-      `\`\`\`mermaid\n${"x".repeat(32 * 1024 + 1)}\n\`\`\``,
     ]) {
       expect(diagrams(source)).toEqual([]);
       expect(detectExtensions(source).mermaid).toBe(false);
@@ -448,18 +447,14 @@ describe("mixed content", () => {
 
   it("honors the code and table module switches", () => {
     const code = detectExtensions("```text\nroot/\n└── a.txt\n```");
-    expect(
-      shouldTakeOver(code, { math: false, mermaid: false, codeBlocks: true, tables: false }),
-    ).toBe(true);
+    expect(shouldTakeOver(code, { math: false, codeBlocks: true, tables: false })).toBe(true);
     expect(shouldTakeOver(code, NO_MODULES)).toBe(false);
     const table = detectExtensions("| a | b |\n| - | - |\n| 1 | 2 |");
-    expect(
-      shouldTakeOver(table, { math: false, mermaid: false, codeBlocks: false, tables: true }),
-    ).toBe(true);
+    expect(shouldTakeOver(table, { math: false, codeBlocks: false, tables: true })).toBe(true);
     expect(shouldTakeOver(table, NO_MODULES)).toBe(false);
   });
 
-  it("leaves Mermaid-only messages to Paseo by default while preserving mixed math", () => {
+  it("always leaves Mermaid-only messages to Paseo while preserving mixed math", () => {
     const diagram = "```mermaid\nflowchart LR\nA --> B\n```";
     expect(shouldTakeOver(detectExtensions(diagram), DEFAULT_MODULE_SETTINGS)).toBe(false);
     expect(
@@ -467,7 +462,9 @@ describe("mixed content", () => {
     ).toBe(true);
     expect(
       shouldTakeOver(detectExtensions(diagram), moduleSettings.schema.parse({ mermaid: true })),
-    ).toBe(true);
+    ).toBe(false);
+    expect(shouldTakeOver(detectExtensions(diagram), ALL_MODULES)).toBe(false);
+    expect(shouldTakeOver(detectExtensions(diagram), LEGACY_MERMAID_ONLY)).toBe(false);
   });
 
   it("reports nothing for plain Markdown so the host keeps it", () => {
@@ -495,9 +492,9 @@ describe("mixed content", () => {
     expect(shouldTakeOver(detected, ALL_MODULES)).toBe(false);
     const mathOnly = detectExtensions("Only $x$ here");
     expect(shouldTakeOver(mathOnly, MATH_ONLY)).toBe(true);
-    expect(shouldTakeOver(mathOnly, MERMAID_ONLY)).toBe(false);
+    expect(shouldTakeOver(mathOnly, LEGACY_MERMAID_ONLY)).toBe(false);
     const both = detectExtensions(mixed);
-    expect(shouldTakeOver(both, MERMAID_ONLY)).toBe(true);
+    expect(shouldTakeOver(both, LEGACY_MERMAID_ONLY)).toBe(false);
     expect(shouldTakeOver(both, NO_MODULES)).toBe(false);
   });
 });
@@ -540,7 +537,7 @@ describe("whole-message code and table budgets", () => {
       const detected = detectExtensions(source);
       expect(detected.unsupported).toBe(true);
       expect(shouldTakeOver(detected, ALL_MODULES)).toBe(false);
-      expect(shouldTakeOver(detected, MERMAID_ONLY)).toBe(false);
+      expect(shouldTakeOver(detected, LEGACY_MERMAID_ONLY)).toBe(false);
     }
   });
 
@@ -579,18 +576,30 @@ describe("whole-message code and table budgets", () => {
     }
   });
 
-  it("keeps oversized math and Mermaid fences readable as code within the code budget", () => {
-    for (const [language, limit] of [
-      ["math", MAX_MATH_EXPRESSION],
-      ["mermaid", MAX_MERMAID_SOURCE],
-    ] as const) {
-      const source = fence("x".repeat(limit), language);
-      expect(parse(source).find((token) => token.type === "fence")?.content).toHaveLength(
-        limit + 1,
-      );
-      expect(shouldTakeOver(detectExtensions(source), ALL_MODULES)).toBe(true);
+  it("keeps oversized math fences readable as code within the code budget", () => {
+    const source = fence("x".repeat(MAX_MATH_EXPRESSION), "math");
+    expect(parse(source).find((token) => token.type === "fence")?.content).toHaveLength(
+      MAX_MATH_EXPRESSION + 1,
+    );
+    expect(shouldTakeOver(detectExtensions(source), ALL_MODULES)).toBe(true);
+    expect(shouldTakeOver(detectExtensions(`${source}\n\n$x$`), MATH_ONLY)).toBe(true);
+  });
+
+  it.each([32 * 1024, MAX_CODE_SOURCE + 1, MAX_DOCUMENT - 100])(
+    "delegates closed Mermaid fences with %i source characters",
+    (length) => {
+      const source = fence(`flowchart LR\nA --> B\n%% ${"x".repeat(length)}`, "mermaid");
+      expect(diagrams(source)).toHaveLength(1);
+      expect(detectExtensions(source)).toMatchObject({ mermaid: true, code: false });
+      expect(shouldTakeOver(detectExtensions(source), ALL_MODULES)).toBe(false);
       expect(shouldTakeOver(detectExtensions(`${source}\n\n$x$`), MATH_ONLY)).toBe(true);
-    }
+    },
+  );
+
+  it("leaves entire Mermaid-only and mixed messages beyond the document budget with Paseo", () => {
+    const source = fence(`flowchart LR\nA --> B\n%% ${"x".repeat(MAX_DOCUMENT)}`, "mermaid");
+    expect(shouldTakeOver(detectExtensions(source), ALL_MODULES)).toBe(false);
+    expect(shouldTakeOver(detectExtensions(`${source}\n\n$x$`), ALL_MODULES)).toBe(false);
   });
 });
 

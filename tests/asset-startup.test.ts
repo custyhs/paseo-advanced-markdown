@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -7,7 +7,7 @@ import type { PluginServerContribution } from "@getpaseo/plugin/server";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { preparedAssetPath, readPreparedAssetSync } from "../server/assets/store.mjs";
 import assets from "../server/generated/assets.json";
-import { renderMath } from "../shared/rpc.js";
+import { renderMath, runtimeStatus } from "../shared/rpc.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -78,9 +78,20 @@ afterEach(async () => {
 
 describe("compiled plugin startup", () => {
   it("prepares both renderer assets before registering handlers with an empty cache", async () => {
-    await cacheFixture();
-    const { cleanup } = startPlugin();
-    await cleanup();
+    const cache = await cacheFixture();
+    const { cleanup, handlers } = startPlugin();
+    try {
+      const status = runtimeStatus.output.parse(await handlers.get(runtimeStatus.name)!({}));
+      expect(status.math).toEqual({
+        engine: "MathJax 3.2.2 + resvg 2.6.2",
+        cached: 0,
+        cacheRoot: cache,
+      });
+      expect(handlers.has("advanced-markdown.mermaid.render")).toBe(false);
+      expect(await readdir(cache)).toEqual(["assets"]);
+    } finally {
+      await cleanup();
+    }
   });
 
   it("repairs same-size corruption and a deleted font table on reload", async () => {
@@ -90,7 +101,7 @@ describe("compiled plugin startup", () => {
     changed[100] ^= 1;
     await writeFile(preparedAssetPath(assets.resvg), changed);
     await rm(preparedAssetPath(assets.fonts));
-    // Startup must preserve the expensive browser/worker cache and old assets.
+    // Upgrading leaves legacy browser/worker files and older formula assets untouched.
     const retained = ["manifest.json", "worker/ready", "browsers/ready", "assets/old.wasm"];
     for (const name of retained) {
       await mkdir(path.dirname(path.join(cache, name)), { recursive: true });
@@ -119,6 +130,7 @@ describe("compiled plugin startup", () => {
         "89504e470d0a1a0a",
       );
       expect(result.width).toBeGreaterThan(20);
+      expect(await readdir(cache)).toEqual(["assets"]);
       expect(readPreparedAssetSync(assets.resvg).length).toBe(assets.resvg.bytes);
     } finally {
       await cleanup();

@@ -9,7 +9,6 @@
       "!.paseo-source",
       "!.compat-runtime",
       "!.smoke",
-      "!worker/package-lock.json",
       "!package-lock.json"
     ]
   },

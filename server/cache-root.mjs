@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 
 /**
- * Stable per-user directory for renderer assets, the Mermaid worker and browser.
+ * Stable per-user directory for formula assets.
  * It lives outside Paseo's managed plugin checkouts, which move from a staging
  * directory to a versioned directory on activation, so nothing in this plugin
  * depends on the checkout path after preparation. Shared by the preparation
@@ -38,8 +38,5 @@ export function cacheLayout(root) {
   return {
     root,
     assets: path.join(root, "assets"),
-    browsers: path.join(root, "browsers"),
-    workers: path.join(root, "worker"),
-    manifest: path.join(root, "manifest.json"),
   };
 }

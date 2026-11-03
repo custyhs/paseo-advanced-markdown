@@ -67,21 +67,6 @@ describe("formula reading size", () => {
 });
 
 describe("formula inspection", () => {
-  it("fits diagrams independently of the scaled reading size and keeps 100% tied to reading", () => {
-    const diagram = {
-      width: 1000,
-      height: 500,
-      preferredScale: 0.4,
-      viewportWidth: 800,
-      viewportHeight: 600,
-      fitCeiling: 1,
-    };
-    expect(inspectorScale({ ...diagram, zoom: "fit" })).toBe(0.8);
-    expect(inspectorScale({ ...diagram, zoom: 1 })).toBe(0.4);
-    expect(
-      inspectorScale({ ...diagram, viewportWidth: 2000, viewportHeight: 2000, zoom: "fit" }),
-    ).toBe(1);
-  });
   it("fits both dimensions with bounded enlargement and keeps manual zoom when the viewport changes", () => {
     const formula = { width: 400, height: 300, preferredScale: 1.5 };
     const viewport = { viewportWidth: 500, viewportHeight: 300 };

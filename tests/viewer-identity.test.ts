@@ -4,12 +4,7 @@ import { buildSync } from "esbuild";
 import MarkdownIt from "markdown-it";
 import { describe, expect, it } from "vitest";
 import { viewerIdentity } from "../client/viewer-identity.js";
-import {
-  markdownExtensions,
-  MATH_BLOCK,
-  MATH_INLINE,
-  MERMAID_BLOCK,
-} from "../shared/markdown/extensions.js";
+import { markdownExtensions, MATH_BLOCK, MATH_INLINE } from "../shared/markdown/extensions.js";
 
 type Node = {
   type: string;
@@ -48,9 +43,9 @@ function entries(source: string) {
   const found: { id: string; key: string; source: string; node: Node; parents: Node[] }[] = [];
   const root: Node = { type: "body", key: "root", content: "", children: [] };
   const visit = (node: Node, parents: Node[]) => {
-    if ([MATH_INLINE, MATH_BLOCK, MERMAID_BLOCK].includes(node.type)) {
-      const kind = node.type === MERMAID_BLOCK ? "diagram" : "formula";
-      const exactSource = node.sourceMeta?.source ?? node.content;
+    if ([MATH_INLINE, MATH_BLOCK, "table"].includes(node.type)) {
+      const kind = node.type === "table" ? "table" : "formula";
+      const exactSource = kind === "table" ? "" : (node.sourceMeta?.source ?? node.content);
       found.push({
         id: viewerIdentity(kind, node, parents, exactSource),
         key: node.key,
@@ -70,8 +65,8 @@ function entries(source: string) {
 }
 
 describe("viewer identity across Markdown parses", () => {
-  it("keeps formula and diagram identities when streaming appends text and rebuilds React keys", () => {
-    const source = "First $x^2$.\n\n```mermaid\ngraph TD\nA-->B\n```\n";
+  it("keeps formula and table identities when streaming appends text and rebuilds React keys", () => {
+    const source = "First $x^2$.\n\n| A | B |\n| --- | --- |\n| x | y |\n";
     const before = entries(source);
     const after = entries(`${source}\nMore $y$ arrives.`);
     expect(before).toHaveLength(2);
@@ -84,7 +79,7 @@ describe("viewer identity across Markdown parses", () => {
 
   it("distinguishes repeated content within a paragraph and in nested containers", () => {
     const source =
-      "$x$ and $x$.\n\n> $x$\n\n- $x$\n- $x$\n\n```mermaid\ngraph TD\nA-->B\n```\n\n```mermaid\ngraph TD\nA-->B\n```";
+      "$x$ and $x$.\n\n> $x$\n\n- $x$\n- $x$\n\n| A | B |\n| --- | --- |\n| x | y |\n\nSeparate tables.\n\n| A | B |\n| --- | --- |\n| x | y |";
     const parsed = entries(source);
     expect(parsed).toHaveLength(7);
     expect(new Set(parsed.map(({ id }) => id)).size).toBe(parsed.length);
@@ -103,6 +98,6 @@ describe("viewer identity across Markdown parses", () => {
 
   it("separates content kinds even when their source and AST path match", () => {
     const { node, parents, source, id } = entries("$x$")[0];
-    expect(viewerIdentity("diagram", node, parents, source)).not.toBe(id);
+    expect(viewerIdentity("table", node, parents, source)).not.toBe(id);
   });
 });

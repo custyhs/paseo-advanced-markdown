@@ -8,7 +8,8 @@ import {
   type ImageResult,
 } from "../client/render-cache.js";
 
-type Output = ({ ok: true; png: string } | { ok: false; reason: "invalid" | "busy" }) & ImageResult;
+type Output = ({ ok: true; png: string } | { ok: false; reason: "invalid" | "failed" }) &
+  ImageResult;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -21,7 +22,7 @@ function deferred<T>() {
 }
 
 describe("client render cache", () => {
-  it("deduplicates identical requests and separates hosts and modules", async () => {
+  it("deduplicates identical requests and separates hosts and rendering inputs", async () => {
     clearRenderCache();
     let calls = 0;
     const call = async () => {
@@ -39,8 +40,8 @@ describe("client render cache", () => {
     expect(renderKey("math", "host-b", { expression: "x" })).not.toBe(
       renderKey("math", "host-a", { expression: "x" }),
     );
-    expect(renderKey("mermaid", "host-a", { source: "x" })).not.toBe(
-      renderKey("math", "host-a", { source: "x" }),
+    expect(renderKey("math", "host-a", { expression: "x", display: true })).not.toBe(
+      renderKey("math", "host-a", { expression: "x", display: false }),
     );
   });
 
@@ -48,8 +49,8 @@ describe("client render cache", () => {
     clearRenderCache();
     const slow = deferred<Output>();
     const fast = deferred<Output>();
-    const keyOld = renderKey("mermaid", "h", { source: "old", theme: "dark" });
-    const keyNew = renderKey("mermaid", "h", { source: "new", theme: "dark" });
+    const keyOld = renderKey("math", "h", { expression: "old", color: "#fff" });
+    const keyNew = renderKey("math", "h", { expression: "new", color: "#fff" });
     const oldPromise = requestRender(keyOld, {}, () => slow.promise);
     const newPromise = requestRender(keyNew, {}, () => fast.promise);
     fast.resolve({ ok: true, png: "NEW" });
@@ -62,25 +63,25 @@ describe("client render cache", () => {
 
   it("treats transport failures and declared retryable failures as expiring, and supports forget", async () => {
     clearRenderCache();
-    const keyFail = renderKey("mermaid", "h", { source: "fail" });
+    const keyFail = renderKey("math", "h", { expression: "fail" });
     const transport = await requestRender(keyFail, {}, () => Promise.reject(new Error("offline")));
     expect(transport).toBeNull();
     expect(peekRender(keyFail)).toBeNull();
     forgetRender(keyFail);
     expect(peekRender(keyFail)).toBeUndefined();
     let attempts = 0;
-    const busyThenOk = async () =>
+    const failedThenOk = async () =>
       ++attempts === 1
-        ? ({ ok: false, reason: "busy" } as Output)
+        ? ({ ok: false, reason: "failed" } as Output)
         : ({ ok: true, png: "OK" } as Output);
-    const keyBusy = renderKey("mermaid", "h", { source: "busy" });
-    const first = await requestRender(keyBusy, {}, busyThenOk, {
-      retryableReasons: (r) => !r.ok && r.reason === "busy",
+    const keyRetry = renderKey("math", "h", { expression: "retry" });
+    const first = await requestRender(keyRetry, {}, failedThenOk, {
+      retryableReasons: (r) => !r.ok && r.reason === "failed",
     });
-    expect(first).toEqual({ ok: false, reason: "busy" });
-    forgetRender(keyBusy);
-    const second = await requestRender(keyBusy, {}, busyThenOk, {
-      retryableReasons: (r) => !r.ok && r.reason === "busy",
+    expect(first).toEqual({ ok: false, reason: "failed" });
+    forgetRender(keyRetry);
+    const second = await requestRender(keyRetry, {}, failedThenOk, {
+      retryableReasons: (r) => !r.ok && r.reason === "failed",
     });
     expect(second).toEqual({ ok: true, png: "OK" });
     const keyInvalid = renderKey("math", "h", { expression: "bad" });

@@ -7,7 +7,6 @@ describe("formula-size settings", () => {
   it("enables math by default and leaves optional enhancements to Paseo", () => {
     expect(DEFAULT_MODULE_SETTINGS).toEqual({
       math: true,
-      mermaid: false,
       codeBlocks: false,
       tables: false,
       fontScale: "default",
@@ -28,11 +27,10 @@ describe("formula-size settings", () => {
     unsubscribe();
     moduleState.reset();
   });
-  it("defaults old host records to 100% without resetting unrelated preferences", () => {
+  it("ignores old Mermaid preferences without resetting unrelated preferences", () => {
     expect(moduleSettings.schema.parse({ math: false, mermaid: true, fontScale: "large" })).toEqual(
       {
         math: false,
-        mermaid: true,
         codeBlocks: false,
         tables: false,
         fontScale: "large",
@@ -44,10 +42,24 @@ describe("formula-size settings", () => {
     expect(DEFAULT_MODULE_SETTINGS.tables).toBe(false);
   });
 
+  it("strips a retired Mermaid field while retaining all supported saved values", () => {
+    const supported = {
+      math: false,
+      codeBlocks: true,
+      tables: true,
+      fontScale: "large",
+      mathScale: 1.5,
+    };
+    for (const mermaid of [true, false, "old-value"]) {
+      const parsed = moduleSettings.schema.parse({ ...supported, mermaid });
+      expect(parsed).toEqual(supported);
+      expect(parsed).not.toHaveProperty("mermaid");
+    }
+  });
+
   it.each(MATH_SCALES)("round-trips the %s formula-size preset independently", (mathScale) => {
     const stored = {
       math: true,
-      mermaid: false,
       codeBlocks: false,
       tables: false,
       fontScale: "small",

@@ -4,16 +4,15 @@ import type { MathRenderOutput } from "../shared/rpc.js";
 export type ViewerImage = { uri: string; width: number; height: number };
 export type ViewerSelection = {
   id: string;
-  kind: "formula" | "diagram" | "table";
+  kind: "formula" | "table";
   /** Exact block, including original delimiters or fence. */
   source: string;
   /** Original message slice when copyable Markdown also needs reference definitions. */
   sourceAnchor?: string;
-  /** LaTeX/Mermaid body, or plain-text table cells serialized as TSV. */
+  /** LaTeX body, or plain-text table cells serialized as TSV. */
   body: string;
   tablePreview?: ReactNode;
   image?: ViewerImage;
-  readingScale?: number;
   status?: string;
   retry?: () => void;
   canRetry?: boolean;

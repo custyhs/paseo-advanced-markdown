@@ -6,14 +6,13 @@ export type FontScale = (typeof FONT_SCALES)[number];
 export const MATH_SCALES = [0.75, 1, 1.25, 1.5, 2] as const;
 export type MathScale = (typeof MATH_SCALES)[number];
 
-/** Host-scoped preferences; Mermaid and ordinary code use Paseo unless enhanced here. */
+/** Host-scoped preferences; Mermaid always uses Paseo's renderer. */
 export const moduleSettings = defineSettings({
   id: "modules",
   scope: "host",
   version: 1,
   schema: z.object({
     math: z.boolean().default(true),
-    mermaid: z.boolean().default(false),
     codeBlocks: z.boolean().default(false),
     tables: z.boolean().default(false),
     fontScale: z.enum(FONT_SCALES).default("default"),
