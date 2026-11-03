@@ -47,7 +47,6 @@ jobs:
       - name: Check release identity
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
-          PUBLISH: ${{ inputs.publish }}
         run: |
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
@@ -72,8 +71,7 @@ jobs:
           assert.equal(lock.packages[''].version, pkg.version);
           const response = await fetch(`https://registry.npmjs.org/${pkg.name}/${pkg.version}`);
           assert.ok(response.status === 200 || response.status === 404, `Registry check failed: ${response.status}`);
-          if (process.env.PUBLISH === 'true') assert.equal(response.status, 404, 'This immutable npm version is already published');
-          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Release tag: ${tag} (${tagSha})\n\nBuild/provenance commit: ${sha}\n`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Release tag: ${tag} (${tagSha})\n\nBuild commit (used for provenance on a new upload): ${sha}\n`);
           NODE
       - run: npm ci --ignore-scripts
       - run: npm run build
@@ -156,7 +154,7 @@ jobs:
     if: inputs.publish
     needs: [validate, compatibility]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write
@@ -175,18 +173,27 @@ jobs:
           name: npm-package
           path: .smoke/npm
       - name: Verify the artifact before publishing
+        id: registry
         run: |
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import { createHash } from 'node:crypto';
-          import { readFileSync } from 'node:fs';
+          import { appendFileSync, readFileSync } from 'node:fs';
           const { PACKAGE_FILE: file, PACKAGE_INTEGRITY: integrity, PACKAGE_VERSION: version } = process.env;
           assert.equal(file, `paseo-advanced-markdown-${version}.tgz`);
           assert.equal(`sha512-${createHash('sha512').update(readFileSync(`.smoke/npm/${file}`)).digest('base64')}`, integrity);
-          const response = await fetch(`https://registry.npmjs.org/paseo-advanced-markdown/${version}`);
-          assert.equal(response.status, 404, `Version already published or registry unavailable: ${response.status}`);
+          const response = await fetch(`https://registry.npmjs.org/paseo-advanced-markdown/${version}`, { headers: { 'cache-control': 'no-cache' } });
+          assert.ok(response.status === 200 || response.status === 404, `Registry unavailable: ${response.status}`);
+          if (response.ok) {
+            const published = await response.json();
+            assert.equal(published.dist.integrity, integrity, 'This npm version already exists with a different artifact');
+            appendFileSync(process.env.GITHUB_OUTPUT, 'published=true\n');
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'Upload skipped: the identical artifact is already published. Its original provenance is unchanged.\n');
+            console.log('The identical artifact is already published; only verify it on this run.');
+          }
           NODE
       - name: Publish with npm Trusted Publishing
+        if: steps.registry.outputs.published != 'true'
         run: npm publish ".smoke/npm/$PACKAGE_FILE" --ignore-scripts --access public --provenance --tag latest
       - name: Verify the published integrity
         run: |
@@ -195,16 +202,19 @@ jobs:
           import { appendFileSync } from 'node:fs';
           import { setTimeout } from 'node:timers/promises';
           const { PACKAGE_VERSION: version, PACKAGE_INTEGRITY: integrity } = process.env;
-          for (let attempt = 0; attempt < 6; attempt++) {
-            const response = await fetch(`https://registry.npmjs.org/paseo-advanced-markdown/${version}`);
+          // npm may accept the upload before its processing makes the version readable.
+          for (let attempt = 0; attempt < 60; attempt++) {
+            const response = await fetch(`https://registry.npmjs.org/paseo-advanced-markdown/${version}`, { headers: { 'cache-control': 'no-cache' } });
             if (response.ok) {
               const published = await response.json();
               assert.equal(published.dist.integrity, integrity);
-              appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Published paseo-advanced-markdown@${version}\n\nVerified integrity: ${integrity}\n`);
+              assert.ok(published.dist.attestations?.url, 'Published package is missing provenance');
+              appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Verified npm package: paseo-advanced-markdown@${version}\n\nIntegrity: ${integrity}\n\nProvenance: ${published.dist.attestations.url}\n`);
               break;
             }
             assert.equal(response.status, 404, `Registry verification failed: ${response.status}`);
-            assert.ok(attempt < 5, 'Published version did not become readable; check npm before retrying publication');
-            await setTimeout(5000);
+            assert.ok(attempt < 59, 'npm accepted the upload but processing did not finish within ten minutes; check npm before retrying publication');
+            console.log(`Waiting for npm processing (${attempt + 1}/60).`);
+            await setTimeout(10000);
           }
           NODE

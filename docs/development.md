@@ -84,7 +84,9 @@ Select an existing `vX.Y.Z` tag and leave **publish** off for a rehearsal. The
 workflow builds and tests the package, checks installation against Paseo 0.13.0,
 0.14.0 and 0.15.0-beta.1, and retains the tarball as the `npm-package` artifact.
 Turn **publish** on to publish that run's checked tarball to npm's `latest` tag.
-An already published version cannot be overwritten.
+An already published version cannot be overwritten. When a rerun produces the
+same artifact as the published version, it skips uploading and verifies the
+existing package; different bytes fail the run.
 
 The workflow builds its triggering commit so npm's provenance identifies the
 actual source. For new releases, dispatch from the release tag:
@@ -133,9 +135,10 @@ for CLI authorization.
 After publication, download that run's `npm-package` artifact and use its tarball
 for the GitHub release attachment and its integrity for the directory review.
 A previous local package can differ from the CI build; the workflow verifies the
-registry contains exactly the CI-validated artifact. If publication succeeds but a
-later verification fails, inspect the registry before retrying; npm versions are
-immutable.
+registry contains exactly the CI-validated artifact. npm can accept an upload
+before its processing makes the version readable, so verification waits up to
+ten minutes. If that wait expires, inspect the registry before rerunning; wait
+until processing finishes rather than attempting another upload.
 
 ## Asset recovery
 
