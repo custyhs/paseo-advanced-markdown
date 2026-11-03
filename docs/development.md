@@ -76,6 +76,67 @@ recovery from the in-memory bundle. Its isolated installation and cache use temp
 directories that are removed afterward; reports stay under `.smoke/npm/`.
 It does not reload the production plugin or daemon.
 
+## Publish with GitHub Actions
+
+Use [Publish npm package](https://github.com/custyhs/paseo-advanced-markdown/actions/workflows/publish.yml)
+for stable releases. It runs on demand; pushes and tags do not publish packages.
+Select an existing `vX.Y.Z` tag and leave **publish** off for a rehearsal. The
+workflow builds and tests the package, checks installation against Paseo 0.13.0,
+0.14.0 and 0.15.0-beta.1, and retains the tarball as the `npm-package` artifact.
+Turn **publish** on to publish that run's checked tarball to npm's `latest` tag.
+An already published version cannot be overwritten.
+
+The workflow builds its triggering commit so npm's provenance identifies the
+actual source. For new releases, dispatch from the release tag:
+
+```bash
+gh workflow run publish.yml --ref v0.4.2 -f release_tag=v0.4.2 -f publish=false
+# After checking the rehearsal, change publish=false to publish=true.
+```
+
+For the existing v0.4.1 tag, which predates this workflow, use `--ref main` and
+`-f release_tag=v0.4.1`. This only works when the tag is an ancestor and all
+intervening file differences are under `.github/` or `docs/`. Package sources,
+README, screenshots, dependencies and build scripts must match the tag. Do not
+move a published tag or check out a different commit inside the workflow.
+
+### One-time npm authorization
+
+In the package's npm **Settings → Trusted publishing**, authorize:
+
+| Field | Value |
+| --- | --- |
+| Provider | GitHub Actions |
+| Organization or user | `custyhs` |
+| Repository | `paseo-advanced-markdown` |
+| Workflow filename | `publish.yml` |
+| Environment name | Leave empty |
+| Allowed actions | Allow direct `npm publish` |
+
+Alternatively, after `npm login`, run this with an account that owns the package
+and has 2FA enabled. Complete the interactive npm authentication prompt:
+
+```bash
+npx --yes npm@11.21.1 trust github paseo-advanced-markdown \
+  --repo=custyhs/paseo-advanced-markdown \
+  --file=publish.yml --allow-publish \
+  --registry=https://registry.npmjs.org/
+```
+
+No `NPM_TOKEN` or `NODE_AUTH_TOKEN` secret is needed. Only the publishing job can
+request an OIDC credential. Configure the trust relationship when ready to publish:
+npm requires its first successful publish within two days, or the unused
+configuration expires. See [npm's Trusted Publishing documentation](https://docs.npmjs.com/trusted-publishers/)
+for current requirements and [npm trust](https://docs.npmjs.com/cli/v11/commands/npm-trust/)
+for CLI authorization.
+
+After publication, download that run's `npm-package` artifact and use its tarball
+for the GitHub release attachment and its integrity for the directory review.
+A previous local package can differ from the CI build; the workflow verifies the
+registry contains exactly the CI-validated artifact. If publication succeeds but a
+later verification fails, inspect the registry before retrying; npm versions are
+immutable.
+
 ## Asset recovery
 
 The WASM and font JSON are data files. Preparation checks their SHA256 and size
