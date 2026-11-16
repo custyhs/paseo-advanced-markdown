@@ -98,6 +98,10 @@ interface AgentState {
   epoch: string | null;
   entries: readonly TimelineEntryLike[];
   turns: readonly IndexedTurn[];
+  /** Oldest `startCursor` paging has reached this epoch; reads continue from it. */
+  oldestCursor: unknown;
+  /** The paging window is spent: a cap ran out or history has no older pages. */
+  exhausted: boolean;
   requested: Set<ReplyKey>;
   pending: Set<ReplyKey>;
   mounted: number;
@@ -193,6 +197,8 @@ export function createReplyActionsStore(options: {
         epoch: null,
         entries: [],
         turns: [],
+        oldestCursor: undefined,
+        exhausted: false,
         requested: new Set(),
         pending: new Set(),
         mounted: 0,
@@ -271,17 +277,23 @@ export function createReplyActionsStore(options: {
     // Buffer locally so a rejected read leaves the committed index untouched.
     let epoch = state.epoch;
     let entries = state.entries;
+    let oldestCursor = state.oldestCursor;
+    let exhausted = state.exhausted;
     try {
       let next: TimelineReadOptions = { direction: "tail" };
       let pages = 0;
+      let missing = false;
       while (pages < READ_PAGE_CAP) {
         const page = await options.read(agentId, next);
         if (operation.cancelled) return;
         pages += 1;
         if (page.epoch !== epoch) {
-          // The timeline was rebuilt under this epoch; everything read so far is stale.
+          // The timeline was rebuilt under this epoch; everything read so
+          // far is stale, the paging window included.
           epoch = page.epoch;
           entries = [];
+          oldestCursor = undefined;
+          exhausted = false;
           if (next.direction === "before") {
             // This page's cursor came from the old epoch; restart from the new tail.
             next = { direction: "tail" };
@@ -289,10 +301,23 @@ export function createReplyActionsStore(options: {
           }
         }
         entries = mergeBySeqStart(entries, page.entries);
+        // The window spans operations: a tail page only seeds it, while a
+        // paged response always reaches older than anything read before.
+        if (next.direction === "before" || oldestCursor === undefined) {
+          oldestCursor = page.startCursor;
+        }
         // Pending keys may grow while a page is in flight; re-check the live set.
-        if (!hasMissingKey(state.pending, entries) || !page.hasOlder) break;
-        next = { direction: "before", cursor: page.startCursor };
+        missing = hasMissingKey(state.pending, entries);
+        if (!missing || exhausted) break;
+        if (!page.hasOlder) {
+          exhausted = true;
+          break;
+        }
+        next = { direction: "before", cursor: oldestCursor };
       }
+      // A key beyond the spent cap will not be found by more reads either;
+      // from here on, missing keys cost one tail read per operation.
+      if (missing && pages >= READ_PAGE_CAP) exhausted = true;
     } catch {
       // Requested keys stay recorded, so a failing daemon is asked once per key.
       state.pending.clear();
@@ -300,6 +325,8 @@ export function createReplyActionsStore(options: {
     }
     state.epoch = epoch;
     state.entries = entries;
+    state.oldestCursor = oldestCursor;
+    state.exhausted = exhausted;
     state.turns = groupTurns(entries);
     state.pending.clear();
     coOwnership = computeNow();

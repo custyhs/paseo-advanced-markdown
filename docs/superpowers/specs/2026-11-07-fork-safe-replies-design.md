@@ -206,8 +206,10 @@ One index per agent, built from that agent's daemon timeline and shared by all o
 - **Completion.** Every turn is complete except the latest one while the agent's status is
   `initializing` or `running`.
 - **Reads.** A mounted row whose key is missing from its agent's index requests a read: the tail
-  first, then older pages from `startCursor` while `hasOlder`, up to a cap. One read per agent is
-  in flight at a time, and later requests join it. Reads are rate-limited per agent. A row
+  first, then older pages from `startCursor` while `hasOlder`, up to a cap. Paging continues from the
+  oldest cursor the agent's epoch has reached, and once the window is exhausted — a cap ran out or
+  history has no older pages — a missing key costs one tail read per operation. One read per agent
+  is in flight at a time, and later requests join it. Reads are rate-limited per agent. A row
   triggers at most one read per key. A row keyed by text never triggers a read while its reply is
   streaming, because its key changes with every chunk.
 - **Refresh.** Read the tail again when the agent's status crosses into or out of working while

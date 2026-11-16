@@ -62,6 +62,72 @@ describe("turn index", () => {
     expect(store.turnView("a1", "id:missing")).toBeNull();
   });
 
+  it("reads only the tail for later keys once the paging window is exhausted", async () => {
+    const { store, calls } = harness((_agent, options) =>
+      page(options.direction === "tail" ? [userEntry(100)] : [userEntry(1)], { hasOlder: true }),
+    );
+    store.requestKey("a1", "id:missing", { streaming: false });
+    await store.settled();
+    expect(calls).toHaveLength(READ_PAGE_CAP);
+    store.requestKey("a1", "id:also-missing", { streaming: false });
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls).toHaveLength(READ_PAGE_CAP + 1);
+    expect(calls[READ_PAGE_CAP]!.options).toEqual({ direction: "tail" });
+  });
+
+  it("continues paging from the oldest cursor already reached", async () => {
+    const pages: Record<string, TimelinePageLike> = {
+      tail: page([userEntry(300, "t9"), replyEntry(301, "$t$", { messageId: "t", turnId: "t9" })], {
+        startCursor: "c300",
+        hasOlder: true,
+      }),
+      c300: page([userEntry(200, "t5"), replyEntry(201, "$a$", { messageId: "a", turnId: "t5" })], {
+        startCursor: "c200",
+        hasOlder: true,
+      }),
+      c200: page([userEntry(100, "t2"), replyEntry(101, "$b$", { messageId: "b", turnId: "t2" })], {
+        startCursor: "c100",
+        hasOlder: true,
+      }),
+    };
+    const { store, calls } = harness(
+      (_agent, options) => pages[options.direction === "tail" ? "tail" : String(options.cursor)]!,
+    );
+    store.requestKey("a1", "id:a", { streaming: false });
+    await store.settled();
+    expect(calls.map((call) => call.options)).toEqual([
+      { direction: "tail" },
+      { direction: "before", cursor: "c300" },
+    ]);
+    store.requestKey("a1", "id:b", { streaming: false });
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls.slice(2).map((call) => call.options)).toEqual([
+      { direction: "tail" },
+      { direction: "before", cursor: "c200" },
+    ]);
+    expect(store.turnView("a1", "id:b")).not.toBeNull();
+  });
+
+  it("resumes paging after an epoch change resets the window", async () => {
+    let epoch = "e1";
+    const { store, calls } = harness((_agent, options) =>
+      page(options.direction === "tail" ? [userEntry(100)] : [userEntry(1)], {
+        hasOlder: true,
+        epoch,
+      }),
+    );
+    store.requestKey("a1", "id:missing", { streaming: false });
+    await store.settled();
+    expect(calls).toHaveLength(READ_PAGE_CAP);
+    epoch = "e2";
+    store.requestKey("a1", "id:second", { streaming: false });
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls).toHaveLength(READ_PAGE_CAP * 2);
+  });
+
   it("does not read for a streaming reply keyed by text", async () => {
     const { store, calls } = harness(() => page(agentic));
     store.requestKey("a1", "text:Partial $x", { streaming: true });
