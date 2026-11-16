@@ -14,8 +14,13 @@ import { getReplyActionsRuntime } from "./runtime.js";
 const noStoreSubscribe = () => () => {};
 const noStoreVersion = () => 0;
 
-/** The first-use toast fires once per bundle evaluation. */
+/** The first-use toast fires once per plugin activation; cleanup resets it. */
 let firstUseToastShown = false;
+
+/** Called from the plugin cleanup so a disabled and re-enabled plugin shows the toast again. */
+export function resetFirstUseToast(): void {
+  firstUseToastShown = false;
+}
 
 /**
  * Reports a rendered reply row to the turn index: owned and co-owned rows

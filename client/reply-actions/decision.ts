@@ -33,11 +33,15 @@ function sameSet(a: ReadonlySet<ReplyKey>, b: ReadonlySet<ReplyKey>): boolean {
   return true;
 }
 
+/**
+ * The settings fields `decideReply` reads. Display settings such as
+ * `fontScale` and `mathScale` never change the transformer's answer, so they
+ * must not re-register it and re-project every timeline on the host.
+ */
+const DECIDING_SETTINGS = ["math", "codeBlocks", "tables", "forkSafeReplies"] as const;
+
 export function sameSnapshot(a: DecisionSnapshot, b: DecisionSnapshot): boolean {
-  // Iterate the fields of both objects so a future ModuleSettings field
-  // cannot be forgotten here.
-  for (const key of new Set([...Object.keys(a.settings), ...Object.keys(b.settings)])) {
-    const field = key as keyof ModuleSettings;
+  for (const field of DECIDING_SETTINGS) {
     if (a.settings[field] !== b.settings[field]) return false;
   }
   return sameSet(a.handedBack, b.handedBack) && sameSet(a.coOwned, b.coOwned);

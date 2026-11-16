@@ -89,4 +89,28 @@ describe("sameSnapshot", () => {
     ).toBe(false);
     expect(sameSnapshot(snapshot(), snapshot({ coOwned: new Set(["c"]) }))).toBe(false);
   });
+
+  it("compares only the settings fields the decision reads", () => {
+    expect(
+      sameSnapshot(
+        snapshot(),
+        snapshot({ settings: { ...DEFAULT_MODULE_SETTINGS, fontScale: "large" } }),
+      ),
+    ).toBe(true);
+    expect(
+      sameSnapshot(
+        snapshot(),
+        snapshot({ settings: { ...DEFAULT_MODULE_SETTINGS, mathScale: 2 } }),
+      ),
+    ).toBe(true);
+    expect(
+      sameSnapshot(snapshot(), snapshot({ settings: { ...DEFAULT_MODULE_SETTINGS, math: false } })),
+    ).toBe(false);
+    expect(
+      sameSnapshot(
+        snapshot(),
+        snapshot({ settings: { ...DEFAULT_MODULE_SETTINGS, forkSafeReplies: false } }),
+      ),
+    ).toBe(false);
+  });
 });

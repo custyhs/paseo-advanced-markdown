@@ -60,8 +60,9 @@ export function createReplyActionsRuntime(options: {
 
   function snapshotNow(): DecisionSnapshot {
     return {
-      // The snapshot carries the effective fork-safe value, so a host-native
-      // footer report re-registers the transformer like a settings change.
+      // `forkSafeReplies` here is the effective value — the stored setting
+      // and no host-native footer report — not the stored setting itself, so
+      // a #9253 host re-registers the transformer like a settings change.
       settings: { ...settings.current, forkSafeReplies: enabledNow() },
       ...store.decisionInputs(),
     };

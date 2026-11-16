@@ -631,6 +631,14 @@ async function runCase(spec: CaseSpec): Promise<CaseReport> {
 
 // --- Run every case, merge this host's section into the report, assert. ---
 
+/** Pinned so a truncated or accidentally filtered list cannot exit green. */
+const EXPECTED_CASE_COUNT = 13;
+if (CASES.length !== EXPECTED_CASE_COUNT) {
+  throw new Error(
+    `reply-actions-probe defines ${CASES.length} cases, expected ${EXPECTED_CASE_COUNT}; update the pin together with the case list`,
+  );
+}
+
 const caseReports: CaseReport[] = [];
 for (const spec of CASES) {
   caseReports.push(await runCase(spec));

@@ -33,7 +33,9 @@ export function ensurePaseoCheckout({ revision, directory, paths, label, ref = r
     run(["checkout", "-q", "--detach", revision], directory);
   }
   if (run(["rev-parse", "HEAD"], directory, true) !== revision) {
-    throw new Error("Official source checkout did not reach the pinned revision");
+    throw new Error(
+      `The ${label} checkout at ${directory} did not reach the pinned revision ${revision}`,
+    );
   }
   if (run(["status", "--porcelain"], directory, true)) {
     throw new Error(`Refusing to use a modified ${directory}; reset it first`);

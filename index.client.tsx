@@ -23,6 +23,8 @@ function setupPlugin(client: PluginClientContext) {
     require("./client/reply-actions/reader.js") as typeof import("./client/reply-actions/reader.js");
   const { createReplyActionsRuntime, setReplyActionsRuntime } =
     require("./client/reply-actions/runtime.js") as typeof import("./client/reply-actions/runtime.js");
+  const { resetFirstUseToast } =
+    require("./client/reply-actions/footer.js") as typeof import("./client/reply-actions/footer.js");
 
   // The transformer runs outside React; seed the module snapshot from the host
   // once, then keep it current from rendered items and the settings screen.
@@ -62,6 +64,7 @@ function setupPlugin(client: PluginClientContext) {
     disposed = true;
     runtime.dispose();
     setReplyActionsRuntime(null);
+    resetFirstUseToast();
     ownership.clear();
     moduleState.reset();
     clearRenderCache();
