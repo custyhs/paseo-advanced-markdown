@@ -19,7 +19,12 @@ original moves a turn's keys into a handed-back set, and a composer pill restore
 ## Global Constraints
 
 - The Paseo floor stays `>=0.13.0` in `paseo-plugin.json`. The reference host is official Paseo
-  0.15.3, commit `d91ae138cb931447635e94296023414a58bedcc5` (tag `v0.15.3`).
+  0.16.0, commit `c54bc39e7997c03a07402c09df2e825889432557` (tag `v0.16.0`). Paseo 0.15.3, commit
+  `d91ae138cb931447635e94296023414a58bedcc5` (tag `v0.15.3`), stays pinned in the pipeline check.
+- Every transform result carries `nativeTurnFooter: true` next to `items`, the opt-in of
+  getpaseo/paseo#9253. A row whose props carry `nativeTurnFooter: true` draws no plugin footer,
+  requests no index read, and reports host-native footers to the runtime, which then keeps
+  `store.setEnabled(false)` for the rest of the session.
 - Client code must not use `class` syntax, because Hermes on Android has failed on it. Follow the
   factory-function style of `client/module-state.ts`.
 - No new runtime dependencies.
@@ -52,6 +57,9 @@ original moves a turn's keys into a handed-back set, and a composer pill restore
    the tail first, so the hand-back covers the turn's real final reply. Test in Task 6.
 5. Empty or whitespace-only replies: never co-owned and left out of the plugin's Copy text. Tests
    in Task 3 and Task 5.
+6. A host that passes `nativeTurnFooter: true` to the renderer: no plugin footer, no reads, every
+   hand-back and pill cleared, the co-owned set empty, and the setting without further effect.
+   Tests in Task 7 and Task 8.
 
 ## File Structure
 
@@ -69,7 +77,7 @@ original moves a turn's keys into a handed-back set, and a composer pill restore
 | `client/reply-actions/footer-state.ts` | Pure footer visibility, time format and copy strings |
 | `client/reply-actions/footer.tsx` | Row hook and footer component |
 | `scripts/lib/paseo-checkout.mjs` | Sparse checkout of pinned Paseo sources, shared by two scripts |
-| `scripts/host-source.mjs` | Pinned Paseo 0.15.3 app and protocol sources |
+| `scripts/host-source.mjs` | Pinned Paseo host sources: 0.15.3, 0.16.0 and the #9253 head |
 | `scripts/qa/reply-actions-probe.ts`, `scripts/qa/reply-actions.mjs` | Host pipeline check |
 | `tests/helpers/timeline.ts` | Timeline entry builders for tests |
 
@@ -477,6 +485,9 @@ git commit -m "feat: co-own plain replies that precede a formula answer"
   - `sameSnapshot(a: DecisionSnapshot, b: DecisionSnapshot): boolean`
   - `decideReply(reply: { text: string; messageId?: string }, snapshot: DecisionSnapshot, ownership: OwnershipDetector): ReplyRole | undefined`
   - `createReplyTransformer(snapshot: DecisionSnapshot, ownership: OwnershipDetector): PluginTimelineTransformerContribution<"assistant_message">`
+  - `type HostFooterTransformResult = PluginTimelineTransformResult & { nativeTurnFooter: true }`,
+    the value `transform` returns. SDK 0.13.0's result type has no such field, so build the result
+    as a value of this type, never as an object literal typed as the SDK result.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -536,6 +547,7 @@ describe("createReplyTransformer", () => {
           data: { text: "$x$", messageId: "f", role: "owned", phase: "complete" },
         },
       ],
+      nativeTurnFooter: true,
     });
   });
 
@@ -565,9 +577,11 @@ behavior: at most 256 entries and 512 KiB of cached text, texts over 512 KiB not
 object-keyed `WeakMap` is dropped, because transformer inputs are fresh clones. `isOwned` returns
 false over `MAX_DOCUMENT`, otherwise `shouldTakeOver(detect(text), settings)`. `sameSnapshot`
 compares every `ModuleSettings` field and both sets by size and membership. The transformer's
-`transform` returns `{ items: [{ type: "plugin", kind: MESSAGE_KIND, version: MESSAGE_VERSION, data }] }`
+`transform` returns `{ items: [{ type: "plugin", kind: MESSAGE_KIND, version: MESSAGE_VERSION, data }], nativeTurnFooter: true }`
 for a role, with `data` holding `text`, `messageId` when present, `role` and `phase`, and returns
-`undefined` otherwise. `index.client.tsx` is not changed in this task.
+`undefined` otherwise. `nativeTurnFooter` is getpaseo/paseo#9253's opt-in: a host with it keeps
+Paseo's footer under the row, and released hosts drop the field. Put a one-line comment naming the
+PR next to it. `index.client.tsx` is not changed in this task.
 
 - [ ] **Step 4: Run the tests**
 
@@ -984,7 +998,7 @@ git commit -m "feat: hand turns back to Paseo and restore them"
     `turnId`, `timestamp`, `seqStart`), `startCursor` and `hasOlder`
   - `interface OriginalViewPills { sync(agentId: string, workspaceId: string | null, count: number, onRestore: () => void): void; dispose(): void }`
   - `createOriginalViewPills(client: { addComposerPill: PluginClientContext["addComposerPill"] }): OriginalViewPills`
-  - `interface ReplyActionsRuntime { readonly store: ReplyActionsStore; showOriginal(agentId: string, key: ReplyKey, workspaceId: string | null): Promise<boolean>; restore(agentId: string): void; dispose(): void }`
+  - `interface ReplyActionsRuntime { readonly store: ReplyActionsStore; showOriginal(agentId: string, key: ReplyKey, workspaceId: string | null): Promise<boolean>; restore(agentId: string): void; noteHostNativeFooter(): void; readonly hostNativeFooter: boolean; dispose(): void }`
   - `createReplyActionsRuntime(options: { client: Pick<PluginClientContext, "addTimelineTransformer" | "addComposerPill">; read: TimelineReader; ownership: OwnershipDetector; settings: { readonly current: ModuleSettings; subscribe(listener: () => void): () => void } }): ReplyActionsRuntime`
   - `setReplyActionsRuntime(runtime: ReplyActionsRuntime | null): void` and
     `getReplyActionsRuntime(): ReplyActionsRuntime | null`, a module-level holder. The bundle is
@@ -1014,11 +1028,15 @@ const reply = (text: string, messageId: string) => ({
   item: { type: "assistant_message", text, messageId },
   phase: "complete",
 });
+let reads = 0;
 function start() {
   const client = fakeClient();
   const runtime = createReplyActionsRuntime({
     client: client as never,
-    read: async () => page(agentic),
+    read: async () => {
+      reads += 1;
+      return page(agentic);
+    },
     ownership,
     settings: moduleState,
   });
@@ -1028,6 +1046,7 @@ function start() {
 beforeEach(() => {
   vi.useFakeTimers();
   moduleState.reset();
+  reads = 0;
 });
 afterEach(() => {
   moduleState.reset();
@@ -1097,6 +1116,33 @@ describe("reply actions runtime", () => {
     expect(client.transformers).toHaveLength(0);
     expect(client.pills.size).toBe(0);
   });
+
+  it("a host that keeps native footers disables hand-back, co-ownership and reads", async () => {
+    const { client, runtime } = start();
+    runtime.store.rowMounted("a1");
+    runtime.store.requestKey("a1", "id:f", { streaming: false });
+    await runtime.store.settled();
+    await runtime.showOriginal("a1", "id:f", "w1");
+    expect(client.pills.size).toBe(1);
+    runtime.noteHostNativeFooter();
+    runtime.noteHostNativeFooter();
+    await vi.advanceTimersByTimeAsync(20);
+    expect(runtime.hostNativeFooter).toBe(true);
+    expect(client.log).toEqual(["add", "remove", "add"]);
+    expect(client.pills.size).toBe(0);
+    expect(runtime.store.decisionInputs()).toEqual({ handedBack: new Set(), coOwned: new Set() });
+    const [transformer] = client.transformers;
+    expect(transformer!.transform(reply("$E=mc^2$", "f"))?.items[0].data.role).toBe("owned");
+    expect(transformer!.transform(reply("Checking first.", "c"))).toBeUndefined();
+    const readsBefore = reads;
+    runtime.store.requestKey("a1", "id:g", { streaming: false });
+    await runtime.store.settled();
+    expect(reads).toBe(readsBefore);
+    moduleState.set({ ...DEFAULT_MODULE_SETTINGS, math: false });
+    await vi.advanceTimersByTimeAsync(20);
+    expect(client.transformers[0]!.transform(reply("$E=mc^2$", "f"))).toBeUndefined();
+    expect(runtime.store.decisionInputs()).toEqual({ handedBack: new Set(), coOwned: new Set() });
+  });
 });
 
 describe("createTimelineReader", () => {
@@ -1132,13 +1178,18 @@ Expected: FAIL, modules not found.
 - [ ] **Step 3: Implement the runtime, reader and pills**
 
 `createReplyActionsRuntime` builds the store with `isOwned: (text) => ownership.isOwned(text, settings.current)`
-and calls `store.setEnabled(settings.current.forkSafeReplies)`. It registers
+and calls `store.setEnabled(settings.current.forkSafeReplies && !hostNativeFooter)`, where
+`hostNativeFooter` is a runtime flag that starts `false`. It registers
 `createReplyTransformer(snapshot, ownership)` once during setup, where the snapshot is
 `{ settings: settings.current, ...store.decisionInputs() }`. On a store change or a settings change
 it computes the next snapshot. When `sameSnapshot` says it differs and no update is scheduled, it
 schedules one with `setTimeout(..., 16)`. The scheduled update recomputes the snapshot, and if it
 still differs, calls the old registration's cleanup and then registers the new transformer. A
-settings change first calls `store.setEnabled(...)` and `store.ownershipChanged()`.
+settings change first calls `store.setEnabled(...)`, with the same expression, and
+`store.ownershipChanged()`. `noteHostNativeFooter` sets the flag; its first call also calls
+`store.setEnabled(false)` and `store.ownershipChanged()` and schedules the snapshot update the way
+a settings change does, and later calls do nothing. The flag is per host, like the runtime, and
+`dispose` resets it.
 
 `showOriginal` awaits `store.showOriginal`, then calls
 `pills.sync(agentId, workspaceId, store.originalTurnCount(agentId), () => this.restore(agentId))`.
@@ -1177,7 +1228,8 @@ The returned cleanup calls `runtime.dispose()`, `setReplyActionsRuntime(null)` a
 
 In `scripts/smoke.mjs`, change the renderer data assertion in the inline-math case to
 `{ text: assembled, messageId: "synthetic-message", role: "owned", phase: "complete" }`. Paseo
-0.8.0 always reports `complete` for assistant replies.
+0.8.0 always reports `complete` for assistant replies, and its `parseTransformResult` reads only
+`items`, so the result's `nativeTurnFooter` field never reaches row data.
 
 - [ ] **Step 6: Run the checks**
 
@@ -1206,12 +1258,12 @@ git commit -m "feat: wire reply actions into the plugin entry"
 - Consumes: `getReplyActionsRuntime` (Task 7); `TurnView` (Task 5); `ReplyRole`, `replyKey`.
 - Produces:
   - `type FooterMode = "hidden" | "footer" | "footer-with-warning"`
-  - `footerMode(input: { enabled: boolean; role: ReplyRole; view: TurnView | null }): FooterMode`
+  - `footerMode(input: { enabled: boolean; role: ReplyRole; view: TurnView | null; hostNativeFooter?: boolean }): FooterMode`
   - `formatEndTime(iso: string, now: Date): string`, giving `HH:MM` on the same local day and
     `YYYY-MM-DD HH:MM` otherwise, 24-hour and zero-padded
   - `FOOTER_COPY`, holding the exact strings below
-  - `useReplyRow(agentId: string, key: ReplyKey, phase: "streaming" | "complete"): void`
-  - `ReplyFooter(props: { agentId: string; replyKey: ReplyKey; theme: PluginTheme; compact: boolean }): JSX.Element | null`
+  - `useReplyRow(agentId: string, key: ReplyKey, phase: "streaming" | "complete", hostNativeFooter: boolean): void`
+  - `ReplyFooter(props: { agentId: string; replyKey: ReplyKey; theme: PluginTheme; compact: boolean; hostNativeFooter: boolean }): JSX.Element | null`
 
 `FOOTER_COPY` strings:
 
@@ -1250,6 +1302,7 @@ describe("footerMode", () => {
     expect(footerMode({ enabled: true, role: "owned", view: null })).toBe("hidden");
     expect(footerMode({ enabled: true, role: "owned", view: view({ isFinalReply: false }) })).toBe("hidden");
     expect(footerMode({ enabled: true, role: "owned", view: view({ complete: false }) })).toBe("hidden");
+    expect(footerMode({ enabled: true, role: "owned", view: view(), hostNativeFooter: true })).toBe("hidden");
   });
 });
 
@@ -1272,7 +1325,9 @@ Pure functions and constants only, with no React or React Native imports, so the
 
 - [ ] **Step 4: Implement `footer.tsx` and change `MessageView`**
 
-`useReplyRow` does nothing without a runtime. Otherwise:
+`useReplyRow` does nothing without a runtime. With `hostNativeFooter` true, its only effect calls
+`runtime.noteHostNativeFooter()`, so the row never counts as mounted and never requests a read.
+Otherwise:
 - an effect calls `store.rowMounted(agentId)` and returns its cleanup;
 - an effect calls `store.requestKey(agentId, key, { streaming: phase === "streaming" })`;
 - `useAgent(agentId, (agent) => agent.status)` feeds an effect that calls `store.noteAgentStatus`,
@@ -1282,8 +1337,8 @@ Pure functions and constants only, with no React or React Native imports, so the
 `store.turnView(agentId, replyKey)` in a `useMemo` keyed on that version. The snapshot must be the
 version number: a fresh `TurnView` object would re-render forever. It reads `enabled` from
 `useSettings(moduleSettings)`, falling back to `moduleState.current.forkSafeReplies`, and
-`useAgent(agentId, (agent) => agent.workspaceId)` for the pill. It renders nothing in mode
-`hidden`. Otherwise it renders one row in the style of `client/action-bar.tsx`: a `Copy` icon
+`useAgent(agentId, (agent) => agent.workspaceId)` for the pill, and passes `hostNativeFooter` to
+`footerMode`. It renders nothing in mode `hidden`. Otherwise it renders one row in the style of `client/action-bar.tsx`: a `Copy` icon
 button labelled `FOOTER_COPY.copyLabel` that calls `copyText(view.copyText)` and then
 `toast.show(FOOTER_COPY.copied)`; a `Show original` button that awaits
 `runtime.showOriginal(agentId, replyKey, workspaceId)` and, the first time per session, shows
@@ -1291,11 +1346,14 @@ button labelled `FOOTER_COPY.copyLabel` that calls `copyText(view.copyText)` and
 `footer-with-warning` it adds `FOOTER_COPY.warning` below in muted text.
 
 In `MessageView`, derive `role = item.data.role ?? "owned"`,
-`key = replyKey({ text: item.data.text, messageId: item.data.messageId })` and
-`phase = item.data.phase ?? "complete"`. Call `useReplyRow(agentId, key, phase)` for both roles,
-because co-owned rows must request their own index read to catch late duplicates. Return a
-`View` that holds the existing `MemoizedMessage` and, for owned rows only, `ReplyFooter`. Keep the
-footer outside `MemoizedMessage`, so store updates do not re-render the formulas.
+`key = replyKey({ text: item.data.text, messageId: item.data.messageId })`,
+`phase = item.data.phase ?? "complete"` and
+`hostNativeFooter = (props as { nativeTurnFooter?: boolean }).nativeTurnFooter === true`, with a
+one-line comment naming getpaseo/paseo#9253, since SDK 0.13.0's props type has no such field. Call
+`useReplyRow(agentId, key, phase, hostNativeFooter)` for both roles, because co-owned rows must
+request their own index read to catch late duplicates. Return a `View` that holds the existing
+`MemoizedMessage` and, for owned rows only, `ReplyFooter` with `hostNativeFooter`. Keep the footer
+outside `MemoizedMessage`, so store updates do not re-render the formulas.
 
 - [ ] **Step 5: Run the checks**
 
@@ -1309,14 +1367,14 @@ git add client/reply-actions/footer-state.ts client/reply-actions/footer.tsx cli
 git commit -m "feat: show the reply footer with Show original"
 ```
 
-### Task 9: Host pipeline check against Paseo 0.15.3
+### Task 9: Host pipeline check against pinned Paseo hosts
 
 **Files:**
 - Create: `scripts/lib/paseo-checkout.mjs`, `scripts/host-source.mjs`, `scripts/qa/reply-actions-probe.ts`, `scripts/qa/reply-actions.mjs`
 - Modify: `scripts/paseo-source.mjs`, `package.json`, `.gitignore`, `biome.json`, `.github/workflows/ci.yml`, `docs/development.md`
 
 **Interfaces:**
-- Produces: `ensurePaseoCheckout({ revision, directory, paths, label }): void` in
+- Produces: `ensurePaseoCheckout({ revision, directory, paths, label, ref? }): void` in
   `scripts/lib/paseo-checkout.mjs`; npm scripts `host-source` and `qa:reply-actions`.
 
 - [ ] **Step 1: Extract the checkout helper**
@@ -1330,14 +1388,22 @@ Expected: prints `Official Paseo sources ready at ... (b8e24677e12b, tag v0.8.0)
 
 - [ ] **Step 2: Add `scripts/host-source.mjs`**
 
-Call the helper with revision `d91ae138cb931447635e94296023414a58bedcc5`, directory
-`.paseo-host-0.15.3`, paths `packages/app/src` and `packages/protocol/src`, and label `v0.15.3`.
-Add `.paseo-host-0.15.3/` to `.gitignore` and `!.paseo-host-0.15.3` to biome's `files.includes`.
-Add the npm scripts `"host-source": "node scripts/host-source.mjs"` and
+Call the helper once per pinned host, with paths `packages/app/src` and `packages/protocol/src`:
+
+| Label | Revision | Directory | Fetch ref |
+| --- | --- | --- | --- |
+| `v0.15.3` | `d91ae138cb931447635e94296023414a58bedcc5` | `.paseo-host-0.15.3` | the revision |
+| `v0.16.0` | `c54bc39e7997c03a07402c09df2e825889432557` | `.paseo-host-0.16.0` | the revision |
+| `pr-9253` | `ffa02c5d81970c6ffbda9d3802287ed9f06648d6` | `.paseo-host-pr-9253` | `refs/pull/9253/head` |
+
+`ref` is what the helper passes to `git fetch --depth 1 origin`; it defaults to the revision. The
+checkout must still reach the pinned revision, so a force-pushed PR fails the pin loudly instead of
+drifting. Add the three directories to `.gitignore` and their `!`-prefixed names to biome's
+`files.includes`. Add the npm scripts `"host-source": "node scripts/host-source.mjs"` and
 `"qa:reply-actions": "node scripts/qa/reply-actions.mjs"`.
 
 Run: `npm run host-source`
-Expected: prints the ready line with `d91ae138cb93`.
+Expected: prints one ready line per host, with `d91ae138cb93`, `c54bc39e7997` and `ffa02c5d8197`.
 
 - [ ] **Step 3: Write the probe**
 
@@ -1345,7 +1411,8 @@ Expected: prints the ready line with `d91ae138cb93`.
 reader that returns each case's timeline entries, `createOwnershipDetector` over
 `shared/markdown/extensions.ts`, and `createReplyTransformer`. It feeds Paseo's own
 `transformTimelineItem`, `projectPluginTimelineItems`, `layoutStream`, `createStreamStrategy` and
-`resolveAssistantTurnForkBoundary` from `.paseo-host-0.15.3/packages/app/src`. Build stream items
+`resolveAssistantTurnForkBoundary` from `<host>/packages/app/src`, where `<host>` is the pinned
+checkout named by the `PASEO_HOST` environment variable. Build stream items
 and timeline entries from one case description, so their ids, turn ids and texts match. For each
 footer host in `layout.history[].completedFooter` and `layout.auxiliaryTurnFooter`, record the
 anchored item id, the fork boundary from `resolveAssistantTurnForkBoundary({ items, startIndex, supportsTimelineCursor: true })`,
@@ -1390,6 +1457,13 @@ claims every non-empty reply. Assert, and write `.smoke/reply-actions/report.jso
 
 The fork boundary of every anchored footer must point at the anchored item.
 
+Run every case against each pinned host. On `pr-9253`, projection keeps the original reply on each
+plugin row as `turnFooterSource`, so every "before" case whose final reply is a plugin row expects
+Paseo's footer anchored to that final reply with Copy covering the whole turn; "after" cases and
+the native-final case keep the expectations above, and the Unprotected column is not asserted
+there, because the renderer-side detection that disables the index is outside this pipeline. Write
+one report section per host.
+
 - [ ] **Step 4: Write the runner**
 
 `scripts/qa/reply-actions.mjs` bundles the probe with esbuild to `.smoke/reply-actions/probe.mjs`
@@ -1416,12 +1490,14 @@ await build({
 });
 ```
 
-`host` is the absolute path of `.paseo-host-0.15.3`.
+`host` is the absolute path of the checkout named by `PASEO_HOST`; the runner loops over the three
+labels and builds the probe once per host.
 
 - [ ] **Step 5: Run it**
 
 Run: `npm run host-source && npm run qa:reply-actions`
-Expected: exit 0, and `.smoke/reply-actions/report.json` lists all 13 cases as passed.
+Expected: exit 0, and `.smoke/reply-actions/report.json` lists all 13 cases as passed for each of
+the three hosts.
 
 - [ ] **Step 6: Add it to CI and the development guide**
 
@@ -1433,21 +1509,21 @@ on what the check proves.
 
 ```bash
 git add scripts .gitignore biome.json package.json .github/workflows/ci.yml docs/development.md
-git commit -m "test: check reply actions against Paseo 0.15.3 host functions"
+git commit -m "test: check reply actions against pinned Paseo host functions"
 ```
 
-### Task 10: Real-client QA on an isolated Paseo 0.15.3 host
+### Task 10: Real-client QA on an isolated Paseo 0.16.0 host
 
 **Files:**
 - Create: `docs/qa/fork-safe-replies.md`, screenshots under `docs/qa/evidence/`
-- Modify: `docs/qa/environment.md` (0.15.3 harness section)
+- Modify: `docs/qa/environment.md` (0.16.0 harness section)
 
 - [ ] **Step 1: Start the isolated host**
 
 ```bash
-H=~/projects/paseo-harness-0.15.3
+H=~/projects/paseo-harness-0.16.0
 mkdir -p "$H/npm" "$H/home"
-npm install --prefix "$H/npm" @getpaseo/cli@0.15.3
+npm install --prefix "$H/npm" @getpaseo/cli@0.16.0
 env -u PASEO_AGENT_ID -u PASEO_HOME "$H/npm/node_modules/.bin/paseo" daemon start --home "$H/home" --port 6792 --web-ui --no-relay
 ```
 
@@ -1472,8 +1548,9 @@ At widths 1100 and 390, using `scripts/qa/web-capture.mjs` for screenshots, chec
   or restored;
 - formula images do not render again when the transformer re-registers;
 - with Better Paseo's Plugin markdown for replies off, the same checks hold;
-- the Full and the Collapse turns views both hold, including the fold Show original causes under
-  Collapse turns;
+- the Full and the Collapse turns views both hold; under Collapse turns a co-owned formula turn
+  folds with its answer visible and shows no Paseo Fork while folded or expanded, and Show original
+  keeps it folded with Paseo's footer under the answer;
 - after restarting the isolated daemon, the reloaded Claude chat co-owns a long unique commentary,
   and a short repeated one shows the warning.
 
@@ -1481,7 +1558,7 @@ At widths 1100 and 390, using `scripts/qa/web-capture.mjs` for screenshots, chec
 
 Write `docs/qa/fork-safe-replies.md` in the style of `docs/qa/host-integration.md`: environment,
 results per check, screenshots, and what was not checked, such as Electron, iOS and Android. Add the
-0.15.3 harness to `docs/qa/environment.md`. Then stop the host:
+0.16.0 harness to `docs/qa/environment.md`. Then stop the host:
 
 ```bash
 env -u PASEO_AGENT_ID -u PASEO_HOME "$H/npm/node_modules/.bin/paseo" daemon stop --home "$H/home"
@@ -1491,7 +1568,7 @@ env -u PASEO_AGENT_ID -u PASEO_HOME "$H/npm/node_modules/.bin/paseo" daemon stop
 
 ```bash
 git add docs/qa
-git commit -m "docs: record fork-safe replies QA on Paseo 0.15.3"
+git commit -m "docs: record fork-safe replies QA on Paseo 0.16.0"
 ```
 
 ### Task 11: Documentation, release notes and version
@@ -1504,8 +1581,9 @@ git commit -m "docs: record fork-safe replies QA on Paseo 0.15.3"
 - [ ] **Step 1: Rewrite the user-facing docs**
 
 The README section describes Show original, the pill, the setting, the Better Paseo requirement,
-the warning in unprotected turns, Collapse turns on 0.15.3, the 0.13.x limitation, the spec's Known
-limitations, and the upstream host fix as the long-term path. Link the spec and the QA record. OVERVIEW adds that the plugin reads
+the warning in unprotected turns, Collapse turns on 0.15.x, the 0.13.x limitation, the spec's Known
+limitations, the upstream host fix as the long-term path, and that a host with getpaseo/paseo#9253
+shows Paseo's footer under typeset replies with no setting change. Link the spec and the QA record. OVERVIEW adds that the plugin reads
 each open chat's timeline through Paseo's API to find turn boundaries and copy turns, and replaces
 the paragraph that says unpatched clients lose the controls. `docs/usage.md` gets a short section
 on Show original. `docs/qa/host-integration.md` links the pipeline check and the QA record.

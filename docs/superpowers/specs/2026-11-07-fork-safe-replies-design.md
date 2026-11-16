@@ -1,15 +1,17 @@
 # Fork-safe replies: Show original and turn awareness
 
-Status: draft for review. Written 2026-11-07; text-key policy settled 2026-11-08.
+Status: approved 2026-11-08. Written 2026-11-07; text-key policy settled 2026-11-08; host-native
+footer compatibility (section 11) and the 0.16.0 findings added 2026-11-16.
 Plugin: advanced-markdown 0.4.1, next minor release.
-Hosts: official Paseo 0.15.3 is the reference. The plugin's floor stays Paseo 0.13.0.
+Hosts: official Paseo 0.16.0 is the reference, and 0.15.3 stays pinned in the pipeline check. The
+plugin's floor stays Paseo 0.13.0.
 
 ## Why
 
 Advanced Markdown claims assistant replies that contain math, and code blocks or tables when
 those modules are on, and draws them as plugin rows. Paseo builds a turn's footer (Copy, Fork,
 duration) from native assistant rows only. Walking up from the end of a turn, it anchors Copy and
-Fork to the nearest native reply in that turn. On every released Paseo through 0.15.3 this causes
+Fork to the nearest native reply in that turn. On every released Paseo through 0.16.0 this causes
 two failures:
 
 1. **No footer.** When every reply in a turn is a plugin row, the turn has no Copy, no Fork and
@@ -19,9 +21,11 @@ two failures:
    the final answer, and Copy copies only the plain reply. Coding agents produce this shape
    often: a short plain message, some tool calls, then an answer with formulas.
 
-The plugin SDK cannot invoke Paseo's Fork. The host-side fixes, getpaseo/paseo#7462 and the
-body-override patch in custyhs/paseo@74c11e85a, are not in a release. The maintainer's priority
-is that Fork works while Advanced Markdown and Better Paseo are both enabled.
+The plugin SDK cannot invoke Paseo's Fork. The host-side fixes are not in a release:
+getpaseo/paseo#9253, a transformer opt-in that keeps the host footer under a plugin-rendered
+reply; #7462; and the body-override patch in custyhs/paseo@74c11e85a. Section 11 adopts the
+#9253 contract ahead of a release. The maintainer's priority is that Fork works while Advanced
+Markdown and Better Paseo are both enabled.
 
 ## What the user sees
 
@@ -61,6 +65,9 @@ indicator is unaffected.
 3. One press restores plugin rendering. A reload restores it as well.
 4. Goals 1 to 3 hold with Better Paseo enabled and its **Plugin markdown for replies** off.
 5. Turns with no plugin-rendered reply look and behave exactly as today.
+6. On a host that keeps its own footer for plugin-rendered replies (getpaseo/paseo#9253), formula
+   replies stay typeset under Paseo's own footer with Fork, and the plugin draws no footer, co-owns
+   nothing and reads no timelines.
 
 ## Non-goals
 
@@ -88,7 +95,8 @@ The change has failed, even if it works mechanically, when any of these happen:
 
 ## Constraints
 
-Host and SDK facts the design rests on. File references are to getpaseo/paseo v0.15.3.
+Host and SDK facts the design rests on. File references are to getpaseo/paseo v0.16.0; every file
+named here is byte-identical in v0.15.3 except where a bullet says otherwise.
 
 - **Transformer input.** A transformer receives `{ item, phase }`. For a reply, `item` is
   `{ type, text, messageId? }`, with no agent id, turn id, timestamp or row id
@@ -109,7 +117,7 @@ Host and SDK facts the design rests on. File references are to getpaseo/paseo v0
   the end of the turn (`agent-stream/layout.ts`, `findTurnFooterSource`). Turn membership compares
   canonical turn ids. Without ids, a `user_message`, or a `tool_call` that carries `agentMessage`
   or is named `heartbeat`, starts a turn (`packages/protocol/src/timeline-turn.ts`). Plugin rows
-  keep their source turn id.
+  keep their source turn id. Unchanged between 0.15.3 and 0.16.0.
 - **Renderer props.** A timeline renderer gets `agentId`, `item.data`, `timestamp`, `theme`, `host`
   and `layout`. It gets no navigation and no turn context.
 - **SDK floor.** All of these exist in SDK 0.13.0: `usePaseo().agents.ref(id).timeline.refetch()`,
@@ -127,11 +135,21 @@ Host and SDK facts the design rests on. File references are to getpaseo/paseo v0
   plain texts repeat within a chat and across chats. Message ids do not repeat across chats in
   practice: Claude uses UUIDs and Codex uses `msg_` ids.
 - **Collapse turns.** Since 0.14, new installs default to the Collapse turns view
-  (`chatDisplay: "collapseTurns"` in `packages/app/src/hooks/use-settings/storage.ts`). On 0.15.3
+  (`chatDisplay: "collapseTurns"` in `packages/app/src/hooks/use-settings/storage.ts`). On 0.15.x
   a turn folds the work before its last native reply (`findLastAssistantIndex` in
-  `agent-stream/turn-collapse/model.ts`) and ignores plugin rows. getpaseo/paseo#8811, merged on
-  main after 0.15.3, lets folding recognize plugin rows projected from replies. It does not change
-  the footer.
+  `agent-stream/turn-collapse/model.ts`) and ignores plugin rows. 0.16.0 ships getpaseo/paseo#8811:
+  `findLastReplyIndex` counts plugin rows projected from replies as replies, so folding follows
+  them. Neither version changes the footer. On 0.16.0 a folded turn whose final reply is a plugin
+  row shows no footer at all, because the walk up from that row meets the summary row and then the
+  prompt; an early-anchored footer appears only once the turn is expanded.
+- **Host-native footer opt-in.** getpaseo/paseo#9253, open since 2026-11-10, adds
+  `nativeTurnFooter?: boolean` to the transform result and to the renderer props. When a
+  transformer returns exactly one item for an `assistant_message` with `nativeTurnFooter: true`,
+  projection keeps the original message on the row as `turnFooterSource`, the footer walk treats
+  the row as that original, Copy uses its text, timing and the fork boundary use its id, and the
+  renderer receives `nativeTurnFooter: true`. `parseTransformResult` on every released host reads
+  only `items` and drops other fields, checked at v0.13.0 and v0.16.0, and released hosts pass no
+  such prop. The PR head is `ffa02c5d81970c6ffbda9d3802287ed9f06648d6`.
 - **Paseo 0.13.x.** On 0.13 a response continues across turn ids until the next user message, and
   without ids only a user message starts a turn (`agent-stream/turn-membership.ts` at v0.13.0).
   The rule described under Footer anchoring holds from 0.14.0. The SDK does not expose the app
@@ -172,6 +190,8 @@ The transformer checks, in order:
 
 Plugin item data gains the reply's `messageId` when present and its role, owned or co-owned. The
 renderer derives the key from them.
+
+Every result also carries `nativeTurnFooter: true` next to `items`, the opt-in of section 11.
 
 ### 2. Turn index
 
@@ -282,13 +302,15 @@ values without it.
   Show original hands turns to Better Paseo, so Fork stays unavailable. The plugin cannot read
   another plugin's settings. The setting hint, the toast and the README cover this case.
 
-### 9. Collapse turns on Paseo 0.15.3
+### 9. Collapse turns on Paseo 0.15.x
 
-Folding and a correct Fork depend on the same native reply, so on 0.15.3 they conflict. Once a
+Folding and a correct Fork depend on the same native reply, so on 0.15.x they conflict. Once a
 formula-final turn's earlier plain replies are co-owned, the turn has no native reply and does not
 fold. Show original makes the turn native and Paseo folds its work behind a summary line. Restore
-unfolds it. Fork takes priority, so co-ownership stays as designed. A Paseo release that includes
-#8811 folds plugin rows like native replies, and the difference disappears without a plugin change.
+unfolds it. Fork takes priority, so co-ownership stays as designed. Paseo 0.16.0 includes #8811 and
+folds plugin rows like native replies: there the co-owned turn folds with its formula answer
+visible, and Show original changes nothing about folding. The difference exists on 0.15.x only,
+without a plugin change.
 
 ### 10. Paseo 0.13.x
 
@@ -296,7 +318,28 @@ The plugin's floor stays 0.13.0, and the index groups turns by the 0.14 rule. On
 Paseo's footer can reach back across turns started by heartbeats or agent messages, so such a
 response can still show an early-anchored Fork before Show original. Show original itself works,
 because the final reply becomes native. Document this as a 0.13.x limitation. The pipeline check
-pins 0.15.3 only.
+pins 0.15.3, 0.16.0 and the #9253 head.
+
+### 11. Hosts with native turn footers
+
+getpaseo/paseo#9253 lets a transformer keep Paseo's footer for the reply it replaces. The plugin
+adopts its contract now, so a host that ships it gets the native footer without a plugin release:
+
+- **Transformer.** Every result, owned or co-owned, carries `nativeTurnFooter: true` next to
+  `items`. Released hosts drop the field.
+- **Renderer.** A row whose props carry `nativeTurnFooter: true` draws no plugin footer: Paseo's
+  own Copy, Fork and duration sit under it, anchored to the original reply. The first such row
+  reports to the runtime that this host keeps native footers.
+- **Runtime.** Once reported, the host keeps native footers for the rest of the session: the
+  runtime disables the store as if the setting were off, which clears hand-backs and pills, stops
+  timeline reads and empties the co-owned set, and re-registers the transformer. Rows on such a
+  host never request index reads. The setting stays visible and has no further effect there.
+- **Order.** Detection runs in the first owned row's mount effect, before that row would request a
+  read, so co-ownership never starts on such a host and nothing flashes.
+
+What it does not cover: a host patched with the body override (custyhs/paseo@74c11e85a) passes no
+prop, so there the setting hint still applies. If upstream merges the opt-in under another field
+name, the plugin needs a follow-up release; until then the field is inert.
 
 ## Known limitations
 
@@ -316,6 +359,8 @@ pins 0.15.3 only.
   footer for that time.
 - **Read-only panes.** Paseo offers no Fork in read-only subagent panes. If the index loads there,
   Show original restores only Copy and time.
+- **Renamed opt-in.** If #9253 lands under another field or prop name, hosts with it behave like
+  today's hosts until a plugin release follows. The field the plugin sends stays inert there.
 
 ## Evidence
 
@@ -336,15 +381,29 @@ canonical turn ids. The agentic turn is plain commentary, a tool call, then a fo
 
 The third row is the failure this design removes. The fifth shows co-ownership removing it.
 
+`.smoke/show-original-probe-0.16.0/` repeats the run against v0.16.0 sources with identical
+results. `probe-collapse.ts` in both directories runs the agentic turn through `collapseTurns`
+before the layout; the cells give the Paseo footer's anchor:
+
+| Agentic turn, Collapse turns view | 0.15.3 folded | 0.15.3 expanded | 0.16.0 folded | 0.16.0 expanded |
+| --- | --- | --- | --- | --- |
+| Commentary native, before Show original | commentary | commentary | none | commentary |
+| Commentary co-owned, before | none | none | none | none |
+| Commentary co-owned, after | final reply | final reply | final reply | final reply |
+
 ## Verification expected
 
 - **Unit tests** for pure logic: reply keys; turn grouping with and without turn ids; owned
   prediction under each module setting; the co-ownership rule, including running turns and native
   final replies; key uniqueness, including the minimum text length, counting across agents and
   revocation when a duplicate appears; unprotected-turn detection; transformer decision order;
-  snapshot equality and coalescing; Copy text.
-- **Host pipeline.** Turn the probe into a reproducible check against pinned v0.15.3 host sources,
-  fetched the way `scripts/paseo-source.mjs` fetches 0.8.0. Assert the evidence table, plus a
+  snapshot equality and coalescing; Copy text; the `nativeTurnFooter` flag on every result; the hidden
+  footer mode and the skipped read when the renderer prop is present; the runtime disabling the
+  store once a host reports native footers.
+- **Host pipeline.** Turn the probe into a reproducible check against pinned host sources, v0.15.3,
+  v0.16.0 and the #9253 head, fetched the way `scripts/paseo-source.mjs` fetches 0.8.0. On the
+  #9253 head every formula-final turn must show Paseo's footer anchored to the final reply before
+  any Show original. Assert the evidence table, plus a
   formula reply between plain replies with a native final reply, a turn without turn ids, two
   formula replies with a plain reply between them, and a text-keyed commentary that repeats in
   another turn, which must stay native and leave that other turn's footer intact.
@@ -363,12 +422,14 @@ The third row is the failure this design removes. The fifth shows co-ownership r
   - in a Claude chat reloaded after a daemon restart, a long unique commentary is co-owned, and a
     short or repeated one leaves the turn unprotected with the warning shown.
 
-  Record Electron and native devices where available, and state what was not checked.
+  Record Electron and native devices where available, and state what was not checked. No release
+  carries #9253, so its behavior is covered by the pipeline check only.
 
 ## Docs to update
 
 - README, "Reply actions and compatibility": Show original, the Better Paseo setting, the host-fix
-  status.
+  status, and that a host with #9253 shows Paseo's footer under typeset replies with no setting
+  change.
 - OVERVIEW, "Data access and limitations": the plugin now reads each open chat's timeline through
   Paseo's API to find turn boundaries and copy turns.
 - `docs/qa/host-integration.md`: link the new evidence. Release notes for the version.
