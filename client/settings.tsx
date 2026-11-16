@@ -100,6 +100,13 @@ export function SettingsScreen({ theme, host }: PluginSurfaceProps) {
                 disabled={settings.saving}
                 onValueChange={(tables) => void update({ tables })}
               />
+              <SettingsSwitch
+                label="Show original for Fork"
+                hint="Adds Show original under replies this plugin draws. It hands the turn back to Paseo, so Paseo's Copy and Fork return. Turn this off on a Paseo client that keeps reply actions for plugin-rendered messages, or when Better Paseo's Plugin markdown for replies is on."
+                value={settings.values.forkSafeReplies}
+                disabled={settings.saving}
+                onValueChange={(forkSafeReplies) => void update({ forkSafeReplies })}
+              />
               <SettingsSelect
                 label="Plugin text size"
                 hint="Changes plugin-rendered prose and enhanced code. Paseo-rendered code and diagrams keep Paseo's own sizing."

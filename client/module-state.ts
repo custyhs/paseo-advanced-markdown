@@ -26,6 +26,7 @@ function createModuleState(): ModuleStateApi {
         values.math === current.math &&
         values.codeBlocks === current.codeBlocks &&
         values.tables === current.tables &&
+        values.forkSafeReplies === current.forkSafeReplies &&
         values.fontScale === current.fontScale &&
         values.mathScale === current.mathScale
       )
