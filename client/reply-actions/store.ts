@@ -57,6 +57,24 @@ export interface ReplyActionsStore {
   noteAgentStatus(agentId: string, status: AgentStatus): void;
   turnView(agentId: string, key: ReplyKey): TurnView | null;
   decisionInputs(): { handedBack: ReadonlySet<ReplyKey>; coOwned: ReadonlySet<ReplyKey> };
+  /**
+   * Hands the turn holding this key back to the host. Reads the tail first —
+   * right away, outside the spacing rule — so the hand-back covers the turn's
+   * real final reply. Resolves false when no indexed turn holds the key.
+   */
+  showOriginal(agentId: string, key: ReplyKey): Promise<boolean>;
+  /** Returns the agent's handed-back turns to plugin rendering. */
+  restore(agentId: string): void;
+  /** How many of the agent's turns are handed back. */
+  originalTurnCount(agentId: string): number;
+  /** Agents with at least one handed-back turn. */
+  agentsWithOriginalView(): readonly string[];
+  /**
+   * Off, the store answers nothing: `turnView` is null, `decisionInputs` is
+   * two empty sets, `requestKey` reads nothing, and every hand-back record is
+   * deleted. On restores normal answers from the kept indexes.
+   */
+  setEnabled(enabled: boolean): void;
   /** Recomputes co-ownership after an ownership-rule change (settings moved). */
   ownershipChanged(): void;
   /** Resolves once no read operation is in flight or waiting. */
@@ -68,8 +86,12 @@ export interface ReplyActionsStore {
 
 interface ReadOperation {
   cancelled: boolean;
+  /** Skips the spacing wait; `showOriginal` reads the tail right away. */
+  immediate: boolean;
   timer: ReturnType<typeof setTimeout> | null;
   wake: (() => void) | null;
+  /** Settles when the operation is done; `showOriginal` waits out the slot on it. */
+  done: Promise<void> | null;
 }
 
 interface AgentState {
@@ -88,8 +110,8 @@ interface AgentState {
   refreshWanted: boolean;
 }
 
-/** Hand-back tracking lands with the hand-back methods; nothing is handed back yet. */
-const NO_HANDED_BACK: ReadonlySet<ReplyKey> = new Set();
+/** What a disabled store answers for both decision sets. */
+const EMPTY_KEYS: ReadonlySet<ReplyKey> = new Set();
 
 /** A turn can still grow while its agent works; an unknown status counts as idle. */
 function isWorking(status: AgentStatus | null): boolean {
@@ -145,8 +167,16 @@ export function createReplyActionsStore(options: {
   const agents = new Map<string, AgentState>();
   const listeners = new Set<() => void>();
   const operations = new Set<Promise<void>>();
+  /**
+   * Handed-back keys per agent, keyed by turn id: the turn's owned keys plus
+   * the keys co-owned in it just before recording. Kept off `AgentState` so a
+   * hand-back — explicit user state — outlives the index's eviction timer.
+   */
+  const handedBack = new Map<string, Map<string, ReadonlySet<ReplyKey>>>();
+  let handedBackKeys: ReadonlySet<ReplyKey> = EMPTY_KEYS;
   let coOwnership: CoOwnership = { coOwned: new Set(), unprotectedTurns: new Set() };
   let version = 0;
+  let enabled = true;
   let disposed = false;
 
   function notify(): void {
@@ -178,12 +208,26 @@ export function createReplyActionsStore(options: {
   function computeNow(): CoOwnership {
     const turnsByAgent = new Map<string, readonly IndexedTurn[]>();
     for (const [agentId, state] of agents) turnsByAgent.set(agentId, state.turns);
+    const handedBackTurns = new Map<string, ReadonlySet<string>>();
+    for (const [agentId, records] of handedBack) {
+      handedBackTurns.set(agentId, new Set(records.keys()));
+    }
     return computeCoOwnership({
       turnsByAgent,
-      handedBackTurns: new Map(),
+      handedBackTurns,
       isOwned: options.isOwned,
       minTextLength: MIN_CO_OWNED_TEXT_LENGTH,
     });
+  }
+
+  function handedBackUnion(): ReadonlySet<ReplyKey> {
+    const union = new Set<ReplyKey>();
+    for (const records of handedBack.values()) {
+      for (const keys of records.values()) {
+        for (const key of keys) union.add(key);
+      }
+    }
+    return union;
   }
 
   function cancelOperation(state: AgentState): void {
@@ -204,14 +248,20 @@ export function createReplyActionsStore(options: {
     state: AgentState,
     operation: ReadOperation,
   ): Promise<void> {
-    const wait = state.lastReadStartedAt + MIN_READ_INTERVAL_MS - Date.now();
+    const wait = operation.immediate
+      ? 0
+      : state.lastReadStartedAt + MIN_READ_INTERVAL_MS - Date.now();
     if (wait > 0) {
       await new Promise<void>((resolve) => {
         operation.wake = resolve;
         operation.timer = setTimeout(resolve, wait);
       });
       operation.wake = null;
-      operation.timer = null;
+      if (operation.timer !== null) {
+        // Woken early; the timer is still pending.
+        clearTimeout(operation.timer);
+        operation.timer = null;
+      }
     }
     if (operation.cancelled) return;
     state.lastReadStartedAt = Date.now();
@@ -253,9 +303,19 @@ export function createReplyActionsStore(options: {
     notify();
   }
 
-  function startOperation(agentId: string, state: AgentState): void {
-    if (disposed || state.operation !== null) return;
-    const operation: ReadOperation = { cancelled: false, timer: null, wake: null };
+  function startOperation(
+    agentId: string,
+    state: AgentState,
+    immediate = false,
+  ): Promise<void> | null {
+    if (disposed || state.operation !== null) return null;
+    const operation: ReadOperation = {
+      cancelled: false,
+      immediate,
+      timer: null,
+      wake: null,
+      done: null,
+    };
     state.operation = operation;
     const promise = runReads(agentId, state, operation).finally(() => {
       if (state.operation === operation) state.operation = null;
@@ -270,7 +330,9 @@ export function createReplyActionsStore(options: {
         if (state.mounted > 0) startOperation(agentId, state);
       }
     });
+    operation.done = promise;
     operations.add(promise);
+    return promise;
   }
 
   function evict(agentId: string, state: AgentState): void {
@@ -302,7 +364,7 @@ export function createReplyActionsStore(options: {
       };
     },
     requestKey(agentId, key, { streaming }) {
-      if (disposed) return;
+      if (disposed || !enabled) return;
       // A streaming reply without a message id changes text, and with it its key.
       if (streaming && isTextKey(key)) return;
       const state = ensureAgent(agentId);
@@ -325,6 +387,7 @@ export function createReplyActionsStore(options: {
       notify();
     },
     turnView(agentId, key) {
+      if (!enabled) return null;
       const state = agents.get(agentId);
       if (state === undefined) return null;
       for (let index = state.turns.length - 1; index >= 0; index -= 1) {
@@ -349,7 +412,75 @@ export function createReplyActionsStore(options: {
       return null;
     },
     decisionInputs() {
-      return { handedBack: NO_HANDED_BACK, coOwned: coOwnership.coOwned };
+      if (!enabled) return { handedBack: EMPTY_KEYS, coOwned: EMPTY_KEYS };
+      return { handedBack: handedBackKeys, coOwned: coOwnership.coOwned };
+    },
+    async showOriginal(agentId, key) {
+      if (disposed || !enabled) return false;
+      const state = ensureAgent(agentId);
+      // One read per agent at a time: wait out the active operation, waking a
+      // spacing wait early so the gesture never sits out the interval, then
+      // claim the slot with an immediate tail read.
+      let read: Promise<void> | null = null;
+      while (read === null) {
+        const active = state.operation;
+        if (active === null) {
+          read = startOperation(agentId, state, true);
+          if (read === null) return false; // Disposed while waiting.
+        } else {
+          active.wake?.();
+          await active.done;
+        }
+      }
+      await read;
+      if (disposed) return false;
+      let found: IndexedTurn | null = null;
+      for (let index = state.turns.length - 1; index >= 0 && found === null; index -= 1) {
+        const turn = state.turns[index]!;
+        if (turn.replies.some((reply) => reply.key === key)) found = turn;
+      }
+      if (found === null) return false;
+      let records = handedBack.get(agentId);
+      if (records === undefined) {
+        records = new Map();
+        handedBack.set(agentId, records);
+      }
+      // Handing the same turn back again keeps its earlier keys: the turn is
+      // already skipped by co-ownership, so they would not be re-derived.
+      const keys = new Set(records.get(found.id));
+      for (const reply of found.replies) {
+        if (options.isOwned(reply.text) || coOwnership.coOwned.has(reply.key)) {
+          keys.add(reply.key);
+        }
+      }
+      records.set(found.id, keys);
+      handedBackKeys = handedBackUnion();
+      coOwnership = computeNow();
+      notify();
+      return true;
+    },
+    restore(agentId) {
+      if (disposed) return;
+      handedBack.delete(agentId);
+      handedBackKeys = handedBackUnion();
+      coOwnership = computeNow();
+      notify();
+    },
+    originalTurnCount(agentId) {
+      return handedBack.get(agentId)?.size ?? 0;
+    },
+    agentsWithOriginalView() {
+      return [...handedBack.keys()];
+    },
+    setEnabled(next) {
+      if (disposed || enabled === next) return;
+      enabled = next;
+      if (!next) {
+        handedBack.clear();
+        handedBackKeys = EMPTY_KEYS;
+      }
+      coOwnership = computeNow();
+      notify();
     },
     ownershipChanged() {
       const next = computeNow();
@@ -381,6 +512,8 @@ export function createReplyActionsStore(options: {
         cancelOperation(state);
       }
       agents.clear();
+      handedBack.clear();
+      handedBackKeys = EMPTY_KEYS;
       listeners.clear();
     },
   };

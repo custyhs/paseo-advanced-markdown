@@ -252,3 +252,53 @@ describe("turn index", () => {
     expect(notified).toBe(2);
   });
 });
+
+describe("original view", () => {
+  it("reads the tail before handing back and covers the turn's real final reply", async () => {
+    let entries = [...agentic];
+    const { store, calls } = harness(() => page(entries));
+    store.rowMounted("a1");
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    entries = [...agentic, replyEntry(5, "$b$", { messageId: "g", turnId: "t1" })];
+    expect(await store.showOriginal("a1", "id:f")).toBe(true);
+    expect(calls).toHaveLength(2);
+    expect(store.decisionInputs().handedBack).toEqual(new Set(["id:c", "id:f", "id:g"]));
+    expect(store.decisionInputs().coOwned.has("id:c")).toBe(false);
+    expect(store.originalTurnCount("a1")).toBe(1);
+    expect(store.agentsWithOriginalView()).toEqual(["a1"]);
+  });
+
+  it("restores an agent's turns", async () => {
+    const { store } = harness(() => page(agentic));
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    await store.showOriginal("a1", "id:f");
+    store.restore("a1");
+    expect(store.decisionInputs().handedBack.size).toBe(0);
+    expect(store.decisionInputs().coOwned).toEqual(new Set(["id:c"]));
+    expect(store.originalTurnCount("a1")).toBe(0);
+  });
+
+  it("returns false when the key is in no indexed turn", async () => {
+    const { store } = harness(() => page(agentic));
+    expect(await store.showOriginal("a1", "id:nowhere")).toBe(false);
+    expect(store.originalTurnCount("a1")).toBe(0);
+  });
+
+  it("turning the feature off restores every turn and blanks decisions", async () => {
+    const { store, calls } = harness(() => page(agentic));
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    await store.showOriginal("a1", "id:f");
+    store.setEnabled(false);
+    expect(store.decisionInputs()).toEqual({ handedBack: new Set(), coOwned: new Set() });
+    expect(store.originalTurnCount("a1")).toBe(0);
+    expect(store.turnView("a1", "id:f")).toBeNull();
+    store.requestKey("a1", "id:other", { streaming: false });
+    await store.settled();
+    expect(calls).toHaveLength(2);
+    store.setEnabled(true);
+    expect(store.decisionInputs().coOwned).toEqual(new Set(["id:c"]));
+  });
+});
