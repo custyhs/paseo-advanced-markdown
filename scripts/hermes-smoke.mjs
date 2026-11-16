@@ -6,12 +6,20 @@
 // UI, clipboard, or image layout. Those need a device.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadCompiledPlugin } from "./smoke.mjs";
 
-const hermes = process.env.HERMES_BIN;
+// The env override wins; otherwise use the repo's own React Native Hermes.
+// react-native ships the executing `hermes` VM for macOS only (linux64-bin
+// holds just the `hermesc` compiler), so CI does not run this smoke.
+const defaultHermes = fileURLToPath(
+  new URL("../node_modules/react-native/sdks/hermesc/osx-bin/hermes", import.meta.url),
+);
+const hermes = process.env.HERMES_BIN ?? (existsSync(defaultHermes) ? defaultHermes : undefined);
 if (!hermes) throw new Error("Set HERMES_BIN to the RN 0.81 Hermes executable");
 const plugin = await loadCompiledPlugin();
 const directory = await mkdtemp(path.join(os.tmpdir(), "paseo-advanced-markdown-hermes-"));
@@ -39,7 +47,42 @@ var atob = function(input) {
 };
 var allowed = ['react', 'react/jsx-runtime', 'react-native', 'zod', '@tanstack/react-query',
   '@getpaseo/plugin/client', '@getpaseo/plugin/client/ui', '@getpaseo/plugin'];
-var zodStub = { z: proxy };
+// A faithful slice of zod: .default() values survive into parse, so
+// DEFAULT_MODULE_SETTINGS is a real object with own keys, the way the SDK's
+// host delivers it, instead of a Proxy the snapshot spread flattens away.
+// Unknown chain calls (.min, .regex, .finite, ...) keep the field.
+function zodField(defaultValue, hasDefault) {
+  var field = {
+    hasDefault: hasDefault,
+    defaultValue: defaultValue,
+    default: function(value) { return zodField(value, true); },
+    parse: function(input) { return input === undefined ? defaultValue : input; },
+  };
+  field.safeParse = function(input) { return { success: true, data: field.parse(input) }; };
+  var chained = new Proxy(field, { get: function(target, key) {
+    if (key in target) return target[key];
+    return function() { return chained; };
+  }});
+  return chained;
+}
+function zodObject(shape) {
+  var schema = zodField(undefined, false);
+  schema.parse = function(input) {
+    var out = {};
+    for (var key in shape) {
+      var value = input === undefined || input === null ? undefined : input[key];
+      if (value === undefined && shape[key].hasDefault) value = shape[key].defaultValue;
+      if (value !== undefined) out[key] = value;
+    }
+    return out;
+  };
+  schema.safeParse = function(input) { return { success: true, data: schema.parse(input) }; };
+  return schema;
+}
+var zodStub = { z: new Proxy({ object: zodObject }, { get: function(target, key) {
+  if (key in target) return target[key];
+  return function() { return zodField(undefined, false); };
+}}) };
 var sdkStub = {
   defineRpc: function(x) { return x; },
   defineSettings: function(x) { return x; },
@@ -54,7 +97,14 @@ var entry = (0, eval)(${JSON.stringify(plugin.bundles.clientBundle)})(function(n
 var transformers = [], renderers = [], screens = [], rpcs = [];
 var cleanup = entry.default({
   addTimelineRenderer: function(x) { renderers.push(x); },
-  addTimelineTransformer: function(x) { transformers.push(x); },
+  addTimelineTransformer: function(x) {
+    transformers.push(x);
+    // The SDK returns a PluginCleanup that unregisters the contribution.
+    return function() {
+      var index = transformers.indexOf(x);
+      if (index !== -1) transformers.splice(index, 1);
+    };
+  },
   addSettingsScreen: function(x) { screens.push(x); },
   rpc: function(contract) { rpcs.push(contract.name); return { then: function(f) { return { catch: function() {} }; } }; },
 });
@@ -72,6 +122,7 @@ check(!transformers[0].transform({item: {type: 'assistant_message', text: '\\x60
 check(!transformers[0].transform({item: {type: 'assistant_message', text: '$x$ ![i](https://e/x.png)'}, phase: 'complete'}), 'Image item transformed');
 check(!transformers[0].transform({item: {type: 'assistant_message', text: '\\x60\\x60\\x60mermaid\\nflowchart LR\\n  A --> B\\n\\x60\\x60\\x60'}, phase: 'complete'}), 'Native Mermaid item transformed');
 cleanup();
+check(transformers.length === 0, 'Transformer not removed on cleanup');
 print('Hermes evaluated client: setup, incremental math projection, native Mermaid passthrough, fallbacks, cleanup passed');
 `;
   const filename = path.join(directory, "client.js");

@@ -94,9 +94,12 @@ could not produce is a real 0.16.0 timeline whose replies lack ids.
 
 - Electron desktop, iOS and Android clients. No Xcode or Android SDK on this host; the
   compact web layout at 390×844 is the only small-screen evidence.
-- The Hermes bundle smoke (`npm run smoke:hermes`) still has not run on this machine:
-  `HERMES_BIN` is unset (declared gap since Task 8). `client/reply-actions/co-ownership.ts`
-  uses `Array.prototype.findLastIndex` (ES2023), flagged in Task 3 for Android QA.
+- Native device validation of the evaluated bundle. The Hermes bundle smoke itself passes on
+  this machine: `npm run smoke:hermes` (no `HERMES_BIN` needed; it defaults to
+  `node_modules/react-native/sdks/hermesc/osx-bin/hermes`) evaluates the compiled client
+  bundle under default flags and `-Xes6-class` — `client/reply-actions` and its
+  `Array.prototype.findLastIndex` (ES2023) use, flagged in Task 3, included. It is a bundle
+  evaluation check, not a device UI test.
 - Footer behavior while a turn is still streaming. Only completed turns were exercised;
   the completion gating is covered by the store unit tests.
 - A real timeline with id-less replies (see the restart section).

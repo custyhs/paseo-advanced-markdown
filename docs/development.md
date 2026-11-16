@@ -13,7 +13,7 @@ npm run paseo-source     # pinned app projection/stream fixtures for the smoke
 npm run smoke            # 0.13.0 compiler/SDK + legacy fixtures + RPCs
 npm run host-source      # pinned official hosts (0.15.3, 0.16.0, PR #9253) for the next check
 npm run qa:reply-actions # plugin replies keep Paseo's footer, Copy and Fork on each pinned host
-HERMES_BIN=… npm run smoke:hermes
+npm run smoke:hermes     # RN 0.81 Hermes bundle evaluation; HERMES_BIN overrides the repo default
 ```
 
 For local regression tests, run the relevant file with
