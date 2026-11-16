@@ -1,0 +1,194 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  createReplyActionsStore,
+  EVICT_AFTER_MS,
+  MIN_READ_INTERVAL_MS,
+  READ_PAGE_CAP,
+  type TimelinePageLike,
+  type TimelineReadOptions,
+} from "../client/reply-actions/store.js";
+import { agentic, page, replyEntry, userEntry } from "./helpers/timeline.js";
+
+function harness(
+  respond: (
+    agentId: string,
+    options: TimelineReadOptions,
+  ) => TimelinePageLike | Promise<TimelinePageLike>,
+  isOwned: (text: string) => boolean = (text) => text.includes("$"),
+) {
+  const calls: Array<{ agentId: string; options: TimelineReadOptions }> = [];
+  const store = createReplyActionsStore({
+    read: async (agentId, options) => {
+      calls.push({ agentId, options });
+      return respond(agentId, options);
+    },
+    isOwned: (text) => isOwned(text),
+  });
+  return { store, calls };
+}
+
+beforeEach(() => vi.useFakeTimers());
+afterEach(() => vi.useRealTimers());
+
+describe("turn index", () => {
+  it("reads the tail once for an unknown key and indexes its turn", async () => {
+    const { store, calls } = harness(() => page(agentic));
+    store.rowMounted("a1");
+    store.requestKey("a1", "id:f", { streaming: false });
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    expect(calls).toEqual([{ agentId: "a1", options: { direction: "tail" } }]);
+    expect(store.turnView("a1", "id:f")).toEqual({
+      turnId: "t1",
+      isFinalReply: true,
+      complete: true,
+      unprotected: false,
+      copyText: "Checking first.\n\n$E=mc^2$",
+      endedAt: agentic[3]!.timestamp,
+    });
+    expect(store.decisionInputs().coOwned).toEqual(new Set(["id:c"]));
+  });
+
+  it("pages older history until the key appears, up to the cap", async () => {
+    const { store, calls } = harness((_agent, options) =>
+      page(options.direction === "tail" ? [userEntry(100)] : [userEntry(1)], { hasOlder: true }),
+    );
+    store.requestKey("a1", "id:missing", { streaming: false });
+    await store.settled();
+    expect(calls).toHaveLength(READ_PAGE_CAP);
+    expect(calls.slice(1).every((call) => call.options.direction === "before")).toBe(true);
+    expect(store.turnView("a1", "id:missing")).toBeNull();
+  });
+
+  it("does not read for a streaming reply keyed by text", async () => {
+    const { store, calls } = harness(() => page(agentic));
+    store.requestKey("a1", "text:Partial $x", { streaming: true });
+    await store.settled();
+    expect(calls).toHaveLength(0);
+    store.requestKey("a1", "id:f", { streaming: true });
+    await store.settled();
+    expect(calls).toHaveLength(1);
+  });
+
+  it("joins an in-flight read and spaces later reads per agent", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { store, calls } = harness(async () => {
+      await gate;
+      return page(agentic);
+    });
+    store.requestKey("a1", "id:f", { streaming: false });
+    store.requestKey("a1", "id:c", { streaming: false });
+    release();
+    await store.settled();
+    expect(calls).toHaveLength(1);
+    store.requestKey("a1", "id:new", { streaming: false });
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS - 1);
+    expect(calls).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await store.settled();
+    expect(calls).toHaveLength(2);
+  });
+
+  it("refreshes the tail when a running turn completes while rows are mounted", async () => {
+    const { store, calls } = harness(() => page(agentic));
+    const unmount = store.rowMounted("a1");
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    store.noteAgentStatus("a1", "running");
+    expect(store.turnView("a1", "id:f")?.complete).toBe(false);
+    store.noteAgentStatus("a1", "idle");
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls).toHaveLength(2);
+    unmount();
+    store.noteAgentStatus("a1", "running");
+    store.noteAgentStatus("a1", "idle");
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls).toHaveLength(2);
+  });
+
+  it("rebuilds the index when the timeline epoch changes", async () => {
+    let epoch = "e1";
+    const replaced = [
+      userEntry(1, "t9"),
+      replyEntry(2, "Only now", { messageId: "n", turnId: "t9" }),
+    ];
+    const { store } = harness(() =>
+      epoch === "e1" ? page(agentic) : page(replaced, { epoch: "e2" }),
+    );
+    store.rowMounted("a1");
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    epoch = "e2";
+    store.requestKey("a1", "id:n", { streaming: false });
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(store.turnView("a1", "id:f")).toBeNull();
+    expect(store.turnView("a1", "id:n")?.turnId).toBe("t9");
+    expect(store.decisionInputs().coOwned.size).toBe(0);
+  });
+
+  it("keeps today's rendering when reads fail and never re-reads the same key", async () => {
+    const { store, calls } = harness(() => {
+      throw new Error("unsupported");
+    });
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    store.requestKey("a1", "id:f", { streaming: false });
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS * 3);
+    await store.settled();
+    expect(calls).toHaveLength(1);
+    expect(store.turnView("a1", "id:f")).toBeNull();
+  });
+
+  it("evicts an agent's index after its last row unmounts", async () => {
+    const { store } = harness(() => page(agentic));
+    const unmount = store.rowMounted("a1");
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    unmount();
+    await vi.advanceTimersByTimeAsync(EVICT_AFTER_MS - 1);
+    store.rowMounted("a1")();
+    await vi.advanceTimersByTimeAsync(EVICT_AFTER_MS - 1);
+    expect(store.turnView("a1", "id:f")).not.toBeNull();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(store.turnView("a1", "id:f")).toBeNull();
+  });
+
+  it("leaves empty replies out of the Copy text", async () => {
+    const entries = [
+      userEntry(1, "t1"),
+      replyEntry(2, "  ", { messageId: "w", turnId: "t1" }),
+      replyEntry(3, "$x$", { messageId: "f", turnId: "t1" }),
+    ];
+    const { store } = harness(() => page(entries));
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    expect(store.turnView("a1", "id:f")?.copyText).toBe("$x$");
+    expect(store.turnView("a1", "id:f")?.unprotected).toBe(true);
+  });
+
+  it("recomputes co-ownership when ownership rules change and notifies once per change", async () => {
+    let owns = true;
+    const { store } = harness(
+      () => page(agentic),
+      (text) => owns && text.includes("$"),
+    );
+    let notified = 0;
+    store.subscribe(() => {
+      notified++;
+    });
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    const version = store.getVersion();
+    owns = false;
+    store.ownershipChanged();
+    expect(store.decisionInputs().coOwned.size).toBe(0);
+    expect(store.getVersion()).toBe(version + 1);
+    expect(notified).toBe(2);
+  });
+});
