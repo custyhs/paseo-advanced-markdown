@@ -177,7 +177,9 @@ The transformer's answer depends on three inputs: module settings, the handed-ba
 co-owned key set. Keep them in one immutable snapshot, and let each registered transformer close
 over one snapshot. When an input changes, coalesce changes so that a burst produces one
 re-registration, then remove the transformer and register it again under the same id. Skip
-re-registration when the new snapshot equals the old one. Keep the existing parse caches outside
+re-registration when the new snapshot equals the old one; equality compares the two key sets and
+only the settings fields the decision reads — the module switches and the effective fork-safe
+value — so display-only settings never re-project. Keep the existing parse caches outside
 the registration, so re-registering never re-parses a reply.
 
 Including module settings closes an existing gap: today a settings change does not re-project rows
