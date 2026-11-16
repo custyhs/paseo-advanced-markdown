@@ -175,15 +175,8 @@ describe("reply actions runtime", () => {
 });
 
 describe("createTimelineReader", () => {
-  it("reads projected pages and rejects payload errors", async () => {
+  function fakePaseo(payload: { error: string | null } & Record<string, unknown>) {
     const seen: unknown[] = [];
-    const payload = {
-      epoch: "e1",
-      entries: agentic,
-      startCursor: null,
-      hasOlder: false,
-      error: null,
-    };
     const paseo = {
       agents: {
         ref: () => ({
@@ -196,10 +189,69 @@ describe("createTimelineReader", () => {
         }),
       },
     };
-    const read = createTimelineReader(paseo as never);
+    return { seen, read: createTimelineReader(paseo as never) };
+  }
+
+  it("reads projected pages and rejects payload errors", async () => {
+    const payload = {
+      epoch: "e1",
+      entries: agentic,
+      startCursor: null,
+      hasOlder: false,
+      error: null as string | null,
+    };
+    const { seen, read } = fakePaseo(payload);
     expect((await read("a1", { direction: "tail" })).entries).toHaveLength(4);
     expect(seen).toEqual([{ direction: "tail", limit: 200, projection: "projected" }]);
-    payload.error = "boom" as never;
+    payload.error = "boom";
     await expect(read("a1", { direction: "tail" })).rejects.toThrow("boom");
+  });
+
+  it("round-trips the cursor into an older-page request", async () => {
+    const { seen, read } = fakePaseo({
+      epoch: "e1",
+      entries: [],
+      startCursor: null,
+      hasOlder: false,
+      error: null,
+    });
+    const cursor = { seq: 42 };
+    await read("a1", { direction: "before", cursor });
+    expect(seen).toEqual([{ direction: "before", limit: 200, projection: "projected", cursor }]);
+    expect((seen[0] as { cursor: unknown }).cursor).toBe(cursor);
+  });
+
+  it("projects items down to the fields the index reads", async () => {
+    const { read } = fakePaseo({
+      epoch: "e1",
+      entries: [
+        {
+          item: {
+            type: "tool_call",
+            name: "exec_command",
+            agentMessage: { from: "peer" },
+            detail: { output: "x".repeat(4096), unifiedDiff: "--- a\n+++ b" },
+            output: "raw tool output",
+          },
+          turnId: "t1",
+          timestamp: "2026-11-08T00:00:01.000Z",
+          seqStart: 1,
+        },
+        {
+          item: { type: "assistant_message", text: "$x$", messageId: "m", parts: [{ raw: true }] },
+          turnId: "t1",
+          timestamp: "2026-11-08T00:00:02.000Z",
+          seqStart: 2,
+        },
+      ],
+      startCursor: null,
+      hasOlder: false,
+      error: null,
+    });
+    const result = await read("a1", { direction: "tail" });
+    expect(result.entries.map((entry) => entry.item)).toStrictEqual([
+      { type: "tool_call", name: "exec_command", agentMessage: true },
+      { type: "assistant_message", text: "$x$", messageId: "m" },
+    ]);
   });
 });
