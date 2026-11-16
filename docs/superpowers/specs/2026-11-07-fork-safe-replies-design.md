@@ -130,10 +130,12 @@ named here is byte-identical in v0.15.3 except where a bullet says otherwise.
 - **Message ids.** Codex replies carry `messageId` live and in history. Claude Code's streamed
   replies carry it, but replies rebuilt from the Claude transcript do not
   (`convertHistoryEntry` and `appendTextBlockToTimeline` in
-  `packages/server/src/server/agent/providers/claude/agent.ts`). That covers every Claude chat
-  reloaded after a daemon restart and every reopened session, so text keys are common. Short
-  plain texts repeat within a chat and across chats. Message ids do not repeat across chats in
-  practice: Claude uses UUIDs and Codex uses `msg_` ids.
+  `packages/server/src/server/agent/providers/claude/agent.ts`, unchanged in 0.16.0). The
+  0.16.0 real-client QA found that a daemon restart kept the ids of the Claude replies it
+  reloaded, so transcript-rebuilt, id-less replies are rarer than this design first assumed;
+  they still exist, so text keys must stay supported. Short plain texts repeat within a chat
+  and across chats. Message ids do not repeat across chats in practice: Claude uses UUIDs and
+  Codex uses `msg_` ids.
 - **Collapse turns.** Since 0.14, new installs default to the Collapse turns view
   (`chatDisplay: "collapseTurns"` in `packages/app/src/hooks/use-settings/storage.ts`). On 0.15.x
   a turn folds the work before its last native reply (`findLastAssistantIndex` in
@@ -349,8 +351,8 @@ name, the plugin needs a follow-up release; until then the field is inert.
   replies have no `messageId`.
 - **Unprotected turns.** When an earlier plain reply in a formula-final turn has a short or repeated
   key, it cannot be co-owned. Paseo's early Fork stays in that turn, with the plugin footer's
-  warning above it, until Show original. This is common in reloaded Claude chats, whose replies
-  are keyed by text.
+  warning above it, until Show original. It happens in chats whose replies carry no message id
+  and are keyed by text; the 0.16.0 QA could not produce one through a daemon restart.
 - **Identical owned replies.** Owned replies with the same text switch to the original view
   together. An identical owned reply in the middle of another formula-final turn would then give
   that turn an early Fork until restore.
