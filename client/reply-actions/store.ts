@@ -44,7 +44,7 @@ export interface TurnView {
   readonly complete: boolean;
   /** The turn keeps a plain reply the plugin could not claim. */
   readonly unprotected: boolean;
-  /** The turn's non-empty replies, joined by a blank line. */
+  /** The turn's non-empty replies joined untrimmed by a blank line, the host's Copy shape. */
   readonly copyText: string;
   readonly endedAt: string;
 }
@@ -84,6 +84,8 @@ interface AgentState {
   lastReadStartedAt: number;
   evictTimer: ReturnType<typeof setTimeout> | null;
   operation: ReadOperation | null;
+  /** A completion refresh arrived while an operation was active; run one after it. */
+  refreshWanted: boolean;
 }
 
 /** Hand-back tracking lands with the hand-back methods; nothing is handed back yet. */
@@ -166,6 +168,7 @@ export function createReplyActionsStore(options: {
         lastReadStartedAt: Number.NEGATIVE_INFINITY,
         evictTimer: null,
         operation: null,
+        refreshWanted: false,
       };
       agents.set(agentId, state);
     }
@@ -216,22 +219,26 @@ export function createReplyActionsStore(options: {
     let epoch = state.epoch;
     let entries = state.entries;
     try {
-      let page = await options.read(agentId, { direction: "tail" });
-      if (operation.cancelled) return;
-      if (page.epoch === epoch) {
-        entries = mergeBySeqStart(entries, page.entries);
-      } else {
-        // The timeline was rebuilt under this epoch; stored entries are stale.
-        epoch = page.epoch;
-        entries = mergeBySeqStart([], page.entries);
-      }
-      let pages = 1;
-      // Pending keys may grow while a page is in flight; re-check the live set.
-      while (hasMissingKey(state.pending, entries) && page.hasOlder && pages < READ_PAGE_CAP) {
-        page = await options.read(agentId, { direction: "before", cursor: page.startCursor });
+      let next: TimelineReadOptions = { direction: "tail" };
+      let pages = 0;
+      while (pages < READ_PAGE_CAP) {
+        const page = await options.read(agentId, next);
         if (operation.cancelled) return;
-        entries = mergeBySeqStart(entries, page.entries);
         pages += 1;
+        if (page.epoch !== epoch) {
+          // The timeline was rebuilt under this epoch; everything read so far is stale.
+          epoch = page.epoch;
+          entries = [];
+          if (next.direction === "before") {
+            // This page's cursor came from the old epoch; restart from the new tail.
+            next = { direction: "tail" };
+            continue;
+          }
+        }
+        entries = mergeBySeqStart(entries, page.entries);
+        // Pending keys may grow while a page is in flight; re-check the live set.
+        if (!hasMissingKey(state.pending, entries) || !page.hasOlder) break;
+        next = { direction: "before", cursor: page.startCursor };
       }
     } catch {
       // Requested keys stay recorded, so a failing daemon is asked once per key.
@@ -253,6 +260,15 @@ export function createReplyActionsStore(options: {
     const promise = runReads(agentId, state, operation).finally(() => {
       if (state.operation === operation) state.operation = null;
       operations.delete(promise);
+      if (
+        state.refreshWanted &&
+        !operation.cancelled &&
+        !disposed &&
+        agents.get(agentId) === state
+      ) {
+        state.refreshWanted = false;
+        if (state.mounted > 0) startOperation(agentId, state);
+      }
     });
     operations.add(promise);
   }
@@ -302,7 +318,10 @@ export function createReplyActionsStore(options: {
       if (state.status === status) return;
       const turnEnded = isWorking(state.status) && !isWorking(status);
       state.status = status;
-      if (turnEnded && state.mounted > 0) startOperation(agentId, state);
+      if (turnEnded && state.mounted > 0) {
+        if (state.operation === null) startOperation(agentId, state);
+        else state.refreshWanted = true;
+      }
       notify();
     },
     turnView(agentId, key) {
@@ -317,9 +336,12 @@ export function createReplyActionsStore(options: {
           isFinalReply: replyIndex === turn.replies.length - 1,
           complete: !(index === state.turns.length - 1 && isWorking(state.status)),
           unprotected: coOwnership.unprotectedTurns.has(turnRef(agentId, turn.id)),
+          // The host's Copy pushes each reply's text untrimmed and joins with a
+          // blank line (collectAssistantResponseContent in Paseo's
+          // agent-stream/strategy.ts); only all-whitespace replies are left out.
           copyText: turn.replies
-            .map((reply) => reply.text.trim())
-            .filter((text) => text.length > 0)
+            .filter((reply) => reply.text.trim().length > 0)
+            .map((reply) => reply.text)
             .join("\n\n"),
           endedAt: turn.endedAt,
         };

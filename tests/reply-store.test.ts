@@ -111,6 +111,32 @@ describe("turn index", () => {
     expect(calls).toHaveLength(2);
   });
 
+  it("re-reads the tail after the active read when a turn completes mid-read", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { store, calls } = harness(async () => {
+      if (calls.length === 1) {
+        await gate;
+        return page([
+          userEntry(1, "t1"),
+          replyEntry(2, "Partial", { messageId: "f", turnId: "t1" }),
+        ]);
+      }
+      return page(agentic);
+    });
+    store.rowMounted("a1");
+    store.noteAgentStatus("a1", "running");
+    store.requestKey("a1", "id:f", { streaming: false });
+    store.noteAgentStatus("a1", "idle");
+    release();
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls.map((call) => call.options.direction)).toEqual(["tail", "tail"]);
+    expect(store.turnView("a1", "id:f")?.copyText).toBe("Checking first.\n\n$E=mc^2$");
+  });
+
   it("rebuilds the index when the timeline epoch changes", async () => {
     let epoch = "e1";
     const replaced = [
@@ -130,6 +156,28 @@ describe("turn index", () => {
     expect(store.turnView("a1", "id:f")).toBeNull();
     expect(store.turnView("a1", "id:n")?.turnId).toBe("t9");
     expect(store.decisionInputs().coOwned.size).toBe(0);
+  });
+
+  it("rebuilds from the tail when an older page arrives from a new epoch", async () => {
+    const { store, calls } = harness((_agent, options) => {
+      if (options.direction === "before")
+        return page([replyEntry(1, "$ghost$", { messageId: "ghost", turnId: "t0" })], {
+          epoch: "e2",
+        });
+      return calls.length === 1
+        ? page(
+            [userEntry(10, "t2"), replyEntry(11, "Old tail", { messageId: "late", turnId: "t2" })],
+            { hasOlder: true },
+          )
+        : page(agentic, { epoch: "e2" });
+    });
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    expect(calls.map((call) => call.options.direction)).toEqual(["tail", "before", "tail"]);
+    expect(store.turnView("a1", "id:f")?.turnId).toBe("t1");
+    expect(store.turnView("a1", "id:late")).toBeNull();
+    expect(store.turnView("a1", "id:ghost")).toBeNull();
+    expect(store.decisionInputs().coOwned).toEqual(new Set(["id:c"]));
   });
 
   it("keeps today's rendering when reads fail and never re-reads the same key", async () => {
@@ -170,6 +218,18 @@ describe("turn index", () => {
     await store.settled();
     expect(store.turnView("a1", "id:f")?.copyText).toBe("$x$");
     expect(store.turnView("a1", "id:f")?.unprotected).toBe(true);
+  });
+
+  it("keeps host whitespace in the Copy text", async () => {
+    const entries = [
+      userEntry(1, "t1"),
+      replyEntry(2, "Hold on. ", { messageId: "p", turnId: "t1" }),
+      replyEntry(3, "$x$", { messageId: "f", turnId: "t1" }),
+    ];
+    const { store } = harness(() => page(entries));
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    expect(store.turnView("a1", "id:f")?.copyText).toBe("Hold on. \n\n$x$");
   });
 
   it("recomputes co-ownership when ownership rules change and notifies once per change", async () => {
