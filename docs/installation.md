@@ -4,13 +4,13 @@
 
 ## Requirements
 
-v0.4.1 requires **Paseo app and daemon >=0.13.0**, with no upper version limit.
-See [host integration](qa/host-integration.md) for the separate client fix required
-to retain reply actions in transformed messages.
+v0.5.0 requires **Paseo app and daemon >=0.13.0**, with no upper version limit.
+Reply actions in turns the plugin draws come back through **Show original**; see
+[Reply actions and compatibility](../README.md#reply-actions-and-compatibility).
 
 | Side | Requirement |
 | --- | --- |
-| Paseo | app and daemon **>=0.13.0**, with no upper version limit; use v0.3.2 for Paseo 0.11–0.12 and v0.3.0 for Paseo 0.8–0.10; see the version-specific checks and platform coverage in the [release notes](release/0.4.1.md) |
+| Paseo | app and daemon **>=0.13.0**, with no upper version limit; use v0.3.2 for Paseo 0.11–0.12 and v0.3.0 for Paseo 0.8–0.10; see the version-specific checks and platform coverage in the [release notes](release/0.5.0.md) |
 | Daemon host | Node ≥ 22.22 and npm on `PATH`; network access for package installation; Git for Git installations. Formula assets are prepared offline |
 | Text font | A font covering any non-Latin characters used inside formulas (Chinese, Japanese, Korean, …). macOS and most desktop Linux installs already have one; see [Text inside formulas](#text-inside-formulas) |
 | Daemon host OS | Previous releases were verified on macOS arm64. A minimal Linux host may need a CJK font (`fonts-noto-cjk`); no Chrome libraries or browser sandbox configuration are required. Windows is untested |
@@ -22,14 +22,14 @@ in `config.json`).
 Paseo checks prereleases against their stable core, so `0.13.0-beta.1` and
 `0.15.0-beta.1` meet this range. The 0.4.0 compiler and package checks covered official
 0.13.0 and 0.14.0. An accepted version range does not imply device validation;
-see the [release notes](release/0.4.1.md) for coverage and limitations.
+see the [release notes](release/0.5.0.md) for coverage and limitations.
 
 ## Install
 
 From Git, pinned to a tag:
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.4.1
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.5.0
 paseo plugin ls
 ```
 
@@ -46,7 +46,7 @@ path). Relative `XDG_CACHE_HOME` and `LOCALAPPDATA` values are ignored. The cach
 is outside Paseo's managed checkouts so updates can reuse formula assets.
 
 Older versions may have left `browsers/`, `worker/`, and `manifest.json` in that
-cache. Version 0.4.1 does not use or automatically delete those files. Keep them
+cache. Version 0.4.1 and later do not use or automatically delete those files. Keep them
 if another installation or an older version still uses them. The `assets/`
 directory remains in use for formulas.
 
@@ -75,13 +75,13 @@ A fixed tag does not advance to the next release. If `paseo plugin update --help
 lists `--ref`, switch an existing Git installation without removing its settings:
 
 ```bash
-paseo plugin update advanced-markdown --ref v0.4.1
+paseo plugin update advanced-markdown --ref v0.5.0
 ```
 
 For an existing npm installation:
 
 ```bash
-paseo plugin update advanced-markdown --version 0.4.1
+paseo plugin update advanced-markdown --version 0.5.0
 ```
 
 To roll back, select `--ref v0.3.2` for Git or `--version 0.3.2` for npm.
