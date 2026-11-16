@@ -30,6 +30,8 @@ import { Formula } from "./formula.js";
 import { MathTextGroup } from "./math-text-group.js";
 import { ContentViewerProvider } from "./content-viewer.js";
 import { moduleState } from "./module-state.js";
+import { ReplyFooter, useReplyRow } from "./reply-actions/footer.js";
+import { replyKey } from "./reply-actions/keys.js";
 import { MarkdownTable, MarkdownTableCell } from "./table.js";
 import { colorHex } from "./theme.js";
 import { viewerIdentity } from "./viewer-identity.js";
@@ -78,7 +80,28 @@ function useModuleSettings(): ModuleSettings {
 
 export function MessageView(props: PluginTimelineItemProps<MessageData>) {
   const modules = useModuleSettings();
-  return <MemoizedMessage {...props} modules={modules} />;
+  const { agentId, item, theme, layout } = props;
+  const role = item.data.role ?? "owned";
+  const key = replyKey({ text: item.data.text, messageId: item.data.messageId });
+  const phase = item.data.phase ?? "complete";
+  // Hosts with getpaseo/paseo#9253 pass this; SDK 0.13.0's props type has no such field.
+  const hostNativeFooter = (props as { nativeTurnFooter?: boolean }).nativeTurnFooter === true;
+  // Co-owned rows report too: their index read is what catches late duplicates.
+  useReplyRow(agentId, key, phase, hostNativeFooter);
+  return (
+    <View style={{ minWidth: 0, width: "100%" }}>
+      <MemoizedMessage {...props} modules={modules} />
+      {role === "owned" ? (
+        <ReplyFooter
+          agentId={agentId}
+          replyKey={key}
+          theme={theme}
+          compact={layout.compact}
+          hostNativeFooter={hostNativeFooter}
+        />
+      ) : null}
+    </View>
+  );
 }
 
 const MemoizedMessage = memo(
