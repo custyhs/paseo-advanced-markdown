@@ -94,23 +94,65 @@ describe("turn index", () => {
     expect(calls).toHaveLength(2);
   });
 
-  it("refreshes the tail when a running turn completes while rows are mounted", async () => {
+  it("refreshes the tail on the start of a turn and again on its completion", async () => {
     const { store, calls } = harness(() => page(agentic));
     const unmount = store.rowMounted("a1");
     store.requestKey("a1", "id:f", { streaming: false });
     await store.settled();
     store.noteAgentStatus("a1", "running");
     expect(store.turnView("a1", "id:f")?.complete).toBe(false);
-    store.noteAgentStatus("a1", "idle");
     await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
     await store.settled();
     expect(calls).toHaveLength(2);
+    store.noteAgentStatus("a1", "idle");
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls).toHaveLength(3);
     unmount();
     store.noteAgentStatus("a1", "running");
     store.noteAgentStatus("a1", "idle");
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS * 2);
+    await store.settled();
+    expect(calls).toHaveLength(3);
+  });
+
+  it("keeps the previous turn's footer when a new turn starts", async () => {
+    let entries = [...agentic];
+    const { store, calls } = harness(() => page(entries));
+    store.rowMounted("a1");
+    store.noteAgentStatus("a1", "idle");
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    expect(store.turnView("a1", "id:f")?.complete).toBe(true);
+    // A follow-up prompt: the agent starts working and its new turn's user
+    // message is already on the daemon timeline.
+    entries = [...agentic, userEntry(5, "t2")];
+    store.noteAgentStatus("a1", "running");
     await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
     await store.settled();
     expect(calls).toHaveLength(2);
+    const view = store.turnView("a1", "id:f");
+    expect(view?.complete).toBe(true);
+    expect(view?.isFinalReply).toBe(true);
+  });
+
+  it("reads nothing while disabled, and re-enabling restores reads", async () => {
+    const { store, calls } = harness(() => page(agentic));
+    store.setEnabled(false);
+    store.rowMounted("a1");
+    store.requestKey("a1", "id:f", { streaming: false });
+    store.noteAgentStatus("a1", "running");
+    store.noteAgentStatus("a1", "idle");
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS * 2);
+    await store.settled();
+    expect(calls).toHaveLength(0);
+    store.setEnabled(true);
+    store.requestKey("a1", "id:f", { streaming: false });
+    store.noteAgentStatus("a1", "running");
+    await vi.advanceTimersByTimeAsync(MIN_READ_INTERVAL_MS);
+    await store.settled();
+    expect(calls).toHaveLength(2);
+    expect(store.turnView("a1", "id:f")).not.toBeNull();
   });
 
   it("re-reads the tail after the active read when a turn completes mid-read", async () => {

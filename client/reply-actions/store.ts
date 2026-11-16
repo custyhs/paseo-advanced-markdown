@@ -325,6 +325,7 @@ export function createReplyActionsStore(options: {
       operations.delete(promise);
       if (
         state.refreshWanted &&
+        enabled &&
         !operation.cancelled &&
         !disposed &&
         agents.get(agentId) === state
@@ -381,9 +382,13 @@ export function createReplyActionsStore(options: {
       if (disposed) return;
       const state = ensureAgent(agentId);
       if (state.status === status) return;
-      const turnEnded = isWorking(state.status) && !isWorking(status);
+      const wasWorking = isWorking(state.status);
       state.status = status;
-      if (turnEnded && state.mounted > 0) {
+      // Refresh on both working edges while rows are mounted: completion
+      // indexes the finished turn, and the start of a turn brings in the new
+      // turn's user message so the previous turn stops being the latest and
+      // keeps its footer. A disabled store reads nothing.
+      if (enabled && wasWorking !== isWorking(status) && state.mounted > 0) {
         if (state.operation === null) startOperation(agentId, state);
         else state.refreshWanted = true;
       }
@@ -484,6 +489,8 @@ export function createReplyActionsStore(options: {
       if (!next) {
         handedBack.clear();
         handedBackKeys = EMPTY_KEYS;
+        // Off reads nothing, so pending refresh wishes are dropped too.
+        for (const state of agents.values()) state.refreshWanted = false;
       }
       coOwnership = computeNow();
       notify();

@@ -210,8 +210,10 @@ One index per agent, built from that agent's daemon timeline and shared by all o
   in flight at a time, and later requests join it. Reads are rate-limited per agent. A row
   triggers at most one read per key. A row keyed by text never triggers a read while its reply is
   streaming, because its key changes with every chunk.
-- **Refresh.** Read the tail again when a turn of that agent completes while any of its rows is
-  mounted. Rebuild from scratch when a response's `epoch` differs from the index's.
+- **Refresh.** Read the tail again when the agent's status crosses into or out of working while
+  any of its rows is mounted: completion indexes the finished turn, and the start of a turn brings
+  in the new turn's user message so the previous turn stops being the latest and keeps its footer.
+  Rebuild from scratch when a response's `epoch` differs from the index's.
 - **Lifetime.** Memory only. Evict an agent's index some time after its last row unmounts, and
   clear everything on plugin dispose.
 - **Failure.** When a read fails or a key is not found within the cap, that reply gets no footer
