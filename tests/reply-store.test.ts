@@ -15,6 +15,7 @@ function harness(
     options: TimelineReadOptions,
   ) => TimelinePageLike | Promise<TimelinePageLike>,
   isOwned: (text: string) => boolean = (text) => text.includes("$"),
+  canRender: (text: string) => boolean = () => true,
 ) {
   const calls: Array<{ agentId: string; options: TimelineReadOptions }> = [];
   const store = createReplyActionsStore({
@@ -23,6 +24,7 @@ function harness(
       return respond(agentId, options);
     },
     isOwned: (text) => isOwned(text),
+    canRender: (text) => canRender(text),
   });
   return { store, calls };
 }
@@ -230,6 +232,26 @@ describe("turn index", () => {
     store.requestKey("a1", "id:f", { streaming: false });
     await store.settled();
     expect(store.turnView("a1", "id:f")?.copyText).toBe("Hold on. \n\n$x$");
+  });
+
+  it("leaves a reply the renderer cannot draw unclaimed and flags the turn", async () => {
+    const entries = [
+      userEntry(1, "t1"),
+      replyEntry(2, "A long commentary with a screenshot ![s](https://e/x.png) embedded in it.", {
+        messageId: "img",
+        turnId: "t1",
+      }),
+      replyEntry(3, "$x$", { messageId: "f", turnId: "t1" }),
+    ];
+    const { store } = harness(
+      () => page(entries),
+      (text) => text.includes("$"),
+      (text) => !text.includes("!["),
+    );
+    store.requestKey("a1", "id:f", { streaming: false });
+    await store.settled();
+    expect(store.decisionInputs().coOwned.size).toBe(0);
+    expect(store.turnView("a1", "id:f")?.unprotected).toBe(true);
   });
 
   it("recomputes co-ownership when ownership rules change and notifies once per change", async () => {

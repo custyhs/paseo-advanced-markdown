@@ -140,7 +140,7 @@ viewer to copy Markdown or TSV.
 | Any ordinary code block or table over its budget, including beside math or diagrams | the entire timeline row is left to Paseo’s renderer |
 | Local source-file links beside formulas or diagrams | clickable read-only source preview on the selected host; supports relative paths, absolute paths, `file://` URLs, `:line` and `#Lline` anchors |
 | Messages with inline images or unsupported link schemes | left to Paseo's renderer |
-| Plain replies before a plugin-drawn answer in the same turn | plugin-rendered for fork safety; see [Turn footer and Show original](#turn-footer-and-show-original) |
+| Plain replies before a plugin-drawn answer in the same turn | plugin-rendered for fork safety when claimable; the rows above still apply, so an oversized or image-bearing reply stays with Paseo. See [Turn footer and Show original](#turn-footer-and-show-original) |
 | User messages, tool output, other timeline rows | unchanged |
 
 Current Paseo transformers receive the accumulated assistant message, including

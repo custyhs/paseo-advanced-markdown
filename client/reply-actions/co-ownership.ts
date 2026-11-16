@@ -19,6 +19,8 @@ export interface CoOwnershipInput {
   /** Turn ids per agent whose replies were handed back to the host. */
   readonly handedBackTurns: ReadonlyMap<string, ReadonlySet<string>>;
   readonly isOwned: (text: string) => boolean;
+  /** Whether the plugin's renderer could draw this text; see `OwnershipDetector`. */
+  readonly canRender: (text: string) => boolean;
   readonly minTextLength: number;
 }
 
@@ -34,9 +36,10 @@ export interface CoOwnership {
  * its turn footer to the latest reply it still renders natively — an earlier
  * plain reply mid-turn — so those plain replies are co-owned too. A reply is
  * claimable only when its key counts once across every loaded agent's turns
- * (handed-back turns included in the count) and its text passes the length
- * rule for text keys; a turn that ends owned but keeps an unclaimable plain
- * reply is reported in `unprotectedTurns`. Plain replies after the last owned
+ * (handed-back turns included in the count), its text passes the length rule
+ * for text keys, and the renderer could draw it (`canRender`); a turn that
+ * ends owned but keeps an unclaimable plain reply is reported in
+ * `unprotectedTurns`. Plain replies after the last owned
  * reply stay native: the host's footer already lands below them.
  */
 export function computeCoOwnership(input: CoOwnershipInput): CoOwnership {
@@ -63,7 +66,8 @@ export function computeCoOwnership(input: CoOwnershipInput): CoOwnership {
         const eligible =
           counts.get(reply.key) === 1 &&
           trimmed > 0 &&
-          (!isTextKey(reply.key) || trimmed >= input.minTextLength);
+          (!isTextKey(reply.key) || trimmed >= input.minTextLength) &&
+          input.canRender(reply.text);
         if (eligible) coOwned.add(reply.key);
         else if (finalOwned) unprotectedTurns.add(turnRef(agentId, turn.id));
       }

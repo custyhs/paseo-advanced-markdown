@@ -51,6 +51,7 @@ export function createReplyActionsRuntime(options: {
   const store = createReplyActionsStore({
     read: options.read,
     isOwned: (text) => ownership.isOwned(text, settings.current),
+    canRender: (text) => ownership.canRender(text),
   });
 
   function enabledNow(): boolean {

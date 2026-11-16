@@ -223,7 +223,9 @@ In each indexed turn, every reply that is not owned and comes before the turn's 
 is co-owned. The rule needs no completion state, so it also covers the running turn, which is
 usually corrected before it completes. When the final reply is native, the extra co-owned replies
 do no harm, because Paseo anchors to that native final reply. Handed-back turns are skipped.
-Section 4 limits which keys may be co-owned. Recompute the co-owned set whenever an index, the
+A reply the plugin's renderer could not draw on its own — over the document limit or carrying
+content detection marks unsupported — is never co-owned, so a formula-final turn that keeps one
+is unprotected. Section 4 limits which keys may be co-owned. Recompute the co-owned set whenever an index, the
 handed-back set or the module settings change.
 
 Co-owned replies render through the plugin's existing message renderer, the path owned replies
@@ -350,7 +352,7 @@ name, the plugin needs a follow-up release; until then the field is inert.
   host, longer over the relay. The same window appears when a running turn finishes, if its
   replies have no `messageId`.
 - **Unprotected turns.** When an earlier plain reply in a formula-final turn has a short or repeated
-  key, it cannot be co-owned. Paseo's early Fork stays in that turn, with the plugin footer's
+  key, or content the plugin's renderer cannot draw, it cannot be co-owned. Paseo's early Fork stays in that turn, with the plugin footer's
   warning above it, until Show original. It happens in chats whose replies carry no message id
   and are keyed by text; the 0.16.0 QA could not produce one through a daemon restart.
 - **Identical owned replies.** Owned replies with the same text switch to the original view

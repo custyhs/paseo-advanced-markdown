@@ -466,6 +466,7 @@ async function runCase(spec: CaseSpec): Promise<CaseReport> {
       hasOlder: false,
     }),
     isOwned: (text) => detector.isOwned(text, DEFAULT_MODULE_SETTINGS),
+    canRender: (text) => detector.canRender(text),
   });
   const agentReports: AgentReport[] = [];
   try {

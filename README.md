@@ -117,8 +117,8 @@ official host from 0.13.0, without a patched client:
 - In turns where a plain reply precedes the formula answer, the plugin also
   draws that plain reply, so Paseo never shows a Fork anchored before the final
   answer. When it cannot — a short or repeated plain reply without a message
-  id — the footer adds a warning that Paseo's Fork below stops before this
-  answer. Replies without a message id are keyed by their exact text and can be
+  id, or one the plugin's renderer cannot draw — the footer adds a warning
+  that Paseo's Fork below stops before this answer. Replies without a message id are keyed by their exact text and can be
   left unprotected this way; in the 0.16.0 QA, a daemon restart kept Claude
   message ids.
 - The host-scoped switch **Show original for Fork** in the plugin's Modules

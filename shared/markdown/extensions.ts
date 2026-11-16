@@ -459,12 +459,15 @@ let detector: MarkdownParser | undefined;
 export function detectExtensions(source: string): DetectedExtensions {
   if (source.length > MAX_DOCUMENT) return NONE;
   const mayHaveMath = source.includes("$") || source.includes("\\(") || source.includes("\\[");
-  // Cheap gates before parsing: a math delimiter, a fence, an indented line, or a table pipe.
+  // Cheap gates before parsing: a math delimiter, a fence, an indented line, a
+  // table pipe, or an image/link marker (their schemes decide `unsupported`).
   const mayHaveBlock =
     source.includes("```") ||
     source.includes("~~~") ||
     /^(?: {4}|\t)/m.test(source) ||
-    source.includes("|");
+    source.includes("|") ||
+    source.includes("![") ||
+    source.includes("](");
   if (!mayHaveMath && !mayHaveBlock) return NONE;
   if (!detector) {
     detector = new MarkdownIt().use(markdownExtensions);

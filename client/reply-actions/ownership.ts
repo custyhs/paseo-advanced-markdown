@@ -11,6 +11,11 @@ const MAX_CACHED_CHARACTERS = 512 * 1024;
 export interface OwnershipDetector {
   /** Whether the plugin claims this reply text under these settings. */
   isOwned(text: string, settings: ModuleSettings): boolean;
+  /**
+   * Whether the plugin's renderer could draw this text at all: within
+   * `MAX_DOCUMENT` and free of content detection marks unsupported.
+   */
+  canRender(text: string): boolean;
   clear(): void;
 }
 
@@ -29,26 +34,35 @@ export function createOwnershipDetector(deps: {
 }): OwnershipDetector {
   const sources = new Map<string, DetectedExtensions>();
   let sourceCharacters = 0;
+  function detect(text: string): DetectedExtensions {
+    let result = sources.get(text);
+    if (result === undefined) {
+      result = deps.detectExtensions(text);
+      if (text.length <= MAX_CACHED_CHARACTERS) {
+        sources.set(text, result);
+        sourceCharacters += text.length;
+        for (const source of sources.keys()) {
+          if (sources.size <= MAX_CACHED_SOURCES && sourceCharacters <= MAX_CACHED_CHARACTERS) {
+            break;
+          }
+          sources.delete(source);
+          sourceCharacters -= source.length;
+        }
+      }
+    }
+    return result;
+  }
   return {
     isOwned(text, settings) {
       // Larger items stay with the host, so skip detection entirely.
       if (text.length > MAX_DOCUMENT) return false;
-      let result = sources.get(text);
-      if (result === undefined) {
-        result = deps.detectExtensions(text);
-        if (text.length <= MAX_CACHED_CHARACTERS) {
-          sources.set(text, result);
-          sourceCharacters += text.length;
-          for (const source of sources.keys()) {
-            if (sources.size <= MAX_CACHED_SOURCES && sourceCharacters <= MAX_CACHED_CHARACTERS) {
-              break;
-            }
-            sources.delete(source);
-            sourceCharacters -= source.length;
-          }
-        }
-      }
-      return deps.shouldTakeOver(result, settings);
+      return deps.shouldTakeOver(detect(text), settings);
+    },
+    canRender(text) {
+      // detectExtensions reports nothing for oversized texts, so the length
+      // bound is checked here before the cached detection.
+      if (text.length > MAX_DOCUMENT) return false;
+      return !detect(text).unsupported;
     },
     clear() {
       sources.clear();

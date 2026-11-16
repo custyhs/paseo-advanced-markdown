@@ -163,6 +163,8 @@ function sameKeySet(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 export function createReplyActionsStore(options: {
   read: TimelineReader;
   isOwned(text: string): boolean;
+  /** Whether the plugin's renderer could draw this text; see `OwnershipDetector`. */
+  canRender(text: string): boolean;
 }): ReplyActionsStore {
   const agents = new Map<string, AgentState>();
   const listeners = new Set<() => void>();
@@ -216,6 +218,7 @@ export function createReplyActionsStore(options: {
       turnsByAgent,
       handedBackTurns,
       isOwned: options.isOwned,
+      canRender: options.canRender,
       minTextLength: MIN_CO_OWNED_TEXT_LENGTH,
     });
   }
