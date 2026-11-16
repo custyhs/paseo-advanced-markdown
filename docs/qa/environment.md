@@ -28,6 +28,52 @@ env -u PASEO_AGENT_ID -u PASEO_HOME "$H/npm/node_modules/.bin/paseo" daemon stop
 `PASEO_AGENT_ID` and `PASEO_HOME` are unset so a Paseo-launched shell cannot
 redirect the commands to the production daemon.
 
+## Official 0.16.0 daemon and web UI (isolated)
+
+Built for the fork-safe replies QA ([fork-safe-replies.md](fork-safe-replies.md)).
+Same rules as the 0.8.0 harness: isolated home, every command carries the
+`env -u PASEO_AGENT_ID -u PASEO_HOME` prefix and targets this host only.
+
+| Item | Value |
+| --- | --- |
+| Daemon | `@getpaseo/cli@0.16.0` from npm, installed in `~/projects/paseo-harness-0.16.0/npm` |
+| Version reported | `paseo --version` = 0.16.0; `daemon status` = 0.16.0 |
+| Home | `~/projects/paseo-harness-0.16.0/home` (`--home`), relay off |
+| Listen | `127.0.0.1:6792`, bundled web UI on the same origin |
+| Server id | `srv_E8ndEay2l_ZY` (from `home/server-id`) |
+| Plugins | this repo's worktree and a copy of Better Paseo 1.6.0 at `~/projects/paseo-harness-0.16.0/better-paseo-src`, both installed with `paseo plugin install <directory>` |
+| Workspace | scratch git repo `~/projects/paseo-harness-0.16.0/workspace`, registered with `paseo workspace create` |
+| Providers | `claude` (`~/.local/bin/claude`) and `codex` (`/opt/homebrew/bin/codex`), the binaries the production daemon uses |
+| Host machine | macOS arm64 (Darwin 25.6), Node v24.15.0, npm 11.12.1, Google Chrome 157 for captures |
+
+Unlike 0.8.0, `daemon start` on 0.16.0 takes no `--port`, `--web-ui` or `--no-relay`
+flags — it reads persistent configuration. Write `home/config.json` before the first
+start (`features.webUi` sits at the top level, not under `daemon`):
+
+```json
+{
+  "version": 1,
+  "daemon": { "listen": "127.0.0.1:6792", "relay": { "enabled": false } },
+  "features": { "webUi": { "enabled": true } },
+  "pluginsEnabled": true
+}
+```
+
+```bash
+H=~/projects/paseo-harness-0.16.0
+env -u PASEO_AGENT_ID -u PASEO_HOME "$H/npm/node_modules/.bin/paseo" daemon start --home "$H/home"
+env -u PASEO_AGENT_ID -u PASEO_HOME "$H/npm/node_modules/.bin/paseo" --host 127.0.0.1:6792 plugin ls
+env -u PASEO_AGENT_ID -u PASEO_HOME "$H/npm/node_modules/.bin/paseo" daemon stop --home "$H/home"
+```
+
+Directory plugin installs on 0.16.0 run the plugin in place and skip the manifest's
+build commands, so build the worktree (`npm run build`) before installing it. The
+bundled web UI connects to the local daemon without pairing. The app follows
+`navigator.language`; captures pin English by writing
+`localStorage["@paseo:app-settings"] = {"language":"en"}`, which also resets the
+0.16.0 default chat display (Collapse turns) back to Full — set `chatDisplay`
+explicitly when a capture needs the collapsed view.
+
 ## Official sources used by the smoke
 
 | Item | Value |
