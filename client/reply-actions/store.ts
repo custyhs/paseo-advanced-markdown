@@ -423,6 +423,9 @@ export function createReplyActionsStore(options: {
       // claim the slot with an immediate tail read.
       let read: Promise<void> | null = null;
       while (read === null) {
+        // Disposal or setEnabled(false) can land during any await in here; a
+        // gesture that outlives either must read and record nothing more.
+        if (disposed || !enabled) return false;
         const active = state.operation;
         if (active === null) {
           read = startOperation(agentId, state, true);
@@ -433,7 +436,7 @@ export function createReplyActionsStore(options: {
         }
       }
       await read;
-      if (disposed) return false;
+      if (disposed || !enabled) return false;
       let found: IndexedTurn | null = null;
       for (let index = state.turns.length - 1; index >= 0 && found === null; index -= 1) {
         const turn = state.turns[index]!;

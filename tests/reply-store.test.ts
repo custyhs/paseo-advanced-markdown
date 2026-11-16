@@ -301,4 +301,23 @@ describe("original view", () => {
     store.setEnabled(true);
     expect(store.decisionInputs().coOwned).toEqual(new Set(["id:c"]));
   });
+
+  it("records nothing when the feature turns off while the gesture reads", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { store } = harness(async () => {
+      await gate;
+      return page(agentic);
+    });
+    const gesture = store.showOriginal("a1", "id:f");
+    store.setEnabled(false);
+    release();
+    expect(await gesture).toBe(false);
+    expect(store.originalTurnCount("a1")).toBe(0);
+    expect(store.agentsWithOriginalView()).toEqual([]);
+    store.setEnabled(true);
+    expect(store.decisionInputs().handedBack.size).toBe(0);
+  });
 });
