@@ -1459,10 +1459,11 @@ The fork boundary of every anchored footer must point at the anchored item.
 
 Run every case against each pinned host. On `pr-9253`, projection keeps the original reply on each
 plugin row as `turnFooterSource`, so every "before" case whose final reply is a plugin row expects
-Paseo's footer anchored to that final reply with Copy covering the whole turn; "after" cases and
-the native-final case keep the expectations above, and the Unprotected column is not asserted
-there, because the renderer-side detection that disables the index is outside this pipeline. Write
-one report section per host.
+Paseo's footer anchored to that final reply with Copy covering the whole turn; "after" cases keep
+the expectations above; the native-final case keeps its anchor and fork boundary at the native
+final reply while its Copy covers the whole turn, because that host builds Copy from every row's
+original reply; and the Unprotected column is not asserted there, because the renderer-side
+detection that disables the index is outside this pipeline. Write one report section per host.
 
 - [ ] **Step 4: Write the runner**
 
