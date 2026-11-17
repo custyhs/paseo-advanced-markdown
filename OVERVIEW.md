@@ -10,8 +10,8 @@ and viewer, including in messages that also contain formulas.
 ![Formula viewer with preview, source, copy, and zoom controls](images/05-formula-viewer.png)
 
 These screenshots show version 0.4.1 in a 390px browser on Paseo 0.15.0-beta.1
-with the separate host integration fix linked below. They are not native-device
-screenshots; the host fix is not included in the plugin.
+with the separate [host integration fix](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/host-integration.md).
+They are not native-device screenshots; the host fix is not included in the plugin.
 
 ## Setup and controls
 
@@ -29,9 +29,11 @@ for font setup and supported environments.
 
 ## Data access and limitations
 
-The plugin reads assistant-message Markdown to render matching content. Formula
-expressions go to the selected Paseo daemon and rendered images return to the
-connected client; no external rendering service is used. Rendered images and
+The plugin reads assistant-message Markdown to render matching content, and
+reads each open chat's timeline through Paseo's API to find turn boundaries and
+copy whole turns; that index stays in memory. Formula expressions go to the
+selected Paseo daemon and rendered images return to the connected client; no
+external rendering service is used. Rendered images and
 formula assets are cached locally. Clicking a local file link requests a read-only
 preview from that host. Files are not read until the link is opened.
 
@@ -40,7 +42,11 @@ enabled. Formula images support source copying but do not provide selectable
 mathematical glyphs or semantic MathML navigation. Mixed prose and inline formulas
 still use the plugin's Markdown layout.
 
-Copy, Fork, work duration, and turn collapse in transformed messages depend on the
-Paseo host. Unpatched clients can lose those controls; see the separate
-[host integration fix](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/host-integration.md).
+Released Paseo clients build Copy, Fork, and work duration from native replies
+only. Under the final reply of a turn it draws, the plugin shows **Copy turn**
+and **Show original**; Show original hands the whole turn back to Paseo, with
+formulas as TeX source, so Paseo's own actions return. A host that keeps its
+footer for plugin-rendered replies
+([getpaseo/paseo#9253](https://github.com/getpaseo/paseo/pull/9253)) shows
+Paseo's actions under typeset replies, and the plugin draws no footer.
 Native iOS/Android devices, Electron, and Windows remain unverified.

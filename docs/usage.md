@@ -2,7 +2,7 @@
 
 [Back to README](../README.md) · [Installation](installation.md)
 
-This guide describes v0.4.1 (Paseo >=0.13.0).
+This guide describes v0.5.0 (Paseo >=0.13.0).
 For older installations, see the [v0.3.2 guide](https://github.com/custyhs/paseo-advanced-markdown/blob/v0.3.2/docs/usage.md).
 
 ## Reading formulas
@@ -80,6 +80,24 @@ remain available in the conversation; copying actions live inside the viewer.
 Turning **Tables** off restores the standard table layout in plugin-owned messages
 as well as leaving ordinary table-only messages to Paseo.
 
+## Turn footer and Show original
+
+The final reply of a completed turn the plugin draws carries a footer with
+**Copy turn**, **Show original**, and the turn's end time. **Copy turn** copies
+the turn's replies joined by blank lines, the text Paseo's own Copy produces
+for a native turn. **Show original** hands the whole turn back to Paseo:
+formulas show as TeX source, and Paseo's own Copy, Fork, and work duration
+appear under the answer. A pill above the composer ("Original view · 1 turn")
+restores plugin rendering for that agent's handed-back turns, and so does a
+reload.
+
+To keep Paseo's Fork from anchoring before the final answer, the plugin also
+draws plain replies that precede its answer in the same turn. When an earlier
+plain reply cannot be claimed, the footer adds a warning that Paseo's Fork
+below stops before this answer; Show original forks from the answer. Version
+and Better Paseo compatibility and the known limits are in the
+[README](../README.md#reply-actions-and-compatibility).
+
 ## Settings
 
 Settings → Plugins → Advanced Markdown, per host:
@@ -92,13 +110,17 @@ Settings → Plugins → Advanced Markdown, per host:
 - Tables on/off (off by default). When on, Markdown tables keep readable column
   widths and scroll horizontally inside the message instead of squeezing every
   column to a fraction of the message width.
+- Show original for Fork on/off (on by default). When on, the plugin draws the
+  turn footer and claims plain replies for fork safety; see
+  [Turn footer and Show original](#turn-footer-and-show-original). Off restores
+  the behavior before 0.5.0.
 - Text size inside plugin rows.
 - Formula size and its independent reset.
 - Runtime status: plugin and math engine versions and formula cache count.
 
-A message with no enabled plugin enhancement stays with Paseo. Reopen the
-conversation after changing which messages are claimed. These settings do not
-change Paseo's built-in Mermaid rendering.
+A message with no enabled plugin enhancement stays with Paseo, except plain
+replies claimed for fork safety. Module changes apply to conversations already
+on screen. These settings do not change Paseo's built-in Mermaid rendering.
 
 Code scrolling and tables are opt-in enhancements. Math remains enabled by default. Copying a code block copies its source, without the fence. Use the table
 viewer to copy Markdown or TSV.
@@ -118,6 +140,7 @@ viewer to copy Markdown or TSV.
 | Any ordinary code block or table over its budget, including beside math or diagrams | the entire timeline row is left to Paseo’s renderer |
 | Local source-file links beside formulas or diagrams | clickable read-only source preview on the selected host; supports relative paths, absolute paths, `file://` URLs, `:line` and `#Lline` anchors |
 | Messages with inline images or unsupported link schemes | left to Paseo's renderer |
+| Plain replies before a plugin-drawn answer in the same turn | plugin-rendered for fork safety when claimable; the rows above still apply, so an oversized or image-bearing reply stays with Paseo. See [Turn footer and Show original](#turn-footer-and-show-original) |
 | User messages, tool output, other timeline rows | unchanged |
 
 Current Paseo transformers receive the accumulated assistant message, including
@@ -136,7 +159,8 @@ Copy scopes: copying happens inside the viewer. In **Preview**, **Copy LaTeX** c
 **More** offers the other copy format and **Copy fragment Markdown**,
 which copies the source message supplied to the plugin, including its prose and
 other blocks. A turn can contain several assistant messages: this action does
-not collect the other messages or replace Paseo's **Copy turn** action.
+not collect the other messages. For the whole turn, use **Copy turn** in the
+[turn footer](#turn-footer-and-show-original) or Paseo's own Copy.
 
 ## Limitations
 

@@ -17,14 +17,14 @@ function setupPlugin(client: PluginClientContext) {
     require("./client/module-state.js") as typeof import("./client/module-state.js");
   const { clearRenderCache } =
     require("./client/render-cache.js") as typeof import("./client/render-cache.js");
-  const { MAX_DOCUMENT } = require("./shared/limits.js") as typeof import("./shared/limits.js");
-
-  type Detected = ReturnType<typeof detectExtensions>;
-  const objects = new WeakMap<object, { text: string; result: Detected }>();
-  // Projection may clone settled items. Bound retained source while avoiding
-  // reparsing those clones on every unrelated transcript/composer update.
-  const sources = new Map<string, Detected>();
-  let sourceCharacters = 0;
+  const { createOwnershipDetector } =
+    require("./client/reply-actions/ownership.js") as typeof import("./client/reply-actions/ownership.js");
+  const { createTimelineReader } =
+    require("./client/reply-actions/reader.js") as typeof import("./client/reply-actions/reader.js");
+  const { createReplyActionsRuntime, setReplyActionsRuntime } =
+    require("./client/reply-actions/runtime.js") as typeof import("./client/reply-actions/runtime.js");
+  const { resetFirstUseToast } =
+    require("./client/reply-actions/footer.js") as typeof import("./client/reply-actions/footer.js");
 
   // The transformer runs outside React; seed the module snapshot from the host
   // once, then keep it current from rendered items and the settings screen.
@@ -50,45 +50,22 @@ function setupPlugin(client: PluginClientContext) {
     icon: "Sigma",
     Component: SettingsScreen,
   });
-  // Inspect the accumulated source on every revision, including streaming text.
-  // Closed expressions can render before the surrounding reply is complete.
-  client.addTimelineTransformer({
-    id: "assistant-advanced-markdown",
-    query: { itemType: "assistant_message" },
-    transform({ item }) {
-      const remembered = objects.get(item);
-      let result = remembered?.text === item.text ? remembered.result : sources.get(item.text);
-      if (result === undefined) {
-        result = detectExtensions(item.text);
-        if (item.text.length <= 512 * 1024) {
-          sources.set(item.text, result);
-          sourceCharacters += item.text.length;
-          for (const source of sources.keys()) {
-            if (sources.size <= 256 && sourceCharacters <= 512 * 1024) break;
-            sources.delete(source);
-            sourceCharacters -= source.length;
-          }
-        }
-      }
-      objects.set(item, { text: item.text, result });
-      if (item.text.length > MAX_DOCUMENT) return undefined;
-      if (!shouldTakeOver(result, moduleState.current)) return undefined;
-      return {
-        items: [
-          {
-            type: "plugin" as const,
-            kind: MESSAGE_KIND,
-            version: MESSAGE_VERSION,
-            data: { text: item.text },
-          },
-        ],
-      };
-    },
+  const ownership = createOwnershipDetector({ detectExtensions, shouldTakeOver });
+  const runtime = createReplyActionsRuntime({
+    client,
+    ownership,
+    settings: moduleState,
+    // Read `client.paseo` per call: setup must not touch it, because harness
+    // clients may not provide it.
+    read: (agentId, options) => createTimelineReader(client.paseo)(agentId, options),
   });
+  setReplyActionsRuntime(runtime);
   return () => {
     disposed = true;
-    sources.clear();
-    sourceCharacters = 0;
+    runtime.dispose();
+    setReplyActionsRuntime(null);
+    resetFirstUseToast();
+    ownership.clear();
     moduleState.reset();
     clearRenderCache();
   };

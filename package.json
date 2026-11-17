@@ -1,6 +1,6 @@
 {
   "name": "paseo-advanced-markdown",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "private": true,
   "description": "LaTeX formulas and optional code and table viewers for Paseo, with built-in Mermaid rendering",
   "type": "module",
@@ -17,6 +17,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
     "test": "vitest run",
     "paseo-source": "node scripts/paseo-source.mjs",
+    "host-source": "node scripts/host-source.mjs",
+    "qa:reply-actions": "node scripts/qa/reply-actions.mjs",
     "smoke": "node --import tsx scripts/smoke.mjs",
     "check": "npm run build && npm run typecheck && npm run lint && npm run format:check && npm test",
     "smoke:hermes": "node --import tsx scripts/hermes-smoke.mjs",

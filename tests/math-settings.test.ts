@@ -9,6 +9,7 @@ describe("formula-size settings", () => {
       math: true,
       codeBlocks: false,
       tables: false,
+      forkSafeReplies: true,
       fontScale: "default",
       mathScale: 1,
     });
@@ -33,6 +34,7 @@ describe("formula-size settings", () => {
         math: false,
         codeBlocks: false,
         tables: false,
+        forkSafeReplies: true,
         fontScale: "large",
         mathScale: 1,
       },
@@ -47,6 +49,7 @@ describe("formula-size settings", () => {
       math: false,
       codeBlocks: true,
       tables: true,
+      forkSafeReplies: true,
       fontScale: "large",
       mathScale: 1.5,
     };
@@ -62,6 +65,7 @@ describe("formula-size settings", () => {
       math: true,
       codeBlocks: false,
       tables: false,
+      forkSafeReplies: true,
       fontScale: "small",
       mathScale,
     };
@@ -74,4 +78,29 @@ describe("formula-size settings", () => {
       expect(moduleSettings.schema.safeParse({ mathScale }).success).toBe(false);
     },
   );
+
+  it("keeps Show original for Fork on for values saved before it existed", () => {
+    const saved = {
+      math: true,
+      codeBlocks: false,
+      tables: false,
+      fontScale: "default",
+      mathScale: 1,
+    };
+    expect(moduleSettings.schema.parse(saved).forkSafeReplies).toBe(true);
+    expect(moduleSettings.schema.parse({ forkSafeReplies: false }).forkSafeReplies).toBe(false);
+  });
+
+  it("notifies when only Show original for Fork changes", () => {
+    moduleState.reset();
+    let changes = 0;
+    const unsubscribe = moduleState.subscribe(() => {
+      changes++;
+    });
+    moduleState.set({ ...DEFAULT_MODULE_SETTINGS, forkSafeReplies: false });
+    moduleState.set({ ...DEFAULT_MODULE_SETTINGS, forkSafeReplies: false });
+    expect(changes).toBe(1);
+    unsubscribe();
+    moduleState.reset();
+  });
 });

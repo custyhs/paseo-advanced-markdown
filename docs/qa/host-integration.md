@@ -4,6 +4,14 @@ Plugin release: v0.4.0, requiring Paseo >=0.13.0 without an upper limit.
 Host patch: [`74c11e85a`](https://github.com/custyhs/paseo/commit/74c11e85a86b453d3a7201698dc122fdfb6fca9b),
 based on official Paseo v0.15.0-beta.1 (`8bd38fb23645652078cb629baa2e65e0b6baa65a`).
 
+This record covers v0.4.0 with the patched host and stays as historical
+evidence. From v0.5.0, **Show original** reaches Paseo's Copy and Fork on
+official hosts without the patch. Current evidence: the pinned-host pipeline
+check ([`scripts/qa/reply-actions.mjs`](../../scripts/qa/reply-actions.mjs) via
+`npm run host-source && npm run qa:reply-actions`, against official v0.15.3,
+v0.16.0, and the head of getpaseo/paseo#9253) and the real-client record
+[fork-safe-replies.md](fork-safe-replies.md).
+
 ## Diagnosis
 
 The old host projection changed an assistant message into a plugin row. Reply

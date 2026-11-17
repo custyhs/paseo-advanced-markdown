@@ -25,6 +25,8 @@ jobs:
       - run: npm test
       - run: npm run paseo-source
       - run: npm run smoke
+      - run: npm run host-source
+      - run: npm run qa:reply-actions
       - run: npm run pack
       - run: npm run smoke:package
       - run: npm audit --omit=dev --audit-level=moderate

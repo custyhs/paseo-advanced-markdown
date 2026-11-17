@@ -15,6 +15,7 @@ export const moduleSettings = defineSettings({
     math: z.boolean().default(true),
     codeBlocks: z.boolean().default(false),
     tables: z.boolean().default(false),
+    forkSafeReplies: z.boolean().default(true),
     fontScale: z.enum(FONT_SCALES).default("default"),
     mathScale: z.literal(MATH_SCALES).default(1),
   }),

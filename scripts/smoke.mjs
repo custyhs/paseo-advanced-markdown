@@ -293,7 +293,15 @@ async function exerciseClientBundle(bundle, id) {
           pluginRowId ??= rows[0].id;
           assert.equal(rows[0].id, pluginRowId, "appending text must preserve row identity");
           assert.equal(rows[0].itemKind, "advanced-markdown");
-          assert.deepEqual(timelineRenderers[0].schema.parse(rows[0].data), { text: assembled });
+          // 0.8.0 reports phase "complete" for assistant replies even while
+          // they stream, and its parseTransformResult reads only `items`, so
+          // the result's nativeTurnFooter field never reaches row data.
+          assert.deepEqual(timelineRenderers[0].schema.parse(rows[0].data), {
+            text: assembled,
+            messageId: "synthetic-message",
+            role: "owned",
+            phase: "complete",
+          });
         }
         if (complete) assert.equal(rows[0].kind, "plugin");
       });

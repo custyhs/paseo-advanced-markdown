@@ -1,5 +1,8 @@
 node_modules/
 .paseo-source
+.paseo-host-0.15.3
+.paseo-host-0.16.0
+.paseo-host-pr-9253
 .compat-runtime/
 .smoke/
 client/generated/

@@ -10,7 +10,7 @@ export interface ActionItem {
   disabled?: boolean;
 }
 
-/** Compact row of code-block actions. */
+/** Compact action row shared by code blocks and the reply footer, with an optional trailing hint. */
 export function ActionBar({
   actions,
   theme,
