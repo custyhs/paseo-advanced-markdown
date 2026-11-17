@@ -1613,3 +1613,28 @@ git commit -m "release: prepare v0.5.0 fork-safe replies"
 ```
 
 Tagging and publishing stay with the maintainer's release workflow.
+
+## Follow-ups
+
+Minor findings the task reviews and the final review deferred, kept here because the execution
+ledger is deleted once the branch is integrated. None blocks the release; each is a candidate for a
+later change.
+
+- **Task 1.** two pre-existing Biome noUselessStringRaw infos in tests/math-copy.test.ts (not introduced by this branch).
+- **Task 2.** startsTurn branch "previous has turnId, next lacks one, next not a trigger → continues" has no test (brief-inherited test set).
+- **Task 2.** groupTurns([]) → [] untested.
+- **Task 3.** handed-back turn's reply blocking co-ownership elsewhere untested; exact 40-char `>=` boundary untested; duplicate keys within one agent untested.
+- **Task 3.** `Array.prototype.findLastIndex` in co-ownership.ts is an ES2023 runtime surface; Android QA should exercise this path (`npm run smoke:hermes` when HERMES_BIN is available).
+- **Task 4.** moved cache has no direct eviction/no-cache/clear test; `Record<string, string>` on `data` disables excess-property checks (exact-shape test mitigates).
+- **Task 5.** store.ts duplicates groupTurns' reply derivation (export a helper from turns.ts); dispose does not clear coOwnership ("clear everything on dispose"); agent records for never-mounted agents are unbounded (carry to Task 7 wiring); a throwing isOwned/subscriber rejects the operation promise and settled(); no tests for eviction/dispose during a read or rejection with a joined key.
+- **Task 5.** the operation's finally consumes `refreshWanted` even when `mounted === 0`, so an unmount/remount within EVICT_AFTER_MS during an in-flight read drops the owed refresh until the next working→idle cycle.
+- **Task 6.** no tests for showOriginal during an in-flight read, dispose mid-gesture, evicted-agent showOriginal; turn-end refresh and refreshWanted follow-ups have no `enabled` gate (reads nobody consumes while off); eviction firing mid-gesture cancels the immediate read so the hand-back records from the pre-read index; store.ts is at ~520 lines and the operation machinery could split out.
+- **Task 6.** the `await active.done` contention-then-disable path has no dedicated test; an in-flight read that completes while the store is disabled still merges into the kept index (Task 5 machinery).
+- **Task 7.** reader's `before`/cursor branch untested; the "skips re-registration when nothing changed" test is short-circuited by moduleState.set's equality guard (composed assertion still holds); `restore`/`showOriginal` on the runtime have no `disposed` guard (unreachable post-dispose via the nulled holder); pre-existing lint infos in tests/math-copy.test.ts.
+- **Task 8.** FOOTER_COPY doc comment says "every string" while the copy-error string lives outside it; no in-flight guard on Show original (double-tap costs one redundant tail read); `showOriginal(...).then` without `.catch` (no rejection source today); action-bar.tsx doc comment still says "code-block actions"; pre-existing check-output noise (biome deprecation info, math-copy infos, smoke's fs.F_OK deprecation).
+- **Task 9.** pin-failure message in scripts/lib/paseo-checkout.mjs names neither label nor directory; report.json path resolves relative to the bundle (a trap when running the probe outside the runner); scripts/ is outside both tsconfigs so the .ts probe is never typechecked; nothing pins the case count (a shortened CASES list would still exit 0).
+- **Task 10.** helper header omits the `type:`/`key:` steps and understates the one prompt send; the record's capture-conditions sentences (English UI, named view) are overbroad for the earliest Better Paseo run; the timeline-id dump behind the partial is not committed; "no RPC re-render" is proven by node identity, not src hashes; two exploratory false probes in committed JSONs lack a purpose note.
+- **Task 11.** README Known limitations condenses three sub-consequences (running-turn first-load window, identical owned replies' early Fork, late duplicate's missing footer); the six-clause limitations sentence is dense; usage.md's reload sentence can read as per-agent; installation.md's Clients row cites only the 0.4.0 browser checks.
+- **Final review.** defer minor #11 (eviction keyed on row mounts rather than chat visibility) — needs native-list evidence the QA could not produce; a longer delay or agent-visibility keying is a follow-up — cost if wrong: an extra read and re-projection after 60 s off-screen on virtualized lists.
+- **Final review.** park the cap-boundary epoch-mismatch exhausted mislabel as a follow-up — it needs a timeline rebuild landing exactly on the last cap page, violates no invariant, and the process allows no second fix wave — cost if wrong: in that corner, keys older than the tail stay unfound until eviction or the next epoch change.
+- **Final review.** docs/release/0.5.0.md says "official Paseo 0.8.0 compiler smoke" while scripts/smoke.mjs reports the 0.13.0 compiler/SDK with v0.8.0 fixtures; setEnabled(false) does not cancel an in-flight read operation; the detectExtensions cheap gate misses bare autolinks for canRender.
