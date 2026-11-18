@@ -21,6 +21,8 @@ function setupPlugin(client: PluginClientContext) {
     require("./client/reply-actions/ownership.js") as typeof import("./client/reply-actions/ownership.js");
   const { createTimelineReader } =
     require("./client/reply-actions/reader.js") as typeof import("./client/reply-actions/reader.js");
+  const { createTurnStartWatcher } =
+    require("./client/reply-actions/turn-watch.js") as typeof import("./client/reply-actions/turn-watch.js");
   const { createReplyActionsRuntime, setReplyActionsRuntime } =
     require("./client/reply-actions/runtime.js") as typeof import("./client/reply-actions/runtime.js");
   const { resetFirstUseToast } =
@@ -58,6 +60,8 @@ function setupPlugin(client: PluginClientContext) {
     // Read `client.paseo` per call: setup must not touch it, because harness
     // clients may not provide it.
     read: (agentId, options) => createTimelineReader(client.paseo)(agentId, options),
+    watchTurnStart: (agentId, onTurnStart) =>
+      createTurnStartWatcher(client.paseo)(agentId, onTurnStart),
   });
   setReplyActionsRuntime(runtime);
   return () => {

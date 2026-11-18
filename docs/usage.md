@@ -87,9 +87,10 @@ The final reply of a completed turn the plugin draws carries a footer with
 the turn's replies joined by blank lines, the text Paseo's own Copy produces
 for a native turn. **Show original** hands the whole turn back to Paseo:
 formulas show as TeX source, and Paseo's own Copy, Fork, and work duration
-appear under the answer. A pill above the composer ("Original view · 1 turn")
-restores plugin rendering for that agent's handed-back turns, and so does a
-reload.
+appear under the answer. The original view lasts until the agent starts its
+next turn; then that agent's handed-back turns return to plugin rendering. To
+return sooner, press the **Show rendered** pill above the composer, or reload,
+which restores every chat.
 
 To keep Paseo's Fork from anchoring before the final answer, the plugin also
 draws plain replies that precede its answer in the same turn. When an earlier

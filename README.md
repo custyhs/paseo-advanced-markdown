@@ -112,8 +112,9 @@ official host from 0.13.0, without a patched client:
 - Under the final reply of a completed turn it draws, the plugin shows a footer
   with **Copy turn**, **Show original**, and the turn's end time. Show original
   hands the whole turn back to Paseo — formulas show as TeX source — so Paseo's
-  own Copy, Fork, and duration appear. A composer pill ("Original view ·
-  N turns") restores plugin rendering, and so does a reload.
+  own Copy, Fork, and duration appear. The turn returns to plugin rendering
+  when the agent starts its next turn. To return sooner, press the **Show
+  rendered** pill above the composer, or reload.
 - In turns where a plain reply precedes the formula answer, the plugin also
   draws that plain reply, so Paseo never shows a Fork anchored before the final
   answer. When it cannot — a short or repeated plain reply without a message

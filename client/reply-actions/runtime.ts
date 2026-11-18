@@ -7,6 +7,7 @@ import type { ReplyKey } from "./keys.js";
 import type { OwnershipDetector } from "./ownership.js";
 import { createReplyActionsStore, type ReplyActionsStore, type TimelineReader } from "./store.js";
 import { createOriginalViewPills } from "./pills.js";
+import type { TurnStartWatcher } from "./turn-watch.js";
 
 /** One frame: a burst of notifications collapses into one re-registration. */
 const COALESCE_MS = 16;
@@ -40,11 +41,14 @@ export function createReplyActionsRuntime(options: {
   read: TimelineReader;
   ownership: OwnershipDetector;
   settings: { readonly current: ModuleSettings; subscribe(listener: () => void): () => void };
+  watchTurnStart: TurnStartWatcher;
 }): ReplyActionsRuntime {
   const { client, ownership, settings } = options;
   const pills = createOriginalViewPills(client);
   /** Agents whose pill was added; store changes drop the ones restored elsewhere. */
   const pillAgents = new Set<string>();
+  /** One turn-start watch per agent with handed-back turns, keyed by agent. */
+  const turnWatches = new Map<string, () => void>();
   let hostNativeFooter = false;
   let disposed = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -102,11 +106,36 @@ export function createReplyActionsRuntime(options: {
     syncPill(agentId, null);
   }
 
+  /**
+   * The original view exists to reach Paseo's Fork, so it ends when the
+   * agent starts its next turn: watch each agent only while it has
+   * handed-back turns.
+   */
+  function syncTurnWatches(listed: ReadonlySet<string>): void {
+    for (const [agentId, stop] of [...turnWatches]) {
+      if (listed.has(agentId)) continue;
+      turnWatches.delete(agentId);
+      stop();
+    }
+    for (const agentId of listed) {
+      if (turnWatches.has(agentId)) continue;
+      let stop: () => void;
+      try {
+        stop = options.watchTurnStart(agentId, () => restore(agentId));
+      } catch {
+        // Best effort: without a watch the turn's pill still restores it.
+        stop = () => undefined;
+      }
+      turnWatches.set(agentId, stop);
+    }
+  }
+
   const unsubscribeStore = store.subscribe(() => {
     const listed = new Set(store.agentsWithOriginalView());
     for (const agentId of [...pillAgents]) {
       if (!listed.has(agentId)) syncPill(agentId, null);
     }
+    syncTurnWatches(listed);
     scheduleUpdate();
   });
   const unsubscribeSettings = settings.subscribe(() => {
@@ -142,6 +171,8 @@ export function createReplyActionsRuntime(options: {
       }
       unsubscribeSettings();
       unsubscribeStore();
+      for (const stop of turnWatches.values()) stop();
+      turnWatches.clear();
       registered.remove();
       pills.dispose();
       store.dispose();

@@ -44,8 +44,9 @@ show as TeX source, and draws its own footer with Fork:
   Copy · Fork ▾ · Worked for 2m 10s
 ```
 
-A composer pill for that agent states how many turns are in the original view and restores them
-when pressed. Reloading the app restores them too.
+The turn returns to plugin rendering when the agent starts its next turn. A composer pill for
+that agent, labelled "Show rendered", restores it sooner when pressed. Reloading the app restores
+it too.
 
 Some turns cannot be fully protected, for example when an earlier plain reply's text repeats. In
 those, Paseo's own footer stays visible below with a Fork that stops early, and the plugin footer
@@ -283,14 +284,23 @@ Show original:
    identical replies elsewhere.
 2. Updates the snapshot. The coalesced re-registration hands the turn to Paseo, which draws its
    footer with Fork on the final reply.
-3. Adds or updates that agent's composer pill. Its id derives from the agent id, its label states
-   how many turns are in the original view, and pressing it restores them all. The workspace id
-   comes from `useAgent`.
+3. Adds that agent's composer pill. Its id derives from the agent id, its label is the short
+   action phrase "Show rendered", and pressing it restores all of that agent's turns. Paseo cuts
+   a composer pill's label off after about 19 characters, and a label that named the state
+   ("Original view · 1 turn", shipped in 0.5.0) left users without a visible way back. The
+   workspace id comes from `useAgent`.
 4. On first use in a session, shows a toast: when Paseo's Fork does not appear, another plugin is
    drawing replies, and Better Paseo users should turn off **Plugin markdown for replies**.
 
 Restore removes that agent's keys from the handed-back set, updates the snapshot and removes the
 pill. A reload clears all state.
+
+The original view exists to reach Paseo's Fork, so it also ends on its own. While an agent has
+handed-back turns, the plugin subscribes to that agent's live timeline through the SDK and
+restores them when the daemon reports `turn_started`. The subscription delivers live events only,
+so a turn that was already running at hand-back never triggers it. It is best effort: when the
+subscription cannot be established, the pill remains the way back. A panel without a composer,
+such as an archived agent, shows no pill; a reload restores there.
 
 ### 7. Setting
 

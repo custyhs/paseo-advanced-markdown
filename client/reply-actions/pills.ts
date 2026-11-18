@@ -10,9 +10,11 @@ export interface OriginalViewPills {
   dispose(): void;
 }
 
-function pillLabel(count: number): string {
-  return count === 1 ? "Original view · 1 turn" : `Original view · ${count} turns`;
-}
+/**
+ * Names the action, mirroring the footer's "Show original", and stays short:
+ * Paseo cuts a composer pill's label off after about 19 characters.
+ */
+const PILL_LABEL = "Show rendered";
 
 /**
  * `addComposerPill` is read only when a pill is first added, never during
@@ -36,11 +38,7 @@ export function createOriginalViewPills(client: {
         }
         return;
       }
-      const label = pillLabel(count);
-      if (existing !== undefined) {
-        existing.update({ label });
-        return;
-      }
+      if (existing !== undefined) return;
       // Hand-backs live in memory, so a reload restores the turns anyway;
       // without a workspace there is no composer to anchor the pill to.
       if (workspaceId === null) return;
@@ -52,7 +50,7 @@ export function createOriginalViewPills(client: {
           agentId,
           button: {
             title: "Restore formula rendering",
-            label,
+            label: PILL_LABEL,
             icon: "Sigma",
             behavior: { kind: "action", onPress: onRestore },
           },
