@@ -4,7 +4,7 @@
 
 ## Requirements
 
-v0.5.0 requires **Paseo app and daemon >=0.13.0**, with no upper version limit.
+v0.5.1 requires **Paseo app and daemon >=0.13.0**, with no upper version limit.
 Reply actions in turns the plugin draws come back through **Show original**; see
 [Reply actions and compatibility](../README.md#reply-actions-and-compatibility).
 
@@ -22,14 +22,15 @@ in `config.json`).
 Paseo checks prereleases against their stable core, so `0.13.0-beta.1` and
 `0.15.0-beta.1` meet this range. The 0.4.0 compiler and package checks covered official
 0.13.0 and 0.14.0. An accepted version range does not imply device validation;
-see the [release notes](release/0.5.0.md) for coverage and limitations.
+see the [0.5.0](release/0.5.0.md) and [0.5.1](release/0.5.1.md) release notes for coverage and
+limitations.
 
 ## Install
 
 From Git, pinned to a tag:
 
 ```bash
-paseo plugin add custyhs/paseo-advanced-markdown --ref v0.5.0
+paseo plugin add custyhs/paseo-advanced-markdown --ref v0.5.1
 paseo plugin ls
 ```
 
@@ -75,13 +76,13 @@ A fixed tag does not advance to the next release. If `paseo plugin update --help
 lists `--ref`, switch an existing Git installation without removing its settings:
 
 ```bash
-paseo plugin update advanced-markdown --ref v0.5.0
+paseo plugin update advanced-markdown --ref v0.5.1
 ```
 
 For an existing npm installation:
 
 ```bash
-paseo plugin update advanced-markdown --version 0.5.0
+paseo plugin update advanced-markdown --version 0.5.1
 ```
 
 To roll back, select `--ref v0.3.2` for Git or `--version 0.3.2` for npm.

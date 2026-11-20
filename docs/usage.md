@@ -2,7 +2,7 @@
 
 [Back to README](../README.md) · [Installation](installation.md)
 
-This guide describes v0.5.0 (Paseo >=0.13.0).
+This guide describes v0.5.1 (Paseo >=0.13.0).
 For older installations, see the [v0.3.2 guide](https://github.com/custyhs/paseo-advanced-markdown/blob/v0.3.2/docs/usage.md).
 
 ## Reading formulas

@@ -55,17 +55,17 @@ require Git. No Chrome, Chromium, or Mermaid CLI installation is required.
 Enable plugins in **Settings → Plugins**, then install from npm:
 
 ```bash
-paseo plugin add npm:paseo-advanced-markdown@0.5.0
+paseo plugin add npm:paseo-advanced-markdown@0.5.1
 paseo plugin ls
 ```
 
 Update an existing npm installation:
 
 ```bash
-paseo plugin update advanced-markdown --version 0.5.0
+paseo plugin update advanced-markdown --version 0.5.1
 ```
 
-For a Git installation, use `paseo plugin update advanced-markdown --ref v0.5.0`.
+For a Git installation, use `paseo plugin update advanced-markdown --ref v0.5.1`.
 A pinned version or tag stays on that release until you select another one.
 Paseo prepares the bundled formula assets without downloading software. See the
 [installation guide](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/installation.md)
@@ -156,7 +156,8 @@ plugin release follows.
 
 See the [design](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/superpowers/specs/2026-11-07-fork-safe-replies-design.md),
 the [Paseo 0.16.0 QA record](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/fork-safe-replies.md),
-and the [0.5.0 release notes](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/release/0.5.0.md).
+and the [0.5.0](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/release/0.5.0.md)
+and [0.5.1](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/release/0.5.1.md) release notes.
 The [0.4.0 integration record](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/host-integration.md)
 with the patched host remains historical evidence. Native iOS/Android devices,
 Electron, and Windows remain unverified.
