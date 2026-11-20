@@ -104,3 +104,24 @@ could not produce is a real 0.16.0 timeline whose replies lack ids.
   the completion gating is covered by the store unit tests.
 - A real timeline with id-less replies (see the restart section).
 - `Fork in a new workspace`, and sending after Fork on 0.15.x hosts.
+
+## 0.5.1 follow-up: the way back
+
+0.5.0 labelled the restore pill "Original view · 1 turn". Paseo showed it as "Original view · 1 t…",
+and users found no way back to plugin rendering. 0.5.1 labels it **Show rendered** and returns a
+turn on its own when the agent starts its next turn. These checks ran on 2026-11-18 and
+2026-11-20 against an isolated official Paseo 0.16.1 daemon: the [0.16.0 harness](environment.md)
+setup with `@getpaseo/cli@0.16.1` and a copy of that harness's home at
+`~/projects/paseo-harness-0.16.1`, same fixture chats, Better Paseo enabled with its reply
+markdown off.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| The pill shows its whole label | Pass at 1100 and 390. After Show original the pill above the composer reads "Show rendered", inside the viewport, and "Original view" is gone. | [1100](evidence/fork-safe-show-rendered-1100.png), [390](evidence/fork-safe-show-rendered-390.png), [`v051-pill-1100.json`](evidence/fork-safe-runs/v051-pill-1100.json), [`v051-pill-390.json`](evidence/fork-safe-runs/v051-pill-390.json) |
+| Pressing the pill restores | Pass at 1100 and 390. The pill disappears and the chat is back to three Show original footers. | same runs |
+| The next turn restores | Pass at 1100, Claude. With one turn in the original view, sending "Reply with exactly: ok" removed the pill, replaced the TeX source with the typeset formula and brought the formula images back from 35 to 39. | [1100](evidence/fork-safe-next-turn-restored-1100.png), [`v051-next-turn-1100.json`](evidence/fork-safe-runs/v051-next-turn-1100.json) |
+
+The next-turn run used the fix commit before the version bump; the client code is the same. Not
+checked: the next-turn restore at 390 or with Codex, Electron, iOS and Android. An archived agent
+has no composer, so Paseo shows no pill there; a reload restores.
+

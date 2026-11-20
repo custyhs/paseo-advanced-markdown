@@ -55,17 +55,17 @@ require Git. No Chrome, Chromium, or Mermaid CLI installation is required.
 Enable plugins in **Settings → Plugins**, then install from npm:
 
 ```bash
-paseo plugin add npm:paseo-advanced-markdown@0.5.0
+paseo plugin add npm:paseo-advanced-markdown@0.5.1
 paseo plugin ls
 ```
 
 Update an existing npm installation:
 
 ```bash
-paseo plugin update advanced-markdown --version 0.5.0
+paseo plugin update advanced-markdown --version 0.5.1
 ```
 
-For a Git installation, use `paseo plugin update advanced-markdown --ref v0.5.0`.
+For a Git installation, use `paseo plugin update advanced-markdown --ref v0.5.1`.
 A pinned version or tag stays on that release until you select another one.
 Paseo prepares the bundled formula assets without downloading software. See the
 [installation guide](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/installation.md)
@@ -112,8 +112,9 @@ official host from 0.13.0, without a patched client:
 - Under the final reply of a completed turn it draws, the plugin shows a footer
   with **Copy turn**, **Show original**, and the turn's end time. Show original
   hands the whole turn back to Paseo — formulas show as TeX source — so Paseo's
-  own Copy, Fork, and duration appear. A composer pill ("Original view ·
-  N turns") restores plugin rendering, and so does a reload.
+  own Copy, Fork, and duration appear. The turn returns to plugin rendering
+  when the agent starts its next turn. To return sooner, press the **Show
+  rendered** pill above the composer, or reload.
 - In turns where a plain reply precedes the formula answer, the plugin also
   draws that plain reply, so Paseo never shows a Fork anchored before the final
   answer. When it cannot — a short or repeated plain reply without a message
@@ -155,7 +156,8 @@ plugin release follows.
 
 See the [design](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/superpowers/specs/2026-11-07-fork-safe-replies-design.md),
 the [Paseo 0.16.0 QA record](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/fork-safe-replies.md),
-and the [0.5.0 release notes](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/release/0.5.0.md).
+and the [0.5.0](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/release/0.5.0.md)
+and [0.5.1](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/release/0.5.1.md) release notes.
 The [0.4.0 integration record](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/host-integration.md)
 with the patched host remains historical evidence. Native iOS/Android devices,
 Electron, and Windows remain unverified.
