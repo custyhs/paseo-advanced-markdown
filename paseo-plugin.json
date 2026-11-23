@@ -2,6 +2,7 @@
   "id": "advanced-markdown",
   "name": "Advanced Markdown",
   "description": "LaTeX formulas and optional code and table viewers for Paseo, with built-in Mermaid rendering",
+  "icon": "images/icon.png",
   "media": [
     "images/04-math-and-native-mermaid.png",
     "images/05-formula-viewer.png",
