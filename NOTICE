@@ -28,3 +28,6 @@ server/generated/mathjax-fonts.json. Its Apache-2.0 license and attribution are 
 server/generated/mathjax.LICENSE and server/generated/mathjax.NOTICE.
 Copyright (c) 2009-2022 The MathJax Consortium.
 Copyright (c) 2018-2022 Omar Al-Ithawi and The MathJax Consortium.
+
+The icon (images/icon.svg, images/icon.png) adapts the Markdown Mark by Dustin Curtis,
+https://github.com/dcurtis/markdown-mark, which is dedicated to the public domain.
