@@ -46,7 +46,7 @@ not semantic MathML navigation or selectable mathematical glyphs.
 The reviewed TeX profile adds `mathtools` and `cancel`, including `\mathclap`,
 `\coloneqq`, `\cancel`, and `\cancelto`. Undefined macros fail locally; custom
 macro definitions do not carry across formulas. Markdown link labels keep their
-existing literal behavior. See the [host limitations](qa/math-reading-gaps.md).
+existing literal behavior.
 
 ## Reading code blocks
 
@@ -60,10 +60,8 @@ and native clients keep their usual text selection and scrolling.
 ## Reading diagrams
 
 Mermaid always uses Paseo's renderer and viewer, including inside a message with
-math. Version 0.4.1 removes the plugin's PNG diagram renderer and **Enhanced
-Mermaid viewer** switch. A saved `mermaid: true` value from an older installation
-is ignored. Incomplete or empty diagram fences in plugin-owned messages
-remain source. The plugin does not install or launch Chrome.
+math. Incomplete or empty diagram fences in plugin-owned messages remain source.
+A saved `mermaid: true` value from an installation before 0.4.1 is ignored.
 
 ## Reading tables
 
@@ -123,21 +121,17 @@ A message with no enabled plugin enhancement stays with Paseo, except plain
 replies claimed for fork safety. Module changes apply to conversations already
 on screen. These settings do not change Paseo's built-in Mermaid rendering.
 
-Code scrolling and tables are opt-in enhancements. Math remains enabled by default. Copying a code block copies its source, without the fence. Use the table
-viewer to copy Markdown or TSV.
-
 ## What is rendered, and what is not
 
 | Content | Behavior |
 | --- | --- |
 | Complete inline or display math, closed `math` fence | image; click or tap to inspect and copy |
 | A `math` fence whose body is itself wrapped in `\[…\]`, `$$…$$`, `\(…\)`, or `$…$` | the redundant wrapper is ignored, the formula renders |
-| Complete `mermaid` fence | Paseo's diagram renderer and viewer |
+| Complete `mermaid` fence | Paseo's renderer and viewer, which handle syntax, limits, and source fallback |
 | Unclosed delimiters or fences while streaming | readable source until closed |
 | Prices (`$5 and $10`), `\$`, inline code, other fences | plain text / code |
 | Footnote markers and definitions (`[^note]`, `[^note]: …`) | readable text; formulas in definition lines render, without footnote navigation |
 | Invalid or oversized TeX | readable source; ordinary code limits below still apply |
-| Mermaid diagrams | Paseo's renderer handles syntax, limits, and source fallback |
 | Any ordinary code block or table over its budget, including beside math or diagrams | the entire timeline row is left to Paseo’s renderer |
 | Local source-file links beside formulas or diagrams | clickable read-only source preview on the selected host; supports relative paths, absolute paths, `file://` URLs, `:line` and `#Lline` anchors |
 | Messages with inline images or unsupported link schemes | left to Paseo's renderer |
@@ -146,7 +140,7 @@ viewer to copy Markdown or TSV.
 
 Current Paseo transformers receive the accumulated assistant message, including
 blank lines inside `$$` display math. Incomplete delimiters stay as source until
-closed. The paragraph-splitting behavior in the 0.8 QA records is historical.
+closed.
 
 Local file links open a plugin preview because Paseo's public timeline SDK does
 not expose file-tab navigation. Files are read only after a click, relative to

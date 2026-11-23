@@ -3,7 +3,7 @@
 Plugin: branch `feat/fork-safe-replies` at the commit that adds this file, built with
 `npm run build` and installed as a directory plugin. Host: official `@getpaseo/cli@0.16.0`
 from npm with its bundled web UI, on the isolated harness described in
-[environment.md](environment.md#official-0160-daemon-and-web-ui-isolated). No host patch.
+[environment.md](environment.md#isolated-official-daemon-and-web-ui). No host patch.
 
 Better Paseo 1.6.0 was installed next to the plugin from a copy of the production
 checkout (commit `c85f2412` plus the user's local `server/tasks-chunk.ts` edit), because

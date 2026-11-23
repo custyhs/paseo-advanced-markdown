@@ -91,18 +91,14 @@ same artifact as the published version, it skips uploading and verifies the
 existing package; different bytes fail the run.
 
 The workflow builds its triggering commit so npm's provenance identifies the
-actual source. For new releases, dispatch from the release tag:
+actual source. Dispatch from the release tag:
 
 ```bash
-gh workflow run publish.yml --ref v0.4.2 -f release_tag=v0.4.2 -f publish=false
+gh workflow run publish.yml --ref vX.Y.Z -f release_tag=vX.Y.Z -f publish=false
 # After checking the rehearsal, change publish=false to publish=true.
 ```
 
-For the existing v0.4.1 tag, which predates this workflow, use `--ref main` and
-`-f release_tag=v0.4.1`. This only works when the tag is an ancestor and all
-intervening file differences are under `.github/` or `docs/`. Package sources,
-README, screenshots, dependencies and build scripts must match the tag. Do not
-move a published tag or check out a different commit inside the workflow.
+Do not move a published tag or check out a different commit inside the workflow.
 
 ### One-time npm authorization
 
@@ -117,22 +113,12 @@ In the package's npm **Settings → Trusted publishing**, authorize:
 | Environment name | Leave empty |
 | Allowed actions | Allow direct `npm publish` |
 
-Alternatively, after `npm login`, run this with an account that owns the package
-and has 2FA enabled. Complete the interactive npm authentication prompt:
-
-```bash
-npx --yes npm@11.21.1 trust github paseo-advanced-markdown \
-  --repo=custyhs/paseo-advanced-markdown \
-  --file=publish.yml --allow-publish \
-  --registry=https://registry.npmjs.org/
-```
-
 No `NPM_TOKEN` or `NODE_AUTH_TOKEN` secret is needed. Only the publishing job can
 request an OIDC credential. Configure the trust relationship when ready to publish:
 npm requires its first successful publish within two days, or the unused
 configuration expires. See [npm's Trusted Publishing documentation](https://docs.npmjs.com/trusted-publishers/)
-for current requirements and [npm trust](https://docs.npmjs.com/cli/v11/commands/npm-trust/)
-for CLI authorization.
+for current requirements; [`npm trust`](https://docs.npmjs.com/cli/v11/commands/npm-trust/)
+sets up the same authorization from the CLI.
 
 After publication, download that run's `npm-package` artifact and use its tarball
 for the GitHub release attachment and its integrity for the directory review.
@@ -157,5 +143,9 @@ For manual preparation and error recovery, see [Renderer errors](installation.md
 
 ## Validation records
 
-See [QA records](qa/), the [initial npm package validation](qa/npm-package.md),
-and [release notes](release/) for version-specific evidence and device limitations.
+[Fork-safe replies](qa/fork-safe-replies.md) is the current real-client QA record,
+run in the [isolated environment](qa/environment.md). [Host integration](qa/host-integration.md)
+is the 0.4.0 record. Release notes for the current line are in [release/](release/).
+QA records and release notes for versions before 0.5.0 live in their release tags and
+on the [GitHub Releases page](https://github.com/custyhs/paseo-advanced-markdown/releases).
+Findings that reviews deferred are in [follow-ups](follow-ups.md).

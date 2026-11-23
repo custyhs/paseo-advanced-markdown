@@ -30,8 +30,7 @@ Markdown of the assistant message containing it, which may be only one part of a
 
 Configure modules and text/formula size in **Settings → Plugins → Advanced Markdown**.
 Settings are shared by clients of the host. Updating preserves math, code, table,
-and sizing preferences. The removed **Enhanced Mermaid viewer** setting is ignored,
-including an older saved `mermaid: true` value.
+and sizing preferences.
 
 <details>
 <summary>More screenshots</summary>
@@ -84,9 +83,8 @@ for Git/local setup, Linux requirements, rollback, and troubleshooting.
 1. **Select messages.** The [client transformer](https://github.com/custyhs/paseo-advanced-markdown/blob/main/index.client.tsx)
    scans accumulated assistant text, including streaming updates. It requests
    custom rendering only when an enabled module matches. Ordinary messages,
-   including Mermaid-only messages, stay with Paseo.
-   Messages outside supported syntax or size limits also stay with Paseo.
-   When **Show original for Fork** is on, the transformer also draws plain
+   Mermaid-only messages, and messages outside supported syntax or size limits
+   stay with Paseo. When **Show original for Fork** is on, the transformer also draws plain
    replies that precede a plugin-drawn answer in the same turn
    (see [Reply actions and compatibility](#reply-actions-and-compatibility)).
 2. **Render mixed content.** A selected message passes its original Markdown to
@@ -127,9 +125,7 @@ official host from 0.13.0, without a patched client:
   draws that plain reply, so Paseo never shows a Fork anchored before the final
   answer. When it cannot — a short or repeated plain reply without a message
   id, or one the plugin's renderer cannot draw — the footer adds a warning
-  that Paseo's Fork below stops before this answer. Replies without a message id are keyed by their exact text and can be
-  left unprotected this way; in the 0.16.0 QA, a daemon restart kept Claude
-  message ids.
+  that Paseo's Fork below stops before this answer.
 - The host-scoped switch **Show original for Fork** in the plugin's Modules
   settings is on by default; off restores the 0.4.1 behavior exactly.
 
@@ -153,14 +149,18 @@ unavailable.
   [host patch](https://github.com/custyhs/paseo/commit/74c11e85a86b453d3a7201698dc122fdfb6fca9b)
   remains an alternative.
 
-Known limitations: an early-anchored footer can appear when a chat opens, until
-the plugin's first timeline read returns; unprotected turns keep Paseo's early
-Fork, with the warning shown; identical plugin-drawn replies switch to the
-original view together; a duplicate reply in a chat the plugin has not read yet
-stays plugin-drawn for one read round trip; read-only subagent panes offer no
-Fork, so Show original restores only Copy and time there; and if #9253 lands
-under another field name, hosts with it behave like released hosts until a
-plugin release follows.
+**Known limitations:**
+
+- An early-anchored footer can appear when a chat opens, until the plugin's
+  first timeline read returns.
+- Unprotected turns keep Paseo's early Fork, with the warning shown.
+- Identical plugin-drawn replies switch to the original view together.
+- A duplicate reply in a chat the plugin has not read yet stays plugin-drawn
+  for one read round trip.
+- Read-only subagent panes offer no Fork, so Show original restores only Copy
+  and time there.
+- If #9253 lands under another field name, hosts with it behave like released
+  hosts until a plugin release follows.
 
 See the [design](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/superpowers/specs/2026-11-07-fork-safe-replies-design.md),
 the [Paseo 0.16.0 QA record](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/fork-safe-replies.md),
