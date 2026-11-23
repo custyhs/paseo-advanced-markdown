@@ -5,14 +5,6 @@ inspecting source, and copying LaTeX or Markdown. Optional viewers add scrolling
 for long code lines and wide tables. Mermaid diagrams use Paseo's built-in renderer
 and viewer, including in messages that also contain formulas.
 
-![Formulas alongside Paseo's built-in Mermaid diagram](images/04-math-and-native-mermaid.png)
-
-![Formula viewer with preview, source, copy, and zoom controls](images/05-formula-viewer.png)
-
-These screenshots show version 0.4.1 in a 390px browser on Paseo 0.15.0-beta.1
-with the separate [host integration fix](https://github.com/custyhs/paseo-advanced-markdown/blob/main/docs/qa/host-integration.md).
-They are not native-device screenshots; the host fix is not included in the plugin.
-
 ## Setup and controls
 
 Both Paseo app and daemon must be at least 0.13.0. The daemon host needs Node
