@@ -10,6 +10,8 @@ Optional plugin viewers remain for long code lines and wide tables.
 [npm](https://www.npmjs.com/package/paseo-advanced-markdown) ·
 [Release notes](https://github.com/custyhs/paseo-advanced-markdown/releases)
 
+![A derivation with inline and aligned formulas, above the plugin's Copy turn and Show original footer](images/01-formulas.png)
+
 ## Features
 
 | Content | Default in a new installation | Plugin controls |
@@ -32,15 +34,21 @@ and sizing preferences. The removed **Enhanced Mermaid viewer** setting is ignor
 including an older saved `mermaid: true` value.
 
 <details>
-<summary>Screenshots</summary>
+<summary>More screenshots</summary>
 
-![Formulas beside Paseo's built-in Mermaid](images/04-math-and-native-mermaid.png)
+![Formula viewer at 150% with Preview, Source, and Copy LaTeX](images/02-formula-viewer.png)
 
-![Formula viewer with source, copy, and zoom controls](images/05-formula-viewer.png)
+![Show original on an earlier turn: TeX source, Paseo's footer with its Fork menu open, and the Show rendered pill above the composer](images/03-show-original-fork.png)
 
-These v0.4.1 screenshots were captured at 390px in a browser on Paseo
-0.15.0-beta.1 with the separate host integration fix described below.
-They are not native-device screenshots; the host fix is not included in the plugin.
+![Tables module: a table with formulas in its cells and an Open table button](images/04-tables.png)
+
+![Aligned formulas above Paseo's built-in Mermaid flowchart in one reply](images/05-math-and-mermaid.png)
+
+![Plugin settings with the module switches](images/06-module-settings.png)
+
+These screenshots show version 0.5.1 in the official Paseo 0.16.1 web client at
+1040×650, with real agent replies. The tables screenshot has the optional
+**Tables** module on. They are not native-device or Electron screenshots.
 
 </details>
 
