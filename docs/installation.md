@@ -4,7 +4,6 @@
 
 ## Requirements
 
-v0.5.1 requires **Paseo app and daemon >=0.13.0**, with no upper version limit.
 Reply actions in turns the plugin draws come back through **Show original**; see
 [Reply actions and compatibility](../README.md#reply-actions-and-compatibility).
 
@@ -14,16 +13,15 @@ Reply actions in turns the plugin draws come back through **Show original**; see
 | Daemon host | Node ≥ 22.22 and npm on `PATH`; network access for package installation; Git for Git installations. Formula assets are prepared offline |
 | Text font | A font covering any non-Latin characters used inside formulas (Chinese, Japanese, Korean, …). macOS and most desktop Linux installs already have one; see [Text inside formulas](#text-inside-formulas) |
 | Daemon host OS | Previous releases were verified on macOS arm64. A minimal Linux host may need a CJK font (`fonts-noto-cjk`); no Chrome libraries or browser sandbox configuration are required. Windows is untested |
-| Clients | The 0.4.0 browser UI checks used patched Paseo 0.15.0-beta.1 at desktop and phone widths; native iOS/Android UI remains unverified (see [validation record](qa/host-integration.md)) |
+| Clients | Checked in the official web client of Paseo 0.16.0 and 0.16.1 at desktop and phone widths (see the [QA record](qa/fork-safe-replies.md)); native iOS/Android, Electron, and Windows remain unverified |
 
 Plugins must be enabled on the daemon (Settings → Plugins, or `pluginsEnabled`
 in `config.json`).
 
-Paseo checks prereleases against their stable core, so `0.13.0-beta.1` and
-`0.15.0-beta.1` meet this range. The 0.4.0 compiler and package checks covered official
-0.13.0 and 0.14.0. An accepted version range does not imply device validation;
-see the [0.5.0](release/0.5.0.md) and [0.5.1](release/0.5.1.md) release notes for coverage and
-limitations.
+Paseo checks prereleases against their stable core, so `0.13.0-beta.1` meets this
+range. An accepted version range does not imply device validation; see the
+[0.5.0](release/0.5.0.md) and [0.5.1](release/0.5.1.md) release notes for coverage
+and limitations.
 
 ## Install
 
@@ -46,10 +44,9 @@ on Windows; override with `PASEO_ADVANCED_MARKDOWN_CACHE`, which must be an abso
 path). Relative `XDG_CACHE_HOME` and `LOCALAPPDATA` values are ignored. The cache
 is outside Paseo's managed checkouts so updates can reuse formula assets.
 
-Older versions may have left `browsers/`, `worker/`, and `manifest.json` in that
-cache. Version 0.4.1 and later do not use or automatically delete those files. Keep them
-if another installation or an older version still uses them. The `assets/`
-directory remains in use for formulas.
+Versions before 0.4.1 may have left `browsers/`, `worker/`, and `manifest.json` in
+that cache. Later versions neither use nor delete them. Remove them unless an older
+installation still needs them; `assets/` stays in use for formulas.
 
 From a local checkout:
 
@@ -87,7 +84,8 @@ paseo plugin update advanced-markdown --version 0.5.1
 
 To roll back, select `--ref v0.3.2` for Git or `--version 0.3.2` for npm.
 That release supports Paseo >=0.11.0. Paseo 0.8–0.10 users must stay on v0.3.0.
-Older compatibility ranges are recorded in the [release notes](release/).
+Older compatibility ranges are recorded in the
+[release notes](https://github.com/custyhs/paseo-advanced-markdown/releases).
 Versions before 0.4.1 include browser preparation; rolling back restores that behavior.
 
 A failed preparation during `plugin update` keeps the installed version running. Updates never touch
